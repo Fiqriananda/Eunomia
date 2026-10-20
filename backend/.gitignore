@@ -1,0 +1,28 @@
+# ==========================================
+# Backend .gitignore
+# ==========================================
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Dependencies
+node_modules/
+
+# Compiled files
+dist/
+*.tsbuildinfo
+
+# Uploads
+uploads/
+!uploads/.gitkeep
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS & Editor files
+.DS_Store
+.idea/
+.vscode/

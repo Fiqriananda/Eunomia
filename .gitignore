@@ -1,0 +1,67 @@
+# ==========================================
+# Root .gitignore for Eunomia Project
+# ==========================================
+
+# Environment variables & secrets (NEVER commit to GitHub)
+.env
+.env.*
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+!.env.example
+backend/.env
+backend/.env.*
+frontend/.env
+frontend/.env.*
+frontend/.env.local
+
+# Node & Package dependencies
+node_modules/
+*/node_modules/
+.pnp
+.pnp.*
+
+# Build & Compiled artifacts
+dist/
+*/dist/
+.next/
+*/.next/
+out/
+build/
+*.tsbuildinfo
+
+# User uploads & dynamic file storage
+uploads/
+*/uploads/
+backend/uploads/
+!backend/uploads/.gitkeep
+
+# System & Application logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Docker & Database persistence
+postgres_data/
+backend_uploads/
+*.sqlite
+*.sqlite3
+*.db
+
+# Operating System files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+
+# IDE & Editor caches
+.idea/
+.vscode/
+*.swp
+*.swo

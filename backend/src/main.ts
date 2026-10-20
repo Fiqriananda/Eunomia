@@ -14,6 +14,7 @@ async function bootstrap() {
       'http://127.0.0.1:3001',
       'http://localhost:3002',
       'http://127.0.0.1:3002',
+      'https://eunomia.motionlaboratory.com'
     ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
