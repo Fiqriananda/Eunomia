@@ -50,4 +50,5 @@ export declare class EmailService implements OnModuleInit {
     sendMentionNotification(data: MentionEmailData): Promise<boolean>;
     sendAssignmentNotification(data: AssignEmailData): Promise<boolean>;
     sendWorkspaceInvitationEmail(data: WorkspaceInvitationEmailData): Promise<boolean>;
+    private dispatchEmail;
 }

@@ -25,7 +25,16 @@ let EmailService = EmailService_1 = class EmailService {
         const rawFrom = this.configService.get('EMAIL_FROM');
         const user = this.configService.get('SMTP_USER');
         const host = this.configService.get('SMTP_HOST');
-        if (host?.includes('gmail') && user) {
+        const resendApiKey = this.configService.get('RESEND_API_KEY');
+        if (resendApiKey) {
+            if (rawFrom && !rawFrom.includes('@gmail.com')) {
+                this.fromAddress = rawFrom;
+            }
+            else {
+                this.fromAddress = 'Eunomia <onboarding@resend.dev>';
+            }
+        }
+        else if (host?.includes('gmail') && user) {
             const displayNameMatch = rawFrom?.match(/^"([^"]+)"/);
             const displayName = displayNameMatch ? displayNameMatch[1] : 'Eunomia';
             this.fromAddress = `"${displayName}" <${user}>`;
@@ -231,69 +240,14 @@ let EmailService = EmailService_1 = class EmailService {
 </html>
     `;
         this.saveLocalEmailPreview(html);
-        const resendApiKey = this.configService.get('RESEND_API_KEY');
-        if (resendApiKey) {
-            try {
-                const res = await fetch('https://api.resend.com/emails', {
-                    method: 'POST',
-                    headers: {
-                        Authorization: `Bearer ${resendApiKey}`,
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        from: this.fromAddress,
-                        to: data.recipientEmail,
-                        subject,
-                        html,
-                        text: `${data.actorName} commented on [${data.taskIdentifier}] ${data.taskTitle}:\n\n"${data.commentContent}"\n\nView task: ${taskUrl}`,
-                    }),
-                });
-                const resJson = (await res.json());
-                if (res.ok) {
-                    this.logger.log(`Email dispatched via Resend to ${data.recipientEmail}: id=${resJson.id}`);
-                    return true;
-                }
-                else {
-                    this.logger.error(`Resend API error: ${JSON.stringify(resJson)}`);
-                }
-            }
-            catch (resendErr) {
-                this.logger.error(`Resend API network error: ${resendErr.message}`);
-            }
-        }
-        try {
-            const info = await this.transporter.sendMail({
-                from: this.fromAddress,
-                to: data.recipientEmail,
-                subject,
-                html,
-                text: `${data.actorName} commented on [${data.taskIdentifier}] ${data.taskTitle}:\n\n"${data.commentContent}"\n\nView task: ${taskUrl}`,
-            });
-            this.logger.log(`Email dispatched for ${data.recipientEmail}: messageId=${info.messageId || 'dev-preview'}`);
-            const previewUrl = nodemailer.getTestMessageUrl(info);
-            if (previewUrl) {
-                this.logger.log(`📨 View Email in Browser (Ethereal Preview): ${previewUrl}`);
-            }
-            return true;
-        }
-        catch (err) {
-            this.logger.error(`Failed to send email to ${data.recipientEmail}: ${err.message}`);
-            if (err.code === 'ESOCKET' ||
-                err.code === 'ECONNREFUSED' ||
-                err.code === 'EHOSTUNREACH') {
-                this.logger.warn(`[SMTP Network Notice] Direct connection to SMTP server was refused (ECONNREFUSED). Your ISP/network is blocking outbound SMTP ports (465/587). You can use a VPN or set RESEND_API_KEY in backend/.env to send over HTTPS port 443 without port restrictions.`);
-            }
-            return false;
-        }
+        return await this.dispatchEmail({
+            to: data.recipientEmail,
+            subject,
+            html,
+            text: `${data.actorName} commented on [${data.taskIdentifier}] ${data.taskTitle}:\n\n"${data.commentContent}"\n\nView task: ${taskUrl}`,
+        });
     }
     async sendAssignmentNotification(data) {
-        if (!this.transporter) {
-            await this.initTransporter();
-        }
-        if (!this.transporter) {
-            this.logger.error('Transporter is not available');
-            return false;
-        }
         const taskUrl = `${this.frontendUrl}/issue/${data.taskId}`;
         const subject = `${data.actorName} assigned you to [${data.taskIdentifier}] ${data.taskTitle}`;
         const getStatusBadge = (status) => {
@@ -537,34 +491,14 @@ let EmailService = EmailService_1 = class EmailService {
 </html>
     `;
         this.saveLocalEmailPreview(html);
-        try {
-            const info = await this.transporter.sendMail({
-                from: this.fromAddress,
-                to: data.recipientEmail,
-                subject,
-                html,
-                text: `${data.actorName} assigned you to [${data.taskIdentifier}] ${data.taskTitle}\n\nStatus: ${statusBadge.label}\nPriority: ${priorityBadge.label}\nDescription:\n${data.taskDescription || 'No description provided.'}\n\nView task: ${taskUrl}`,
-            });
-            this.logger.log(`Assignment email dispatched for ${data.recipientEmail}`);
-            const previewUrl = nodemailer.getTestMessageUrl(info);
-            if (previewUrl) {
-                this.logger.log(`📨 View Email in Browser (Ethereal Preview): ${previewUrl}`);
-            }
-            return true;
-        }
-        catch (err) {
-            this.logger.error(`Failed to send assignment email to ${data.recipientEmail}: ${err.message}`);
-            return false;
-        }
+        return await this.dispatchEmail({
+            to: data.recipientEmail,
+            subject,
+            html,
+            text: `${data.actorName} assigned you to [${data.taskIdentifier}] ${data.taskTitle}\n\nStatus: ${statusBadge.label}\nPriority: ${priorityBadge.label}\nDescription:\n${data.taskDescription || 'No description provided.'}\n\nView task: ${taskUrl}`,
+        });
     }
     async sendWorkspaceInvitationEmail(data) {
-        if (!this.transporter) {
-            await this.initTransporter();
-        }
-        if (!this.transporter) {
-            this.logger.error('Transporter is not available');
-            return false;
-        }
         const acceptUrl = `${this.frontendUrl}/invitation/${data.token}`;
         const subject = `${data.actorName} invited you to join ${data.workspaceName} on Eunomia`;
         const html = `
@@ -630,19 +564,73 @@ let EmailService = EmailService_1 = class EmailService {
 </html>
     `;
         this.saveLocalEmailPreview(html);
+        return await this.dispatchEmail({
+            to: data.recipientEmail,
+            subject,
+            html,
+            text: `${data.actorName} invited you to join ${data.workspaceName} on Eunomia.\n\nAccept invitation: ${acceptUrl}`,
+        });
+    }
+    async dispatchEmail(options) {
+        const resendApiKey = this.configService.get('RESEND_API_KEY');
+        if (resendApiKey) {
+            try {
+                const res = await fetch('https://api.resend.com/emails', {
+                    method: 'POST',
+                    headers: {
+                        Authorization: `Bearer ${resendApiKey}`,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        from: this.fromAddress,
+                        to: options.to,
+                        subject: options.subject,
+                        html: options.html,
+                        text: options.text,
+                    }),
+                });
+                const resJson = (await res.json());
+                if (res.ok) {
+                    this.logger.log(`Email dispatched via Resend to ${options.to}: id=${resJson.id}`);
+                    return true;
+                }
+                else {
+                    this.logger.error(`Resend API error: ${JSON.stringify(resJson)}`);
+                }
+            }
+            catch (resendErr) {
+                this.logger.error(`Resend API network error: ${resendErr.message}`);
+            }
+        }
+        if (!this.transporter) {
+            await this.initTransporter();
+        }
+        if (!this.transporter) {
+            this.logger.error('Transporter is not available');
+            return false;
+        }
         try {
-            await this.transporter.sendMail({
+            const info = await this.transporter.sendMail({
                 from: this.fromAddress,
-                to: data.recipientEmail,
-                subject,
-                html,
-                text: `${data.actorName} invited you to join ${data.workspaceName} on Eunomia.\n\nAccept invitation: ${acceptUrl}`,
+                to: options.to,
+                subject: options.subject,
+                html: options.html,
+                text: options.text,
             });
-            this.logger.log(`Workspace invitation email sent to ${data.recipientEmail}`);
+            this.logger.log(`Email dispatched for ${options.to}: messageId=${info.messageId || 'dev-preview'}`);
+            const previewUrl = nodemailer.getTestMessageUrl(info);
+            if (previewUrl) {
+                this.logger.log(`View Email in Browser (Ethereal Preview): ${previewUrl}`);
+            }
             return true;
         }
         catch (err) {
-            this.logger.error(`Failed to send invitation email to ${data.recipientEmail}: ${err.message}`);
+            this.logger.error(`Failed to send email to ${options.to}: ${err.message}`);
+            if (err.code === 'ESOCKET' ||
+                err.code === 'ECONNREFUSED' ||
+                err.code === 'EHOSTUNREACH') {
+                this.logger.warn(`[SMTP Network Notice] Direct connection to SMTP server was refused (ECONNREFUSED). Your ISP/network is blocking outbound SMTP ports (465/587). You can use a VPN or set RESEND_API_KEY in backend/.env to send over HTTPS port 443 without port restrictions.`);
+            }
             return false;
         }
     }

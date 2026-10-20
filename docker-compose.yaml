@@ -48,6 +48,7 @@ services:
       SMTP_PASS: ${SMTP_PASS:-bubmvvdghlaqhfag}
       SMTP_SECURE: ${SMTP_SECURE:-true}
       EMAIL_FROM: ${EMAIL_FROM:-"Eunomia" <fiqrianandahakin@gmail.com>}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
     volumes:
       - backend_uploads:/app/uploads
     depends_on:
