@@ -23,8 +23,8 @@ async function bootstrap() {
         forbidNonWhitelisted: false,
     }));
     const swaggerConfig = new DocumentBuilder()
-        .setTitle('Linear Clone API & Mobile Endpoints')
-        .setDescription('REST API documentation for the Linear-inspired project management platform. Includes dedicated consolidated Mobile endpoints (/mobile/*) designed for mobile apps (Flutter, React Native, iOS, Android), as well as core services for tasks, workspaces, projects, file uploads, and notifications.')
+        .setTitle('Eunomia API & Mobile Endpoints')
+        .setDescription('REST API documentation for the Eunomia project management platform. Includes dedicated consolidated Mobile endpoints (/mobile/*) designed for mobile apps (Flutter, React Native, iOS, Android), as well as core services for tasks, workspaces, projects, file uploads, and notifications.')
         .setVersion('1.0.0')
         .addBearerAuth({
         type: 'http',
@@ -44,7 +44,7 @@ async function bootstrap() {
         .build();
     const document = SwaggerModule.createDocument(app, swaggerConfig);
     SwaggerModule.setup('api/docs', app, document, {
-        customSiteTitle: 'Linear Clone API & Mobile Documentation',
+        customSiteTitle: 'Eunomia API & Mobile Documentation',
         swaggerOptions: {
             persistAuthorization: true,
             docExpansion: 'list',
@@ -60,7 +60,7 @@ async function bootstrap() {
     });
     const port = process.env.PORT || 4000;
     await app.listen(port);
-    console.log(`🚀 Motion Backend running on http://localhost:${port}`);
+    console.log(`🚀 Eunomia Backend running on http://localhost:${port}`);
     console.log(`📖 Swagger API Docs running on http://localhost:${port}/api/docs`);
 }
 await bootstrap();

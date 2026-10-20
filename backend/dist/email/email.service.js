@@ -27,11 +27,11 @@ let EmailService = EmailService_1 = class EmailService {
         const host = this.configService.get('SMTP_HOST');
         if (host?.includes('gmail') && user) {
             const displayNameMatch = rawFrom?.match(/^"([^"]+)"/);
-            const displayName = displayNameMatch ? displayNameMatch[1] : 'Motion';
+            const displayName = displayNameMatch ? displayNameMatch[1] : 'Eunomia';
             this.fromAddress = `"${displayName}" <${user}>`;
         }
         else {
-            this.fromAddress = rawFrom || '"Motion" <notifications@motionlaboratory.com>';
+            this.fromAddress = rawFrom || '"Eunomia" <notifications@eunomialab.com>';
         }
         this.frontendUrl =
             this.configService.get('FRONTEND_URL') || 'http://localhost:3002';
@@ -139,7 +139,7 @@ let EmailService = EmailService_1 = class EmailService {
                     </div>
                   </td>
                   <td style="vertical-align: middle; padding-left: 10px;">
-                    <span style="font-size: 17px; font-weight: 700; color: #111827; letter-spacing: -0.3px;">Motion</span>
+                    <span style="font-size: 17px; font-weight: 700; color: #111827; letter-spacing: -0.3px;">Eunomia</span>
                   </td>
                 </tr>
               </table>
@@ -150,7 +150,7 @@ let EmailService = EmailService_1 = class EmailService {
           <tr>
             <td style="padding: 0 36px 24px 36px;">
               <h1 style="margin: 0; font-size: 22px; font-weight: 700; color: #111827; line-height: 1.35; letter-spacing: -0.4px;">
-                You have an unread notification on Motion.
+                You have an unread notification on Eunomia.
               </h1>
             </td>
           </tr>
@@ -378,7 +378,7 @@ let EmailService = EmailService_1 = class EmailService {
                     </div>
                   </td>
                   <td style="vertical-align: middle; padding-left: 10px;">
-                    <span style="font-size: 17px; font-weight: 700; color: #111827; letter-spacing: -0.3px;">Motion</span>
+                    <span style="font-size: 17px; font-weight: 700; color: #111827; letter-spacing: -0.3px;">Eunomia</span>
                   </td>
                 </tr>
               </table>
@@ -389,7 +389,7 @@ let EmailService = EmailService_1 = class EmailService {
           <tr>
             <td style="padding: 0 36px 18px 36px;">
               <h1 style="margin: 0; font-size: 22px; font-weight: 700; color: #111827; line-height: 1.35; letter-spacing: -0.4px;">
-                You were assigned to an issue on Motion.
+                You were assigned to an issue on Eunomia.
               </h1>
             </td>
           </tr>
@@ -507,7 +507,7 @@ let EmailService = EmailService_1 = class EmailService {
                 <tr>
                   <td style="border-radius: 8px; background-color: #5e6ad2;">
                     <a href="${taskUrl}" target="_blank" style="display: inline-block; padding: 12px 24px; font-size: 13px; font-weight: 600; color: #ffffff; text-decoration: none; border-radius: 8px; letter-spacing: -0.1px;">
-                      Open Issue in Motion &rarr;
+                      Open Issue in Eunomia &rarr;
                     </a>
                   </td>
                 </tr>
@@ -524,7 +524,7 @@ let EmailService = EmailService_1 = class EmailService {
           <tr>
             <td style="padding: 20px 36px; background-color: #fafbfc; text-align: left;">
               <p style="margin: 0; font-size: 12px; color: #9ca3af; line-height: 1.5;">
-                This notification was sent to <a href="mailto:${data.recipientEmail}" style="color: #6b7280; text-decoration: none;">${data.recipientEmail}</a> because you were assigned to <strong>${data.taskIdentifier}</strong> on Motion.
+                This notification was sent to <a href="mailto:${data.recipientEmail}" style="color: #6b7280; text-decoration: none;">${data.recipientEmail}</a> because you were assigned to <strong>${data.taskIdentifier}</strong> on Eunomia.
               </p>
             </td>
           </tr>
@@ -566,7 +566,7 @@ let EmailService = EmailService_1 = class EmailService {
             return false;
         }
         const acceptUrl = `${this.frontendUrl}/invitation/${data.token}`;
-        const subject = `${data.actorName} invited you to join ${data.workspaceName} on Motion`;
+        const subject = `${data.actorName} invited you to join ${data.workspaceName} on Eunomia`;
         const html = `
 <!DOCTYPE html>
 <html lang="en">
@@ -585,8 +585,8 @@ let EmailService = EmailService_1 = class EmailService {
               <table width="100%" cellpadding="0" cellspacing="0" border="0">
                 <tr>
                   <td>
-                    <div style="display: inline-block; width: 28px; height: 28px; background: linear-gradient(135deg, #5e6ad2, #8a95ff); border-radius: 6px; text-align: center; line-height: 28px; color: #ffffff; font-weight: bold; font-size: 14px;">M</div>
-                    <span style="font-size: 16px; font-weight: 600; color: #ffffff; margin-left: 10px; vertical-align: middle;">Motion</span>
+                    <div style="display: inline-block; width: 28px; height: 28px; background: linear-gradient(135deg, #5e6ad2, #8a95ff); border-radius: 6px; text-align: center; line-height: 28px; color: #ffffff; font-weight: bold; font-size: 14px;">E</div>
+                    <span style="font-size: 16px; font-weight: 600; color: #ffffff; margin-left: 10px; vertical-align: middle;">Eunomia</span>
                   </td>
                   <td align="right">
                     <span style="font-size: 11px; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; color: #8a95ff; background: rgba(94, 106, 210, 0.2); padding: 4px 8px; border-radius: 4px;">Team Invite</span>
@@ -601,7 +601,7 @@ let EmailService = EmailService_1 = class EmailService {
                 Join ${data.workspaceName}
               </h1>
               <p style="margin: 0 0 24px 0; font-size: 14px; color: #4b5563; line-height: 1.6;">
-                <strong>${data.actorName}</strong> has invited you to join the <strong>${data.workspaceName}</strong> workspace on Motion as <strong>${data.role}</strong>.
+                <strong>${data.actorName}</strong> has invited you to join the <strong>${data.workspaceName}</strong> workspace on Eunomia as <strong>${data.role}</strong>.
               </p>
               <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 18px 20px; margin-bottom: 28px;">
                 <p style="margin: 0; font-size: 13px; color: #64748b; line-height: 1.5;">
@@ -618,7 +618,7 @@ let EmailService = EmailService_1 = class EmailService {
                 </tr>
               </table>
               <p style="margin: 24px 0 0 0; font-size: 12px; color: #9ca3af; line-height: 1.5;">
-                Or accept directly inside your Motion Inbox if you are already signed in.
+                Or accept directly inside your Eunomia Inbox if you are already signed in.
               </p>
             </td>
           </tr>
@@ -636,7 +636,7 @@ let EmailService = EmailService_1 = class EmailService {
                 to: data.recipientEmail,
                 subject,
                 html,
-                text: `${data.actorName} invited you to join ${data.workspaceName} on Motion.\n\nAccept invitation: ${acceptUrl}`,
+                text: `${data.actorName} invited you to join ${data.workspaceName} on Eunomia.\n\nAccept invitation: ${acceptUrl}`,
             });
             this.logger.log(`Workspace invitation email sent to ${data.recipientEmail}`);
             return true;

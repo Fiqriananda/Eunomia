@@ -4,7 +4,7 @@ services:
   # ==========================================
   postgres:
     image: postgres:16-alpine
-    container_name: motion-postgres
+    container_name: eunomia-postgres
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
@@ -21,13 +21,13 @@ services:
       retries: 5
       start_period: 10s
     networks:
-      - motion-network
+      - eunomia-network
 
   # ==========================================
-  # Motion NestJS Backend & Socket.IO
+  # Eunomia NestJS Backend & Socket.IO
   # ==========================================
   backend:
-    container_name: motion-backend
+    container_name: eunomia-backend
     build:
       context: ./backend
       dockerfile: Dockerfile.prod
@@ -36,7 +36,7 @@ services:
       - "${BACKEND_PORT:-4000}:4000"
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgrespassword}@postgres:5432/${POSTGRES_DB:-linear_db}?schema=public
-      JWT_SECRET: ${JWT_SECRET:-motion_super_secure_jwt_secret_production_2026}
+      JWT_SECRET: ${JWT_SECRET:-eunomia_super_secure_jwt_secret_production_2026}
       PORT: 4000
       BASE_URL: ${BASE_URL:-http://localhost:4000}
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3002}
@@ -47,20 +47,20 @@ services:
       SMTP_USER: ${SMTP_USER:-fiqrianandahakin@gmail.com}
       SMTP_PASS: ${SMTP_PASS:-bubmvvdghlaqhfag}
       SMTP_SECURE: ${SMTP_SECURE:-true}
-      EMAIL_FROM: ${EMAIL_FROM:-"Motion" <fiqrianandahakin@gmail.com>}
+      EMAIL_FROM: ${EMAIL_FROM:-"Eunomia" <fiqrianandahakin@gmail.com>}
     volumes:
       - backend_uploads:/app/uploads
     depends_on:
       postgres:
         condition: service_healthy
     networks:
-      - motion-network
+      - eunomia-network
 
   # ==========================================
-  # Motion Next.js 16 Frontend
+  # Eunomia Next.js 16 Frontend
   # ==========================================
   frontend:
-    container_name: motion-frontend
+    container_name: eunomia-frontend
     build:
       context: ./frontend
       dockerfile: Dockerfile.prod
@@ -76,7 +76,7 @@ services:
     depends_on:
       - backend
     networks:
-      - motion-network
+      - eunomia-network
 
 # ==========================================
 # Persistent Volumes & Networks
@@ -88,5 +88,5 @@ volumes:
     driver: local
 
 networks:
-  motion-network:
+  eunomia-network:
     driver: bridge

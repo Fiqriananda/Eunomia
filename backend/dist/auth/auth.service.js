@@ -47,8 +47,8 @@ let AuthService = class AuthService {
                 },
                 projects: {
                     create: {
-                        name: 'Motion Core',
-                        key: 'MTN',
+                        name: 'Eunomia Core',
+                        key: 'EUN',
                         description: 'Core product engineering & features',
                         color: '#6366f1',
                     },

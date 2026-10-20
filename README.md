@@ -1,4 +1,4 @@
-# Linear Clone – Task & Project Management
+# Eunomia – Task & Project Management
 
 A full-stack, Linear-inspired issue tracking and project management platform built with **Next.js 16**, **NestJS 12**, **PostgreSQL**, **Prisma ORM**, **Framer Motion**, and **shadcn/ui**.
 
