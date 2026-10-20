@@ -34,6 +34,7 @@ import {
   Hash,
   GitFork,
   Link as LinkIcon,
+  Image as ImageIcon,
 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { api } from '../../lib/api';
@@ -41,6 +42,8 @@ import { cn } from '../../lib/utils';
 import { useAuth } from '../../context/AuthContext';
 import { SubIssuesSection } from './SubIssuesSection';
 import { RelatedIssuesSection } from './RelatedIssuesSection';
+import { MarkdownRenderer, resolveMediaUrl } from '../ui/MarkdownRenderer';
+import { LinearRichEditor } from './LinearRichEditor';
 
 const PRESET_LABEL_COLORS: Record<string, string> = {
   Bug: '#ef4444',
@@ -66,36 +69,7 @@ const getLabelColor = (name: string) => {
 };
 
 const renderCommentContentWithMentions = (content: string, membersList: WorkspaceMember[]) => {
-  const memberNames = membersList
-    .map((m) => m.user?.name)
-    .filter(Boolean) as string[];
-
-  const parts = content.split(/(@[a-zA-Z0-9_\-\.\s]+?(?=\s|$|[.,!?]))/g);
-
-  return parts.map((part, idx) => {
-    if (part.startsWith('@')) {
-      const mentionName = part.slice(1).trim();
-      const isKnownMember = memberNames.some(
-        (n) => n.toLowerCase() === mentionName.toLowerCase(),
-      );
-
-      return (
-        <span
-          key={idx}
-          className={cn(
-            'inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[11px] font-medium transition-colors mx-0.5 align-baseline',
-            isKnownMember
-              ? 'bg-[#5e6ad2]/25 text-[#a5b4fc] border border-[#5e6ad2]/40 shadow-sm'
-              : 'bg-primary/20 text-primary-foreground border border-primary/30',
-          )}
-        >
-          <span className="text-[#818cf8] font-bold">@</span>
-          <span>{mentionName}</span>
-        </span>
-      );
-    }
-    return <span key={idx}>{part}</span>;
-  });
+  return <MarkdownRenderer content={content} membersList={membersList} />;
 };
 
 interface TaskDetailModalProps {
@@ -157,6 +131,10 @@ export function TaskDetailModal({
   const titleInputRef = useRef<HTMLInputElement>(null);
   const descTextareaRef = useRef<HTMLTextAreaElement>(null);
   const labelsDropdownRef = useRef<HTMLDivElement>(null);
+  const [descPreview, setDescPreview] = useState(false);
+  const [isUploadingDescImage, setIsUploadingDescImage] = useState(false);
+  const [isUploadingCommentImage, setIsUploadingCommentImage] = useState(false);
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
 
   // Collect all unique labels ever used in this workspace plus standard preset labels
   const allWorkspaceLabels = useMemo(() => {
@@ -246,6 +224,93 @@ export function TaskDetailModal({
   const handleDescBlur = () => {
     if (description !== (task.description || '')) {
       onUpdate(task.id, { description });
+    }
+  };
+
+  const handleUploadImageFile = async (
+    file: File,
+    textarea: HTMLTextAreaElement | null,
+    currentVal: string,
+    onValueUpdate: (val: string | ((prev: string) => string)) => void,
+    onSave?: (val: string) => void,
+    setIsUploading?: (val: boolean) => void,
+  ) => {
+    if (!file.type.startsWith('image/')) return;
+
+    if (setIsUploading) setIsUploading(true);
+    const ext = file.type.split('/')[1] || 'png';
+    const cleanFileName = file.name && file.name !== 'image.png'
+      ? file.name
+      : `image-${Date.now()}.${ext}`;
+
+    const placeholder = `\n![Uploading ${cleanFileName}...]()\n`;
+
+    const start = textarea?.selectionStart ?? currentVal.length;
+    const end = textarea?.selectionEnd ?? currentVal.length;
+    const before = currentVal.slice(0, start);
+    const after = currentVal.slice(end);
+    const textWithPlaceholder = before + placeholder + after;
+
+    onValueUpdate(textWithPlaceholder);
+
+    try {
+      const res = await api.uploads.upload(file, task?.id);
+      const finalUrl = resolveMediaUrl(res.url);
+      const markdown = `\n![${cleanFileName}](${finalUrl})\n`;
+
+      onValueUpdate((prev: string) => {
+        const updated = prev.includes(placeholder)
+          ? prev.replace(placeholder, markdown)
+          : `${prev}${markdown}`;
+        if (onSave) {
+          onSave(updated);
+        }
+        return updated;
+      });
+    } catch (err: any) {
+      console.error('Image upload failed:', err);
+      onValueUpdate((prev: string) => {
+        return prev.replace(placeholder, `\n<!-- Upload failed: ${err.message || 'Upload error'} -->\n`);
+      });
+    } finally {
+      if (setIsUploading) setIsUploading(false);
+    }
+  };
+
+  const handlePasteToTextarea = (
+    e: React.ClipboardEvent<HTMLTextAreaElement>,
+    currentVal: string,
+    onValueUpdate: (val: string | ((prev: string) => string)) => void,
+    onSave?: (val: string) => void,
+    setIsUploading?: (val: boolean) => void,
+  ) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+
+    const imgItem = Array.from(items).find((item) => item.type.startsWith('image/'));
+    if (!imgItem) return;
+
+    e.preventDefault();
+    const file = imgItem.getAsFile();
+    if (file) {
+      handleUploadImageFile(file, e.currentTarget, currentVal, onValueUpdate, onSave, setIsUploading);
+    }
+  };
+
+  const handleDropToTextarea = (
+    e: React.DragEvent<HTMLTextAreaElement>,
+    currentVal: string,
+    onValueUpdate: (val: string | ((prev: string) => string)) => void,
+    onSave?: (val: string) => void,
+    setIsUploading?: (val: boolean) => void,
+  ) => {
+    const files = e.dataTransfer?.files;
+    if (!files || files.length === 0) return;
+
+    const imgFile = Array.from(files).find((f) => f.type.startsWith('image/'));
+    if (imgFile) {
+      e.preventDefault();
+      handleUploadImageFile(imgFile, e.currentTarget, currentVal, onValueUpdate, onSave, setIsUploading);
     }
   };
 
@@ -710,19 +775,25 @@ export function TaskDetailModal({
               <div className="space-y-2 group">
                 <div className="flex items-center justify-between text-xs text-muted-foreground font-medium">
                   <span>Description</span>
-                  <span className="text-[10px] text-zinc-500 opacity-0 group-hover:opacity-100 transition-opacity">
-                    Click anywhere to edit
+                  <span className="text-[10px] text-zinc-500">
+                    Auto-saves
                   </span>
                 </div>
-                <textarea
-                  ref={descTextareaRef}
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  onBlur={handleDescBlur}
-                  rows={6}
-                  placeholder="Click here to add a detailed description, notes, or links... (Auto-saves)"
-                  className="w-full bg-[#12141f]/70 hover:bg-[#12141f] focus:bg-[#141624] border border-border/50 hover:border-border focus:border-primary/80 rounded-lg p-3.5 text-sm text-foreground placeholder:text-zinc-600 focus:outline-none transition-all leading-relaxed resize-y"
-                />
+
+                <div className="rounded-lg border border-border/50 bg-[#12141f]/70 p-2 focus-within:border-primary/80 transition-all">
+                  <LinearRichEditor
+                    value={description}
+                    onChange={(val) => {
+                      setDescription(val);
+                      onUpdate(task.id, { description: val });
+                    }}
+                    onBlur={handleDescBlur}
+                    taskId={task.id}
+                    members={members}
+                    onImageClick={(url) => setLightboxUrl(url)}
+                    placeholder="Click here to add description, notes, or links... (Paste images directly to embed inline)"
+                  />
+                </div>
               </div>
 
               {/* Sub-issues Section */}
@@ -904,10 +975,45 @@ export function TaskDetailModal({
                         value={newCommentText}
                         onChange={handleCommentTextChange}
                         onKeyDown={handleCommentKeyDown}
+                        onPaste={(e) =>
+                          handlePasteToTextarea(
+                            e,
+                            newCommentText,
+                            setNewCommentText,
+                            undefined,
+                            setIsUploadingCommentImage,
+                          )
+                        }
+                        onDrop={(e) =>
+                          handleDropToTextarea(
+                            e,
+                            newCommentText,
+                            setNewCommentText,
+                            undefined,
+                            setIsUploadingCommentImage,
+                          )
+                        }
+                        onDragOver={(e) => e.preventDefault()}
                         rows={2}
-                        placeholder="Leave a comment... (Type @ to mention, Cmd + Enter to send)"
+                        placeholder="Leave a comment... (Paste images directly here, type @ to mention, Cmd + Enter to send)"
                         className="w-full bg-transparent border-0 text-xs text-foreground placeholder:text-zinc-500 focus:outline-none resize-none leading-relaxed"
                       />
+
+                      {/* Comment image live preview */}
+                      {newCommentText && newCommentText.includes('![') && (
+                        <div className="p-2 border-t border-border/30 bg-[#0a0b12]/50 my-1 rounded">
+                          <MarkdownRenderer
+                            content={
+                              newCommentText
+                                .split('\n')
+                                .filter((l) => l.trim().startsWith('!['))
+                                .join('\n')
+                            }
+                            membersList={members}
+                            onImageClick={(url) => setLightboxUrl(url)}
+                          />
+                        </div>
+                      )}
 
                       <div className="flex items-center justify-between pt-2 border-t border-border/30 mt-1">
                         <div className="flex items-center gap-2">
@@ -933,9 +1039,16 @@ export function TaskDetailModal({
                             <span>Mention</span>
                           </button>
 
-                          <span className="text-[10px] text-zinc-600 hidden sm:inline">
-                            Press <kbd className="px-1 py-0.5 rounded bg-zinc-800 text-zinc-400 font-mono">⌘</kbd> + <kbd className="px-1 py-0.5 rounded bg-zinc-800 text-zinc-400 font-mono">↵</kbd> to submit
-                          </span>
+                          {isUploadingCommentImage ? (
+                            <span className="flex items-center gap-1 text-[11px] text-indigo-400 font-medium animate-pulse">
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              <span>Uploading image...</span>
+                            </span>
+                          ) : (
+                            <span className="text-[10px] text-zinc-600 hidden sm:inline">
+                              Paste images to upload
+                            </span>
+                          )}
                         </div>
 
                         <Button
@@ -1294,6 +1407,50 @@ export function TaskDetailModal({
                   </Button>
                 </div>
               </form>
+            </div>
+          </div>
+        )}
+
+        {/* Lightbox Image Preview Modal */}
+        {lightboxUrl && (
+          <div
+            onClick={() => setLightboxUrl(null)}
+            className="fixed inset-0 z-[60] bg-black/85 backdrop-blur-md flex items-center justify-center p-4 sm:p-8 animate-in fade-in duration-200"
+          >
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="relative max-w-5xl max-h-[90vh] bg-[#0f1018] border border-border/80 rounded-2xl overflow-hidden shadow-2xl flex flex-col"
+            >
+              <div className="flex items-center justify-between px-4 py-2.5 border-b border-border/60 bg-[#141522]">
+                <span className="text-xs font-medium text-zinc-300 truncate max-w-md">
+                  Image Preview
+                </span>
+                <div className="flex items-center gap-2">
+                  <a
+                    href={lightboxUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-1 rounded hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors text-xs flex items-center gap-1"
+                    title="Open original"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                    <span className="text-[11px]">Original</span>
+                  </a>
+                  <button
+                    onClick={() => setLightboxUrl(null)}
+                    className="p-1 rounded hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+              <div className="p-2 sm:p-4 overflow-auto flex items-center justify-center bg-[#07080d]">
+                <img
+                  src={lightboxUrl}
+                  alt="Enlarged preview"
+                  className="max-h-[80vh] w-auto max-w-full object-contain rounded-lg"
+                />
+              </div>
             </div>
           </div>
         )}

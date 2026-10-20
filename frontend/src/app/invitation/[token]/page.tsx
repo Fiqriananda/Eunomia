@@ -23,6 +23,7 @@ import {
 import { Button } from '../../../components/ui/button';
 import { Input } from '../../../components/ui/input';
 import Link from 'next/link';
+import { EunomiaLogo } from '../../../components/ui/EunomiaLogo';
 
 function InvitationPageContent() {
   const params = useParams();
@@ -217,8 +218,8 @@ function InvitationPageContent() {
         {/* Top Brand Banner */}
         <div className="px-7 pt-7 pb-5 border-b border-border/50 bg-gradient-to-b from-[#151726]/60 to-transparent flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-500 to-primary flex items-center justify-center text-white shadow-md shadow-indigo-500/25">
-              <Building2 className="w-5 h-5" />
+            <div className="w-9 h-9 rounded-xl bg-[#141522] border border-[#2a2d3d] flex items-center justify-center shadow-md shadow-[rgba(255,180,93,0.15)]">
+              <EunomiaLogo className="w-5 h-5" />
             </div>
             <div>
               <span className="text-[10px] uppercase tracking-widest font-bold text-zinc-400">Eunomia</span>

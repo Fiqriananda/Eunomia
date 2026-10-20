@@ -22,6 +22,7 @@ import {
   Users,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
+import { EunomiaLogo } from '../ui/EunomiaLogo';
 
 interface NavbarProps {
   viewMode: 'board-priority' | 'board-status' | 'list';
@@ -83,8 +84,8 @@ export function Navbar({
         <div className="flex items-center gap-3">
           {/* Eunomia Brand Logo */}
           <div className="flex items-center gap-2 pr-2 border-r border-border/60">
-            <div className="w-6 h-6 rounded bg-gradient-to-tr from-[#5e6ad2] to-[#8a95ff] flex items-center justify-center text-white font-bold text-xs shadow-[0_0_12px_rgba(94,106,210,0.5)]">
-              E
+            <div className="w-6 h-6 flex items-center justify-center drop-shadow-[0_0_8px_rgba(255,180,93,0.35)]">
+              <EunomiaLogo className="w-5 h-5" />
             </div>
             <span className="text-sm font-semibold tracking-tight text-white hidden md:inline">
               Eunomia

@@ -5,6 +5,14 @@ export const metadata: Metadata = {
   title: 'Eunomia – Issue Tracking & Project Management',
   description:
     'The project management and issue tracker designed for high-performing engineering teams.',
+  icons: {
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/favicon.ico' },
+    ],
+    shortcut: '/favicon.svg',
+    apple: '/favicon.svg',
+  },
 };
 
 export default function RootLayout({

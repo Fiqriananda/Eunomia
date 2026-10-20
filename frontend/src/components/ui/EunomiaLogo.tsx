@@ -1,0 +1,31 @@
+import React from 'react';
+
+interface EunomiaLogoProps {
+  className?: string;
+  size?: number;
+}
+
+export const EunomiaLogo: React.FC<EunomiaLogoProps> = ({
+  className = 'w-6 h-6',
+  size,
+}) => {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 80 80"
+      fill="none"
+      className={className}
+      width={size}
+      height={size}
+    >
+      <path
+        d="M 14.0 21.0 L 31.5 46.5 L 46.0 38.0 L 54.0 50.5 L 29.0 69.0 L 1.0 30.0 Z"
+        fill="#FFB45D"
+      />
+      <path
+        d="M 65.0 58.0 L 47.5 32.5 L 33.0 41.0 L 25.0 28.5 L 50.0 10.0 L 78.0 49.0 Z"
+        fill="#FFB45D"
+      />
+    </svg>
+  );
+};

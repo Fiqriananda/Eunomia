@@ -44,10 +44,14 @@ import {
   RotateCw,
   RotateCcw,
   Target,
+  Image as ImageIcon,
+  ExternalLink,
 } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
 import { api } from '../../../lib/api';
 import { cn } from '../../../lib/utils';
+import { MarkdownRenderer, resolveMediaUrl } from '../../../components/ui/MarkdownRenderer';
+import { LinearRichEditor } from '../../../components/linear/LinearRichEditor';
 
 const PRIORITIES: TaskPriority[] = ['URGENT', 'HIGH', 'MEDIUM', 'LOW', 'NO_PRIORITY'];
 const STATUSES: TaskStatus[] = ['BACKLOG', 'TODO', 'IN_PROGRESS', 'DONE', 'CANCELED'];
@@ -78,37 +82,7 @@ export const getLabelColor = (name: string) => {
 };
 
 export const renderCommentContentWithMentions = (content: string, membersList: WorkspaceMember[]) => {
-  const memberNames = membersList
-    .map((m) => m.user?.name)
-    .filter(Boolean) as string[];
-
-  // Split content by @mention tokens
-  const parts = content.split(/(@[a-zA-Z0-9_\-\.\s]+?(?=\s|$|[.,!?]))/g);
-
-  return parts.map((part, idx) => {
-    if (part.startsWith('@')) {
-      const mentionName = part.slice(1).trim();
-      const isKnownMember = memberNames.some(
-        (n) => n.toLowerCase() === mentionName.toLowerCase(),
-      );
-
-      return (
-        <span
-          key={idx}
-          className={cn(
-            'inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[11px] font-medium transition-colors mx-0.5 align-baseline',
-            isKnownMember
-              ? 'bg-[#5e6ad2]/25 text-[#a5b4fc] border border-[#5e6ad2]/40 shadow-sm'
-              : 'bg-primary/20 text-primary-foreground border border-primary/30',
-          )}
-        >
-          <span className="text-[#818cf8] font-bold">@</span>
-          <span>{mentionName}</span>
-        </span>
-      );
-    }
-    return <span key={idx}>{part}</span>;
-  });
+  return <MarkdownRenderer content={content} membersList={membersList} />;
 };
 
 function formatTimeAgo(dateString: string): string {
@@ -240,6 +214,9 @@ function IssueDetailContent() {
   const relatedIssuesRef = useRef<HTMLDivElement>(null);
   const [showParentPicker, setShowParentPicker] = useState(false);
   const [parentSearch, setParentSearch] = useState('');
+  const [isUploadingDescImage, setIsUploadingDescImage] = useState(false);
+  const [isUploadingCommentImage, setIsUploadingCommentImage] = useState(false);
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
 
   // Real-time typing & auto-save timer refs
   const taskRef = useRef<Task | null>(task);
@@ -537,6 +514,93 @@ function IssueDetailContent() {
     }
     if (taskRef.current && description !== (taskRef.current.description || '')) {
       triggerSave({ description });
+    }
+  };
+
+  const handleUploadImageFile = async (
+    file: File,
+    textarea: HTMLTextAreaElement | null,
+    currentVal: string,
+    onValueUpdate: (val: string | ((prev: string) => string)) => void,
+    onSave?: (val: string) => void,
+    setIsUploading?: (val: boolean) => void,
+  ) => {
+    if (!file.type.startsWith('image/')) return;
+
+    if (setIsUploading) setIsUploading(true);
+    const ext = file.type.split('/')[1] || 'png';
+    const cleanFileName = file.name && file.name !== 'image.png'
+      ? file.name
+      : `image-${Date.now()}.${ext}`;
+
+    const placeholder = `\n![Uploading ${cleanFileName}...]()\n`;
+
+    const start = textarea?.selectionStart ?? currentVal.length;
+    const end = textarea?.selectionEnd ?? currentVal.length;
+    const before = currentVal.slice(0, start);
+    const after = currentVal.slice(end);
+    const textWithPlaceholder = before + placeholder + after;
+
+    onValueUpdate(textWithPlaceholder);
+
+    try {
+      const res = await api.uploads.upload(file, taskId);
+      const finalUrl = resolveMediaUrl(res.url);
+      const markdown = `\n![${cleanFileName}](${finalUrl})\n`;
+
+      onValueUpdate((prev: string) => {
+        const updated = prev.includes(placeholder)
+          ? prev.replace(placeholder, markdown)
+          : `${prev}${markdown}`;
+        if (onSave) {
+          onSave(updated);
+        }
+        return updated;
+      });
+    } catch (err: any) {
+      console.error('Image upload failed:', err);
+      onValueUpdate((prev: string) => {
+        return prev.replace(placeholder, `\n<!-- Upload failed: ${err.message || 'Upload error'} -->\n`);
+      });
+    } finally {
+      if (setIsUploading) setIsUploading(false);
+    }
+  };
+
+  const handlePasteToTextarea = (
+    e: React.ClipboardEvent<HTMLTextAreaElement>,
+    currentVal: string,
+    onValueUpdate: (val: string | ((prev: string) => string)) => void,
+    onSave?: (val: string) => void,
+    setIsUploading?: (val: boolean) => void,
+  ) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+
+    const imgItem = Array.from(items).find((item) => item.type.startsWith('image/'));
+    if (!imgItem) return;
+
+    e.preventDefault();
+    const file = imgItem.getAsFile();
+    if (file) {
+      handleUploadImageFile(file, e.currentTarget, currentVal, onValueUpdate, onSave, setIsUploading);
+    }
+  };
+
+  const handleDropToTextarea = (
+    e: React.DragEvent<HTMLTextAreaElement>,
+    currentVal: string,
+    onValueUpdate: (val: string | ((prev: string) => string)) => void,
+    onSave?: (val: string) => void,
+    setIsUploading?: (val: boolean) => void,
+  ) => {
+    const files = e.dataTransfer?.files;
+    if (!files || files.length === 0) return;
+
+    const imgFile = Array.from(files).find((f) => f.type.startsWith('image/'));
+    if (imgFile) {
+      e.preventDefault();
+      handleUploadImageFile(imgFile, e.currentTarget, currentVal, onValueUpdate, onSave, setIsUploading);
     }
   };
 
@@ -1344,37 +1408,24 @@ function IssueDetailContent() {
               </div>
 
               <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setDescPreview(!descPreview)}
-                  className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors ${
-                    descPreview
-                      ? 'bg-indigo-600 text-white'
-                      : 'bg-zinc-800 text-zinc-400 hover:text-white'
-                  }`}
-                >
-                  {descPreview ? 'Edit' : 'Preview'}
-                </button>
                 <span className="text-[10px] text-zinc-600 font-normal">
                   Auto-saves
                 </span>
               </div>
             </div>
 
-            {descPreview ? (
-              <div className="w-full bg-[#12131e]/50 border border-border/40 rounded-lg p-3 text-sm text-zinc-200 leading-relaxed min-h-[160px] whitespace-pre-wrap">
-                {renderCommentContentWithMentions(description || '*(No description provided)*', members)}
-              </div>
-            ) : (
-              <textarea
-                ref={descTextareaRef}
-                value={description}
-                onChange={(e) => handleDescChange(e.target.value)}
-                onBlur={handleDescBlur}
-                placeholder="Add description, requirements, bullet points, or context... (Click to edit directly)"
-                className="w-full bg-transparent border-0 text-sm text-zinc-200 placeholder:text-zinc-600 focus:outline-none leading-relaxed resize-none p-1 min-h-[180px] font-sans"
-              />
-            )}
+            <LinearRichEditor
+              value={description}
+              onChange={(val) => {
+                setDescription(val);
+                handleDescChange(val);
+              }}
+              onBlur={handleDescBlur}
+              taskId={taskId}
+              members={members}
+              onImageClick={(url) => setLightboxUrl(url)}
+              placeholder="Add description, requirements, bullet points, or context... (Paste images directly here)"
+            />
           </div>
 
           {/* Quick relation icons matching Linear screenshot right below description */}
@@ -1621,10 +1672,45 @@ function IssueDetailContent() {
                     value={newCommentText}
                     onChange={handleCommentTextChange}
                     onKeyDown={handleCommentKeyDown}
+                    onPaste={(e) =>
+                      handlePasteToTextarea(
+                        e,
+                        newCommentText,
+                        setNewCommentText,
+                        undefined,
+                        setIsUploadingCommentImage,
+                      )
+                    }
+                    onDrop={(e) =>
+                      handleDropToTextarea(
+                        e,
+                        newCommentText,
+                        setNewCommentText,
+                        undefined,
+                        setIsUploadingCommentImage,
+                      )
+                    }
+                    onDragOver={(e) => e.preventDefault()}
                     rows={2}
-                    placeholder="Leave a comment... (Type @ to mention, Cmd + Enter to send)"
+                    placeholder="Leave a comment... (Paste images directly here, type @ to mention, Cmd + Enter to send)"
                     className="w-full bg-transparent border-0 text-xs text-foreground placeholder:text-zinc-500 focus:outline-none resize-none leading-relaxed"
                   />
+
+                  {/* Comment image live preview */}
+                  {newCommentText && newCommentText.includes('![') && (
+                    <div className="p-2 border-t border-border/30 bg-[#0a0b12]/50 my-1 rounded">
+                      <MarkdownRenderer
+                        content={
+                          newCommentText
+                            .split('\n')
+                            .filter((l) => l.trim().startsWith('!['))
+                            .join('\n')
+                        }
+                        membersList={members}
+                        onImageClick={(url) => setLightboxUrl(url)}
+                      />
+                    </div>
+                  )}
 
                   <div className="flex items-center justify-between pt-2 border-t border-border/30 mt-1">
                     <div className="flex items-center gap-2">
@@ -1650,9 +1736,16 @@ function IssueDetailContent() {
                         <span>Mention</span>
                       </button>
 
-                      <span className="text-[10px] text-zinc-600 hidden sm:inline">
-                        Press <kbd className="px-1 py-0.5 rounded bg-zinc-800 text-zinc-400 font-mono">⌘</kbd> + <kbd className="px-1 py-0.5 rounded bg-zinc-800 text-zinc-400 font-mono">↵</kbd> to submit
-                      </span>
+                      {isUploadingCommentImage ? (
+                        <span className="flex items-center gap-1 text-[11px] text-indigo-400 font-medium animate-pulse">
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          <span>Uploading image...</span>
+                        </span>
+                      ) : (
+                        <span className="text-[10px] text-zinc-600 hidden sm:inline">
+                          Paste images to upload
+                        </span>
+                      )}
                     </div>
 
                     <Button
@@ -2466,6 +2559,50 @@ function IssueDetailContent() {
                 </Button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Lightbox Image Preview Modal */}
+      {lightboxUrl && (
+        <div
+          onClick={() => setLightboxUrl(null)}
+          className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 sm:p-8 animate-in fade-in duration-200"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="relative max-w-5xl max-h-[90vh] bg-[#0f1018] border border-border/80 rounded-2xl overflow-hidden shadow-2xl flex flex-col"
+          >
+            <div className="flex items-center justify-between px-4 py-2.5 border-b border-border/60 bg-[#141522]">
+              <span className="text-xs font-medium text-zinc-300 truncate max-w-md">
+                Image Preview
+              </span>
+              <div className="flex items-center gap-2">
+                <a
+                  href={lightboxUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-1 rounded hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors text-xs flex items-center gap-1"
+                  title="Open original"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  <span className="text-[11px]">Original</span>
+                </a>
+                <button
+                  onClick={() => setLightboxUrl(null)}
+                  className="p-1 rounded hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+            <div className="p-2 sm:p-4 overflow-auto flex items-center justify-center bg-[#07080d]">
+              <img
+                src={lightboxUrl}
+                alt="Enlarged preview"
+                className="max-h-[80vh] w-auto max-w-full object-contain rounded-lg"
+              />
+            </div>
           </div>
         </div>
       )}

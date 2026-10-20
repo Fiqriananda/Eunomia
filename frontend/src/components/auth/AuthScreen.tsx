@@ -6,6 +6,7 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { motion } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
+import { EunomiaLogo } from '../ui/EunomiaLogo';
 
 export function AuthScreen() {
   const { login, register } = useAuth();
@@ -48,8 +49,8 @@ export function AuthScreen() {
       >
         {/* Brand Header */}
         <div className="text-center space-y-2 mb-6">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-tr from-[#5e6ad2] to-[#8a95ff] shadow-[0_0_20px_rgba(94,106,210,0.5)] mb-2">
-            <span className="text-xl font-bold text-white font-mono">E</span>
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-[#141522] border border-[#2a2d3d] shadow-[0_0_25px_rgba(255,180,93,0.25)] mb-2">
+            <EunomiaLogo className="w-9 h-9" />
           </div>
           <h1 className="text-2xl font-bold text-white tracking-tight">
             Eunomia

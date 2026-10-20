@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { AuthProvider, useAuth } from '../../context/AuthContext';
 import { AuthScreen } from '../../components/auth/AuthScreen';
 import { api } from '../../lib/api';
+import { EunomiaLogo } from '../../components/ui/EunomiaLogo';
 import {
   ArrowLeft,
   Camera,
@@ -195,9 +196,7 @@ function ProfileContent() {
           {/* Breadcrumb */}
           <div className="flex items-center gap-2 text-xs">
             <div className="flex items-center gap-1.5">
-              <div className="w-4 h-4 rounded bg-gradient-to-tr from-[#5e6ad2] to-[#8a95ff] flex items-center justify-center text-[10px] font-bold text-white">
-                E
-              </div>
+              <EunomiaLogo className="w-4 h-4" />
               <span className="font-semibold text-zinc-200">Eunomia</span>
             </div>
             <span className="text-zinc-600">/</span>
