@@ -1,0 +1,1303 @@
+'use client';
+
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Task, TaskPriority, TaskStatus, WorkspaceMember, TaskComment, Project } from '../../types';
+import { PriorityIcon, PRIORITY_CONFIG } from './PriorityIcon';
+import { StatusIcon, STATUS_CONFIG } from './StatusIcon';
+import { FileUploader } from './FileUploader';
+import {
+  X,
+  Trash2,
+  Calendar,
+  User as UserIcon,
+  Tag,
+  Check,
+  Copy,
+  Star,
+  MoreHorizontal,
+  ChevronLeft,
+  ChevronRight,
+  Paperclip,
+  MessageSquare,
+  Send,
+  CornerDownLeft,
+  FolderKanban,
+  ExternalLink,
+  Loader2,
+  Share2,
+  Plus,
+  Search,
+  GitBranch,
+  AtSign,
+  Edit3,
+  Hash,
+  GitFork,
+  Link as LinkIcon,
+} from 'lucide-react';
+import { Button } from '../ui/button';
+import { api } from '../../lib/api';
+import { cn } from '../../lib/utils';
+import { useAuth } from '../../context/AuthContext';
+import { SubIssuesSection } from './SubIssuesSection';
+import { RelatedIssuesSection } from './RelatedIssuesSection';
+
+const PRESET_LABEL_COLORS: Record<string, string> = {
+  Bug: '#ef4444',
+  Feature: '#a855f7',
+  Improvement: '#3b82f6',
+  Design: '#ec4899',
+  Frontend: '#06b6d4',
+  Backend: '#10b981',
+  Critical: '#f97316',
+  Performance: '#14b8a6',
+  Research: '#8b5cf6',
+  Storage: '#6366f1',
+};
+
+const getLabelColor = (name: string) => {
+  if (PRESET_LABEL_COLORS[name]) return PRESET_LABEL_COLORS[name];
+  const palette = ['#a855f7', '#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#ec4899', '#06b6d4', '#f97316', '#8b5cf6'];
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return palette[Math.abs(hash) % palette.length];
+};
+
+const renderCommentContentWithMentions = (content: string, membersList: WorkspaceMember[]) => {
+  const memberNames = membersList
+    .map((m) => m.user?.name)
+    .filter(Boolean) as string[];
+
+  const parts = content.split(/(@[a-zA-Z0-9_\-\.\s]+?(?=\s|$|[.,!?]))/g);
+
+  return parts.map((part, idx) => {
+    if (part.startsWith('@')) {
+      const mentionName = part.slice(1).trim();
+      const isKnownMember = memberNames.some(
+        (n) => n.toLowerCase() === mentionName.toLowerCase(),
+      );
+
+      return (
+        <span
+          key={idx}
+          className={cn(
+            'inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[11px] font-medium transition-colors mx-0.5 align-baseline',
+            isKnownMember
+              ? 'bg-[#5e6ad2]/25 text-[#a5b4fc] border border-[#5e6ad2]/40 shadow-sm'
+              : 'bg-primary/20 text-primary-foreground border border-primary/30',
+          )}
+        >
+          <span className="text-[#818cf8] font-bold">@</span>
+          <span>{mentionName}</span>
+        </span>
+      );
+    }
+    return <span key={idx}>{part}</span>;
+  });
+};
+
+interface TaskDetailModalProps {
+  task: Task | null;
+  isOpen: boolean;
+  onClose: () => void;
+  onUpdate: (taskId: string, updates: Partial<Task>) => void;
+  onDelete: (taskId: string) => void;
+  members?: WorkspaceMember[];
+  projects?: Project[];
+  allTasks?: Task[];
+  onNavigateTask?: (task: Task) => void;
+}
+
+const PRIORITIES: TaskPriority[] = ['URGENT', 'HIGH', 'MEDIUM', 'LOW', 'NO_PRIORITY'];
+const STATUSES: TaskStatus[] = ['BACKLOG', 'TODO', 'IN_PROGRESS', 'DONE', 'CANCELED'];
+
+export function TaskDetailModal({
+  task,
+  isOpen,
+  onClose,
+  onUpdate,
+  onDelete,
+  members = [],
+  projects = [],
+  allTasks = [],
+  onNavigateTask,
+}: TaskDetailModalProps) {
+  const { user, workspace } = useAuth();
+
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [status, setStatus] = useState<TaskStatus>('TODO');
+  const [priority, setPriority] = useState<TaskPriority>('NO_PRIORITY');
+  const [assigneeId, setAssigneeId] = useState<string | null>(null);
+  const [projectId, setProjectId] = useState<string>('');
+  const [dueDate, setDueDate] = useState<string>('');
+  const [labels, setLabels] = useState<string[]>([]);
+  const [labelSearch, setLabelSearch] = useState('');
+  const [showLabelsDropdown, setShowLabelsDropdown] = useState(false);
+  const [comments, setComments] = useState<TaskComment[]>([]);
+  const [newCommentText, setNewCommentText] = useState('');
+  const [submittingComment, setSubmittingComment] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
+  const [copiedBranch, setCopiedBranch] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  // Mention Tagging State
+  const [mentionQuery, setMentionQuery] = useState<string | null>(null);
+  const [mentionIndex, setMentionIndex] = useState<number>(0);
+  const [mentionCursorPos, setMentionCursorPos] = useState<number>(-1);
+  const commentTextareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Prefix Modal State
+  const [showPrefixModal, setShowPrefixModal] = useState(false);
+  const [newPrefix, setNewPrefix] = useState('');
+  const [updatingPrefix, setUpdatingPrefix] = useState(false);
+
+  const titleInputRef = useRef<HTMLInputElement>(null);
+  const descTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const labelsDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Collect all unique labels ever used in this workspace plus standard preset labels
+  const allWorkspaceLabels = useMemo(() => {
+    const defaultLabels = [
+      'Feature',
+      'Bug',
+      'Improvement',
+      'Critical',
+      'Design',
+      'Frontend',
+      'Backend',
+      'Performance',
+      'Research',
+      'Storage',
+    ];
+    const set = new Set<string>(defaultLabels);
+    allTasks.forEach((t) => {
+      (t.labels || []).forEach((lbl) => set.add(lbl));
+    });
+    labels.forEach((lbl) => set.add(lbl));
+    return Array.from(set);
+  }, [allTasks, labels]);
+
+  const filteredLabels = useMemo(() => {
+    if (!labelSearch.trim()) return allWorkspaceLabels;
+    const q = labelSearch.toLowerCase();
+    return allWorkspaceLabels.filter((lbl) => lbl.toLowerCase().includes(q));
+  }, [allWorkspaceLabels, labelSearch]);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        labelsDropdownRef.current &&
+        !labelsDropdownRef.current.contains(e.target as Node)
+      ) {
+        setShowLabelsDropdown(false);
+      }
+    };
+    if (showLabelsDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showLabelsDropdown]);
+
+  useEffect(() => {
+    if (task) {
+      setTitle(task.title);
+      setDescription(task.description || '');
+      setStatus(task.status);
+      setPriority(task.priority);
+      setAssigneeId(task.assigneeId || null);
+      setProjectId(task.projectId);
+      setDueDate(task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : '');
+      setLabels(task.labels || []);
+      setComments(task.comments || []);
+      setShowDeleteConfirm(false);
+      setShowLabelsDropdown(false);
+    }
+  }, [task]);
+
+  if (!isOpen || !task) return null;
+
+  // Calculate current task index among all tasks for 1 / N navigation
+  const currentIndex = allTasks.findIndex((t) => t.id === task.id);
+  const totalTasks = allTasks.length;
+
+  const handlePrevTask = () => {
+    if (currentIndex > 0 && onNavigateTask) {
+      onNavigateTask(allTasks[currentIndex - 1]);
+    }
+  };
+
+  const handleNextTask = () => {
+    if (currentIndex < totalTasks - 1 && onNavigateTask) {
+      onNavigateTask(allTasks[currentIndex + 1]);
+    }
+  };
+
+  // Instant inline title change & blur
+  const handleTitleBlur = () => {
+    if (title.trim() && title !== task.title) {
+      onUpdate(task.id, { title: title.trim() });
+    }
+  };
+
+  // Instant inline description blur
+  const handleDescBlur = () => {
+    if (description !== (task.description || '')) {
+      onUpdate(task.id, { description });
+    }
+  };
+
+  // Immediate Property Changes (click to edit directly)
+  const handleStatusChange = (newStatus: TaskStatus) => {
+    setStatus(newStatus);
+    onUpdate(task.id, { status: newStatus });
+  };
+
+  const handlePriorityChange = (newPriority: TaskPriority) => {
+    setPriority(newPriority);
+    onUpdate(task.id, { priority: newPriority });
+  };
+
+  const handleAssigneeChange = (newAssigneeId: string | null) => {
+    setAssigneeId(newAssigneeId);
+    onUpdate(task.id, { assigneeId: newAssigneeId });
+  };
+
+  const handleProjectChange = (newProjectId: string) => {
+    setProjectId(newProjectId);
+    onUpdate(task.id, { projectId: newProjectId });
+  };
+
+  const handleDueDateChange = (newDate: string) => {
+    setDueDate(newDate);
+    onUpdate(task.id, { dueDate: newDate ? new Date(newDate).toISOString() : null });
+  };
+
+  const handleToggleLabel = (lbl: string) => {
+    if (!task) return;
+    const updated = labels.includes(lbl) ? labels.filter((l) => l !== lbl) : [...labels, lbl];
+    setLabels(updated);
+    onUpdate(task.id, { labels: updated });
+  };
+
+  const handleCreateLabel = (name: string) => {
+    if (!task) return;
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    const updated = Array.from(new Set([...labels, trimmed]));
+    setLabels(updated);
+    setLabelSearch('');
+    onUpdate(task.id, { labels: updated });
+  };
+
+  const handleRemoveLabel = (labelToRemove: string) => {
+    const updated = labels.filter((l) => l !== labelToRemove);
+    setLabels(updated);
+    onUpdate(task.id, { labels: updated });
+  };
+
+  const handleCopyLink = () => {
+    if (typeof window !== 'undefined') {
+      navigator.clipboard.writeText(window.location.href);
+      setCopiedLink(true);
+      setTimeout(() => setCopiedLink(false), 2000);
+    }
+  };
+
+  const handleCopyBranch = () => {
+    if (!task) return;
+    const cleanTitle = (task.title || 'issue')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '')
+      .slice(0, 45);
+    const branchName = `${task.identifier.toLowerCase()}-${cleanTitle}`;
+
+    if (typeof window !== 'undefined') {
+      navigator.clipboard.writeText(branchName);
+      setCopiedBranch(true);
+      setTimeout(() => setCopiedBranch(false), 2000);
+    }
+  };
+
+  // Mention Autocomplete Matching
+  const matchingMembers = useMemo(() => {
+    if (mentionQuery === null) return [];
+    const q = mentionQuery.toLowerCase().trim();
+    return members
+      .filter((m) => {
+        const name = (m.user?.name || '').toLowerCase();
+        const email = (m.user?.email || '').toLowerCase();
+        return name.includes(q) || email.includes(q);
+      })
+      .slice(0, 5);
+  }, [members, mentionQuery]);
+
+  const handleCommentTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const text = e.target.value;
+    const cursorPos = e.target.selectionStart;
+    setNewCommentText(text);
+
+    // Look backward from cursor to detect '@'
+    const textBeforeCursor = text.slice(0, cursorPos);
+    const lastAtPos = textBeforeCursor.lastIndexOf('@');
+
+    if (lastAtPos !== -1) {
+      const textAfterAt = textBeforeCursor.slice(lastAtPos + 1);
+      const charBeforeAt = lastAtPos > 0 ? textBeforeCursor[lastAtPos - 1] : ' ';
+      if (
+        (charBeforeAt === ' ' || charBeforeAt === '\n' || lastAtPos === 0) &&
+        !textAfterAt.includes('\n') &&
+        textAfterAt.length <= 25
+      ) {
+        setMentionQuery(textAfterAt);
+        setMentionCursorPos(lastAtPos);
+        setMentionIndex(0);
+        return;
+      }
+    }
+    setMentionQuery(null);
+  };
+
+  const handleSelectMention = (userName: string) => {
+    if (mentionCursorPos === -1) return;
+    const textBeforeAt = newCommentText.slice(0, mentionCursorPos);
+    const currentCursor =
+      commentTextareaRef.current?.selectionStart ||
+      mentionCursorPos + (mentionQuery?.length || 0) + 1;
+    const textAfterCursor = newCommentText.slice(currentCursor);
+    const inserted = `${textBeforeAt}@${userName} ${textAfterCursor}`;
+    setNewCommentText(inserted);
+    setMentionQuery(null);
+
+    setTimeout(() => {
+      if (commentTextareaRef.current) {
+        commentTextareaRef.current.focus();
+        const newPos = mentionCursorPos + userName.length + 2;
+        commentTextareaRef.current.setSelectionRange(newPos, newPos);
+      }
+    }, 10);
+  };
+
+  const handleCommentKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (mentionQuery !== null && matchingMembers.length > 0) {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setMentionIndex((prev) => (prev + 1) % matchingMembers.length);
+        return;
+      }
+      if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setMentionIndex((prev) => (prev - 1 + matchingMembers.length) % matchingMembers.length);
+        return;
+      }
+      if (e.key === 'Enter' || e.key === 'Tab') {
+        e.preventDefault();
+        const selected = matchingMembers[mentionIndex];
+        if (selected?.user?.name) {
+          handleSelectMention(selected.user.name);
+        }
+        return;
+      }
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        setMentionQuery(null);
+        return;
+      }
+    }
+
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      handleAddComment();
+    }
+  };
+
+  const activeProject = projects.find((p) => p.id === projectId) || task?.project;
+
+  const handleUpdatePrefix = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const cleanKey = newPrefix.trim().toUpperCase();
+    if (!cleanKey || !activeProject || !task) return;
+    setUpdatingPrefix(true);
+    try {
+      await api.projects.update(activeProject.id, { key: cleanKey });
+      let suffix = '1';
+      const match = task.identifier.match(/-(\d+)$/);
+      if (match) suffix = match[1];
+      const newIdentifier = `${cleanKey}-${suffix}`;
+
+      onUpdate(task.id, { identifier: newIdentifier });
+      setShowPrefixModal(false);
+    } catch (err) {
+      console.error('Failed to update project prefix:', err);
+    } finally {
+      setUpdatingPrefix(false);
+    }
+  };
+
+  // Comments Handling
+  const handleAddComment = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!newCommentText.trim() || submittingComment) return;
+
+    setSubmittingComment(true);
+    const content = newCommentText.trim();
+
+    // Optimistic comment creation
+    const tempComment: TaskComment = {
+      id: `temp-${Date.now()}`,
+      content,
+      taskId: task.id,
+      userId: user?.id || 'me',
+      user: user || { id: 'me', name: 'You', email: '' },
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    setComments((prev) => [...prev, tempComment]);
+    setNewCommentText('');
+
+    try {
+      const serverComment = await api.tasks.addComment(task.id, content);
+      setComments((prev) =>
+        prev.map((c) => (c.id === tempComment.id ? serverComment : c)),
+      );
+      // Update task in parent state
+      onUpdate(task.id, {
+        comments: [...(task.comments || []).filter((c) => c.id !== tempComment.id), serverComment],
+      });
+    } catch (err) {
+      console.error('Failed to post comment:', err);
+      setComments((prev) => prev.filter((c) => c.id !== tempComment.id));
+    } finally {
+      setSubmittingComment(false);
+    }
+  };
+
+  const handleDeleteComment = async (commentId: string) => {
+    setComments((prev) => prev.filter((c) => c.id !== commentId));
+    try {
+      await api.tasks.deleteComment(task.id, commentId);
+      onUpdate(task.id, {
+        comments: (task.comments || []).filter((c) => c.id !== commentId),
+      });
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const currentAssignee = members.find((m) => m.userId === assigneeId)?.user || task.assignee;
+
+  return (
+    <AnimatePresence>
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4">
+        {/* Backdrop */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={onClose}
+          className="fixed inset-0 bg-black/80 backdrop-blur-sm"
+        />
+
+        {/* Modal Window matching Linear Layout */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.98, y: 10 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.98, y: 10 }}
+          transition={{ duration: 0.18, ease: 'easeOut' }}
+          className="relative w-full max-w-6xl h-[92vh] rounded-xl border border-border bg-[#0d0e15] shadow-2xl overflow-hidden flex flex-col z-10"
+        >
+          {/* Top Breadcrumb & Actions Bar (Matching screenshot) */}
+          <div className="flex h-12 items-center justify-between px-4 sm:px-6 border-b border-border/70 bg-[#11121c]/90 select-none shrink-0">
+            {/* Left: Breadcrumbs */}
+            <div className="flex items-center gap-2 text-xs text-muted-foreground overflow-hidden">
+              <div className="flex items-center gap-1.5 shrink-0 text-zinc-300 font-medium">
+                <span className="w-4 h-4 rounded bg-[#5e6ad2] text-[10px] text-white flex items-center justify-center font-bold">
+                  {workspace?.name?.[0] || 'L'}
+                </span>
+                <span>{workspace?.name || 'Workspace'}</span>
+              </div>
+
+              <span>›</span>
+
+              <span className="shrink-0 text-zinc-400">Issues</span>
+
+              <span>›</span>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setNewPrefix(activeProject?.key || 'TJAR');
+                  setShowPrefixModal(true);
+                }}
+                className="flex items-center gap-1 font-mono font-medium text-zinc-200 hover:text-white bg-zinc-800/60 hover:bg-zinc-800 border border-zinc-700/50 px-1.5 py-0.5 rounded text-xs transition-colors shrink-0 group cursor-pointer"
+                title="Click to change project issue prefix (e.g. TJAR)"
+              >
+                <span>{task.identifier}</span>
+                <Edit3 className="w-2.5 h-2.5 text-zinc-500 group-hover:text-indigo-400 ml-0.5" />
+              </button>
+
+              <span className="text-zinc-500 hidden md:inline truncate max-w-[260px]">
+                {task.title}
+              </span>
+
+              <button
+                className="p-1 rounded hover:bg-secondary text-zinc-500 hover:text-amber-400 transition-colors ml-1"
+                title="Favorite"
+              >
+                <Star className="w-3.5 h-3.5" />
+              </button>
+
+              <button
+                className="p-1 rounded hover:bg-secondary text-zinc-500 hover:text-zinc-300 transition-colors"
+                title="More options"
+              >
+                <MoreHorizontal className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+            {/* Right: Actions, Navigation & Close */}
+            <div className="flex items-center gap-2 shrink-0 text-xs text-muted-foreground">
+              {/* Copy Git Branch Name Button */}
+              <button
+                type="button"
+                onClick={handleCopyBranch}
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#161724] hover:bg-[#1f2030] text-zinc-300 hover:text-white border border-[#2b2c3a] text-xs font-mono transition-all group shrink-0"
+                title={`Copy git branch: ${task.identifier.toLowerCase()}-${(task.title || '').toLowerCase().replace(/[^a-z0-9]+/g, '-')}`}
+              >
+                {copiedBranch ? (
+                  <>
+                    <Check className="w-3.5 h-3.5 text-emerald-400 stroke-[2.5]" />
+                    <span className="text-emerald-400 font-sans font-medium text-[11px]">Branch copied!</span>
+                  </>
+                ) : (
+                  <>
+                    <GitBranch className="w-3.5 h-3.5 text-indigo-400 group-hover:text-indigo-300" />
+                    <span className="text-zinc-300 group-hover:text-white font-sans text-[11px]">Copy branch</span>
+                  </>
+                )}
+              </button>
+
+              {totalTasks > 0 && (
+                <div className="hidden sm:flex items-center gap-1 text-[11px] text-zinc-400 px-2 border-r border-border/60 mr-1">
+                  <span>
+                    {currentIndex + 1} / {totalTasks}
+                  </span>
+                  <button
+                    onClick={handlePrevTask}
+                    disabled={currentIndex <= 0}
+                    className="p-1 rounded hover:bg-secondary disabled:opacity-30 disabled:hover:bg-transparent"
+                    title="Previous issue"
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={handleNextTask}
+                    disabled={currentIndex >= totalTasks - 1}
+                    className="p-1 rounded hover:bg-secondary disabled:opacity-30 disabled:hover:bg-transparent"
+                    title="Next issue"
+                  >
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
+
+              <button
+                onClick={handleCopyLink}
+                className="flex items-center gap-1 px-2 py-1 rounded hover:bg-secondary text-zinc-400 hover:text-white transition-colors"
+                title="Copy issue link"
+              >
+                {copiedLink ? (
+                  <>
+                    <Check className="w-3.5 h-3.5 text-emerald-400" />
+                    <span className="text-[11px] text-emerald-400">Copied</span>
+                  </>
+                ) : (
+                  <Copy className="w-3.5 h-3.5" />
+                )}
+              </button>
+
+              <button
+                onClick={() => setShowDeleteConfirm(!showDeleteConfirm)}
+                className="p-1.5 rounded hover:bg-destructive/15 text-zinc-500 hover:text-destructive transition-colors"
+                title="Delete issue"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+
+              <button
+                onClick={onClose}
+                className="p-1.5 rounded hover:bg-secondary text-zinc-400 hover:text-white transition-colors ml-1"
+                title="Close (Esc)"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+
+          {showDeleteConfirm && (
+            <div className="bg-destructive/10 border-b border-destructive/20 px-6 py-2.5 flex items-center justify-between text-xs text-destructive shrink-0">
+              <span>Are you sure you want to permanently delete {task.identifier}?</span>
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  onClick={() => onDelete(task.id)}
+                  className="h-6 text-xs"
+                >
+                  Confirm Delete
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setShowDeleteConfirm(false)}
+                  className="h-6 text-xs"
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Main Body: Two-column layout (Left: Title, Description, Uploads, Comments | Right: Properties sidebar) */}
+          <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
+            {/* Left Main Area: Scrollable */}
+            <div className="flex-1 overflow-y-auto p-6 lg:p-8 space-y-8">
+              {/* Sub-issue parent link banner */}
+              {task.parent && (
+                <div className="flex items-center gap-2">
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#161726] border border-[#2b2c3d] text-xs text-zinc-300">
+                    <GitFork className="w-3.5 h-3.5 text-indigo-400 rotate-180" />
+                    <span className="text-zinc-500">Sub-issue of</span>
+                    <button
+                      type="button"
+                      onClick={() => onNavigateTask && onNavigateTask(task.parent as Task)}
+                      className="font-medium text-indigo-300 hover:text-white flex items-center gap-1 transition-colors"
+                    >
+                      <span className="font-mono text-zinc-400">{task.parent.identifier}</span>
+                      <span className="truncate max-w-[240px]">{task.parent.title}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onUpdate(task.id, { parentId: null })}
+                      className="p-0.5 rounded hover:bg-zinc-700/60 text-zinc-500 hover:text-rose-400 transition-colors ml-1"
+                      title="Unlink from parent"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Issue Title (Click directly to edit inline!) */}
+              <div>
+                <input
+                  ref={titleInputRef}
+                  type="text"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  onBlur={handleTitleBlur}
+                  className="w-full text-2xl sm:text-3xl font-bold bg-transparent border-0 border-b border-transparent hover:border-border/40 focus:border-primary focus:outline-none text-foreground py-1 transition-all rounded"
+                  placeholder="Issue title..."
+                  title="Click directly to edit title"
+                />
+              </div>
+
+              {/* Description Area (Click directly to edit inline!) */}
+              <div className="space-y-2 group">
+                <div className="flex items-center justify-between text-xs text-muted-foreground font-medium">
+                  <span>Description</span>
+                  <span className="text-[10px] text-zinc-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                    Click anywhere to edit
+                  </span>
+                </div>
+                <textarea
+                  ref={descTextareaRef}
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  onBlur={handleDescBlur}
+                  rows={6}
+                  placeholder="Click here to add a detailed description, notes, or links... (Auto-saves)"
+                  className="w-full bg-[#12141f]/70 hover:bg-[#12141f] focus:bg-[#141624] border border-border/50 hover:border-border focus:border-primary/80 rounded-lg p-3.5 text-sm text-foreground placeholder:text-zinc-600 focus:outline-none transition-all leading-relaxed resize-y"
+                />
+              </div>
+
+              {/* Sub-issues Section */}
+              <SubIssuesSection
+                parentTask={task}
+                subTasks={task.subTasks || []}
+                members={members}
+                allTasks={allTasks}
+                onSubTasksChange={(updatedSubTasks) => {
+                  onUpdate(task.id, { subTasks: updatedSubTasks });
+                }}
+                onNavigate={onNavigateTask}
+              />
+
+              {/* Related Issues Section */}
+              <RelatedIssuesSection
+                task={task}
+                allTasks={allTasks}
+                onTaskChange={(updatedTask) => {
+                  onUpdate(task.id, updatedTask);
+                }}
+                onNavigate={onNavigateTask}
+              />
+
+              {/* Attachments Section */}
+              <div className="space-y-3 pt-2 border-t border-border/40">
+                <div className="flex items-center justify-between text-xs text-muted-foreground font-medium">
+                  <span className="flex items-center gap-1.5">
+                    <Paperclip className="w-3.5 h-3.5" />
+                    <span>Attachments & Uploads</span>
+                  </span>
+                </div>
+
+                <FileUploader
+                  taskId={task.id}
+                  attachments={task.attachments || []}
+                  onUploadSuccess={(att) => {
+                    const updatedAttachments = [...(task.attachments || []), att];
+                    onUpdate(task.id, { attachments: updatedAttachments });
+                  }}
+                  onDeleteSuccess={(id) => {
+                    const updatedAttachments = (task.attachments || []).filter((a) => a.id !== id);
+                    onUpdate(task.id, { attachments: updatedAttachments });
+                  }}
+                />
+              </div>
+
+              {/* Activity & Comments Section (Matches Linear comments) */}
+              <div className="space-y-4 pt-4 border-t border-border/40">
+                <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  <MessageSquare className="w-4 h-4 text-primary" />
+                  <span>Activity & Comments ({comments.length})</span>
+                </div>
+
+                {/* Comments List */}
+                <div className="space-y-3">
+                  {comments.length === 0 ? (
+                    <div className="py-6 text-center text-xs text-zinc-600">
+                      No comments yet. Leave the first comment below!
+                    </div>
+                  ) : (
+                    comments.map((c) => (
+                      <div
+                        key={c.id}
+                        className="flex items-start gap-3 p-3.5 rounded-lg bg-[#12131d]/80 border border-border/50 hover:border-border transition-colors group relative"
+                      >
+                        <img
+                          src={
+                            c.user?.avatarUrl ||
+                            `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
+                              c.user?.name || 'User',
+                            )}`
+                          }
+                          alt={c.user?.name || 'User'}
+                          className="w-7 h-7 rounded-full object-cover shrink-0 ring-1 ring-border mt-0.5"
+                        />
+
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-semibold text-foreground">
+                              {c.user?.name || 'Team Member'}
+                            </span>
+                            <span className="text-[10px] text-zinc-500">
+                              {new Date(c.createdAt).toLocaleDateString(undefined, {
+                                month: 'short',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })}
+                            </span>
+                          </div>
+
+                          <div className="mt-1.5 text-xs text-zinc-300 leading-relaxed whitespace-pre-wrap">
+                            {renderCommentContentWithMentions(c.content, members)}
+                          </div>
+                        </div>
+
+                        {c.userId === user?.id && (
+                          <button
+                            onClick={() => handleDeleteComment(c.id)}
+                            className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-destructive/20 text-zinc-500 hover:text-destructive transition-all"
+                            title="Delete comment"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        )}
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                {/* Comment Composer with Mentions */}
+                <div className="relative">
+                  {/* Mentions Autocomplete Floating Dropdown */}
+                  {mentionQuery !== null && matchingMembers.length > 0 && (
+                    <div className="absolute bottom-full left-10 mb-2 z-50 w-72 rounded-xl bg-[#191a24] border border-[#2b2c3a] shadow-2xl p-1.5 animate-in fade-in-0 zoom-in-95 backdrop-blur-md">
+                      <div className="flex items-center justify-between px-2.5 py-1 text-[11px] font-semibold text-zinc-400 border-b border-[#2b2c3a]/70 mb-1">
+                        <div className="flex items-center gap-1.5">
+                          <AtSign className="w-3 h-3 text-indigo-400" />
+                          <span>Mention team member</span>
+                        </div>
+                        <span className="text-[10px] text-zinc-500 font-normal">↑↓ navigate, ↵ select</span>
+                      </div>
+                      <div className="space-y-0.5 max-h-48 overflow-y-auto">
+                        {matchingMembers.map((m, idx) => (
+                          <button
+                            key={m.userId}
+                            type="button"
+                            onClick={() => handleSelectMention(m.user?.name || 'User')}
+                            className={cn(
+                              'w-full flex items-center gap-2.5 px-2.5 py-1.5 text-xs rounded-lg transition-colors text-left',
+                              idx === mentionIndex
+                                ? 'bg-[#282a38] text-white font-medium'
+                                : 'text-zinc-300 hover:bg-[#232432] hover:text-white',
+                            )}
+                          >
+                            <img
+                              src={
+                                m.user?.avatarUrl ||
+                                `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
+                                  m.user?.name || 'User',
+                                )}`
+                              }
+                              alt={m.user?.name || 'User'}
+                              className="w-5 h-5 rounded-full object-cover shrink-0"
+                            />
+                            <div className="min-w-0 flex-1 truncate">
+                              <div className="font-medium text-white truncate text-xs">
+                                {m.user?.name}
+                              </div>
+                              <div className="text-[10px] text-zinc-500 truncate">
+                                {m.user?.email}
+                              </div>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <form
+                    onSubmit={handleAddComment}
+                    className="flex items-start gap-3 p-3 rounded-lg bg-[#141522] border border-border/80 focus-within:border-primary/80 transition-colors"
+                  >
+                    <img
+                      src={
+                        user?.avatarUrl ||
+                        `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
+                          user?.name || 'Me',
+                        )}`
+                      }
+                      alt={user?.name || 'Me'}
+                      className="w-7 h-7 rounded-full object-cover shrink-0 ring-1 ring-border mt-1"
+                    />
+
+                    <div className="flex-1 min-w-0">
+                      <textarea
+                        ref={commentTextareaRef}
+                        value={newCommentText}
+                        onChange={handleCommentTextChange}
+                        onKeyDown={handleCommentKeyDown}
+                        rows={2}
+                        placeholder="Leave a comment... (Type @ to mention, Cmd + Enter to send)"
+                        className="w-full bg-transparent border-0 text-xs text-foreground placeholder:text-zinc-500 focus:outline-none resize-none leading-relaxed"
+                      />
+
+                      <div className="flex items-center justify-between pt-2 border-t border-border/30 mt-1">
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const text = newCommentText ? `${newCommentText} @` : '@';
+                              setNewCommentText(text);
+                              setMentionQuery('');
+                              setMentionCursorPos(text.length - 1);
+                              setMentionIndex(0);
+                              setTimeout(() => {
+                                if (commentTextareaRef.current) {
+                                  commentTextareaRef.current.focus();
+                                  commentTextareaRef.current.setSelectionRange(text.length, text.length);
+                                }
+                              }, 10);
+                            }}
+                            className="flex items-center gap-1 text-[11px] text-zinc-400 hover:text-white px-1.5 py-0.5 rounded hover:bg-zinc-800 transition-colors"
+                            title="Mention a team member"
+                          >
+                            <AtSign className="w-3.5 h-3.5 text-indigo-400" />
+                            <span>Mention</span>
+                          </button>
+
+                          <span className="text-[10px] text-zinc-600 hidden sm:inline">
+                            Press <kbd className="px-1 py-0.5 rounded bg-zinc-800 text-zinc-400 font-mono">⌘</kbd> + <kbd className="px-1 py-0.5 rounded bg-zinc-800 text-zinc-400 font-mono">↵</kbd> to submit
+                          </span>
+                        </div>
+
+                        <Button
+                          type="submit"
+                          variant="linear"
+                          size="sm"
+                          disabled={!newCommentText.trim() || submittingComment}
+                          className="h-7 text-xs px-3 ml-auto"
+                        >
+                          {submittingComment ? (
+                            <Loader2 className="w-3 h-3 animate-spin mr-1" />
+                          ) : (
+                            <Send className="w-3 h-3 mr-1" />
+                          )}
+                          Comment
+                        </Button>
+                      </div>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Sidebar: Properties (Matches Linear sidebar from screenshot) */}
+            <div className="w-full lg:w-72 border-t lg:border-t-0 lg:border-l border-border/70 bg-[#0f1019] p-5 space-y-6 shrink-0 overflow-y-auto select-none">
+              <div className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">
+                Properties
+              </div>
+
+              <div className="space-y-4 text-xs">
+                {/* Status Property */}
+                <div className="space-y-1.5">
+                  <label className="text-[11px] text-muted-foreground font-medium">Status</label>
+                  <div className="relative">
+                    <select
+                      value={status}
+                      onChange={(e) => handleStatusChange(e.target.value as TaskStatus)}
+                      className="w-full appearance-none bg-[#161825] hover:bg-[#1a1d2e] border border-border rounded-md px-3 py-1.5 text-xs text-foreground focus:ring-1 focus:ring-primary focus:outline-none cursor-pointer flex items-center transition-colors"
+                    >
+                      {STATUSES.map((s) => (
+                        <option key={s} value={s}>
+                          {STATUS_CONFIG[s].label}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2">
+                      <StatusIcon status={status} />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Priority Property */}
+                <div className="space-y-1.5">
+                  <label className="text-[11px] text-muted-foreground font-medium">Priority</label>
+                  <div className="relative">
+                    <select
+                      value={priority}
+                      onChange={(e) => handlePriorityChange(e.target.value as TaskPriority)}
+                      className="w-full appearance-none bg-[#161825] hover:bg-[#1a1d2e] border border-border rounded-md px-3 py-1.5 text-xs text-foreground focus:ring-1 focus:ring-primary focus:outline-none cursor-pointer transition-colors"
+                    >
+                      {PRIORITIES.map((p) => (
+                        <option key={p} value={p}>
+                          {PRIORITY_CONFIG[p].label}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2">
+                      <PriorityIcon priority={priority} />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Assignee Property */}
+                <div className="space-y-1.5">
+                  <label className="text-[11px] text-muted-foreground font-medium">Assignee</label>
+                  <div className="relative">
+                    <select
+                      value={assigneeId || ''}
+                      onChange={(e) => handleAssigneeChange(e.target.value || null)}
+                      className="w-full appearance-none bg-[#161825] hover:bg-[#1a1d2e] border border-border rounded-md px-3 py-1.5 text-xs text-foreground focus:ring-1 focus:ring-primary focus:outline-none cursor-pointer transition-colors"
+                    >
+                      <option value="">Unassigned</option>
+                      {members.map((m) => (
+                        <option key={m.userId} value={m.userId}>
+                          {m.user.name}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 flex items-center">
+                      {currentAssignee ? (
+                        <img
+                          src={
+                            currentAssignee.avatarUrl ||
+                            `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
+                              currentAssignee.name,
+                            )}`
+                          }
+                          alt=""
+                          className="w-4 h-4 rounded-full object-cover"
+                        />
+                      ) : (
+                        <UserIcon className="w-3.5 h-3.5 text-zinc-500" />
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Project Property */}
+                <div className="space-y-1.5">
+                  <label className="text-[11px] text-muted-foreground font-medium">Project</label>
+                  <div className="relative">
+                    <select
+                      value={projectId}
+                      onChange={(e) => handleProjectChange(e.target.value)}
+                      className="w-full appearance-none bg-[#161825] hover:bg-[#1a1d2e] border border-border rounded-md px-3 py-1.5 text-xs text-foreground focus:ring-1 focus:ring-primary focus:outline-none cursor-pointer transition-colors"
+                    >
+                      {projects.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name} ({p.key})
+                        </option>
+                      ))}
+                    </select>
+                    <div className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2">
+                      <FolderKanban className="w-3.5 h-3.5 text-indigo-400" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Due Date Property */}
+                <div className="space-y-1.5">
+                  <label className="text-[11px] text-muted-foreground font-medium">Due Date</label>
+                  <div className="relative">
+                    <input
+                      type="date"
+                      value={dueDate}
+                      onChange={(e) => handleDueDateChange(e.target.value)}
+                      className="w-full bg-[#161825] hover:bg-[#1a1d2e] border border-border rounded-md px-3 py-1.5 text-xs text-foreground focus:ring-1 focus:ring-primary focus:outline-none cursor-pointer transition-colors"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Labels Section */}
+              <div className="space-y-2 pt-4 border-t border-border/50 relative" ref={labelsDropdownRef}>
+                <div className="flex items-center justify-between text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">
+                  <span>Labels</span>
+                  <button
+                    type="button"
+                    onClick={() => setShowLabelsDropdown(!showLabelsDropdown)}
+                    className="text-zinc-500 hover:text-white p-0.5 rounded transition-colors"
+                    title="Add or edit labels"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+
+                <div className="flex flex-wrap gap-1.5 items-center">
+                  {labels.map((lbl) => (
+                    <span
+                      key={lbl}
+                      className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs bg-zinc-800/90 text-zinc-200 border border-zinc-700/60"
+                    >
+                      <span
+                        className="w-2 h-2 rounded-full shrink-0"
+                        style={{ backgroundColor: getLabelColor(lbl) }}
+                      />
+                      <span>{lbl}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveLabel(lbl)}
+                        className="hover:text-destructive text-zinc-500 transition-colors ml-0.5"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  ))}
+
+                  <button
+                    type="button"
+                    onClick={() => setShowLabelsDropdown(!showLabelsDropdown)}
+                    className="text-xs text-zinc-400 hover:text-white hover:bg-secondary/70 border border-dashed border-border/80 rounded-full px-2 py-0.5 flex items-center gap-1 transition-colors"
+                  >
+                    <Plus className="w-3 h-3" />
+                    <span>Add label</span>
+                  </button>
+                </div>
+
+                {/* Floating Linear Labels Dropdown */}
+                {showLabelsDropdown && (
+                  <div className="absolute left-0 bottom-full mb-1 z-50 w-64 rounded-xl bg-[#191a24] border border-[#2b2c3a] shadow-2xl p-1.5 animate-in fade-in-0 zoom-in-95 backdrop-blur-md">
+                    {/* Search / Filter Input */}
+                    <div className="flex items-center gap-2 px-2.5 py-1.5 border-b border-[#2b2c3a]/70 mb-1">
+                      <Search className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                      <input
+                        type="text"
+                        placeholder="Filter or create label..."
+                        value={labelSearch}
+                        onChange={(e) => setLabelSearch(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && labelSearch.trim()) {
+                            e.preventDefault();
+                            handleCreateLabel(labelSearch.trim());
+                          }
+                        }}
+                        autoFocus
+                        className="w-full bg-transparent text-xs text-white placeholder:text-zinc-500 focus:outline-none"
+                      />
+                    </div>
+
+                    {/* List of Existing Workspace Labels */}
+                    <div className="overflow-y-auto space-y-0.5 max-h-48 py-0.5 pr-0.5">
+                      {filteredLabels.map((lbl) => {
+                        const isSelected = labels.includes(lbl);
+                        return (
+                          <button
+                            key={lbl}
+                            type="button"
+                            onClick={() => handleToggleLabel(lbl)}
+                            className={cn(
+                              'w-full flex items-center justify-between px-2.5 py-1.5 text-xs rounded-lg transition-colors text-left',
+                              isSelected
+                                ? 'bg-[#282a38] text-white font-medium'
+                                : 'text-zinc-300 hover:bg-[#232432] hover:text-white',
+                            )}
+                          >
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <span
+                                className="w-2.5 h-2.5 rounded-full shrink-0"
+                                style={{ backgroundColor: getLabelColor(lbl) }}
+                              />
+                              <span className="truncate">{lbl}</span>
+                            </div>
+                            {isSelected && (
+                              <Check className="w-3.5 h-3.5 text-white stroke-[2.5] shrink-0 ml-2" />
+                            )}
+                          </button>
+                        );
+                      })}
+
+                      {filteredLabels.length === 0 && !labelSearch.trim() && (
+                        <div className="px-2.5 py-3 text-center text-xs text-zinc-500">
+                          No labels found
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Option to create a new label if search term is typed */}
+                    {labelSearch.trim() &&
+                      !allWorkspaceLabels.some(
+                        (l) => l.toLowerCase() === labelSearch.trim().toLowerCase(),
+                      ) && (
+                        <button
+                          type="button"
+                          onClick={() => handleCreateLabel(labelSearch.trim())}
+                          className="w-full flex items-center gap-2 px-2.5 py-2 text-xs rounded-lg text-primary hover:bg-primary/10 transition-colors font-medium border-t border-[#2b2c3a]/50 mt-1"
+                        >
+                          <Plus className="w-3.5 h-3.5 shrink-0" />
+                          <span className="truncate">Create label &ldquo;{labelSearch.trim()}&rdquo;</span>
+                        </button>
+                      )}
+                  </div>
+                )}
+              </div>
+
+              {/* Creator Info */}
+              <div className="pt-4 border-t border-border/50 text-xs space-y-1">
+                <span className="text-[11px] text-zinc-500 font-medium">Created by</span>
+                <div className="flex items-center gap-2 pt-1">
+                  <img
+                    src={
+                      task.creator?.avatarUrl ||
+                      `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
+                        task.creator?.name || 'Alex',
+                      )}`
+                    }
+                    alt=""
+                    className="w-5 h-5 rounded-full object-cover ring-1 ring-border"
+                  />
+                  <span className="text-zinc-300 font-medium">{task.creator?.name || 'Alex Vance'}</span>
+                </div>
+                <span className="text-[10px] text-zinc-500 block pt-0.5">
+                  {new Date(task.createdAt).toLocaleDateString(undefined, {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                  })}
+                </span>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Modal to Change Issue Prefix / Project Key */}
+        {showPrefixModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div
+              className="fixed inset-0 bg-black/75 backdrop-blur-sm"
+              onClick={() => setShowPrefixModal(false)}
+            />
+            <div className="relative w-full max-w-md rounded-xl border border-[#2b2c3a] bg-[#12131d] shadow-2xl p-5 space-y-4 z-10 animate-in fade-in-0 zoom-in-95">
+              <div className="flex items-center justify-between border-b border-border/40 pb-3">
+                <div className="flex items-center gap-2">
+                  <Hash className="w-4 h-4 text-indigo-400" />
+                  <h3 className="text-sm font-semibold text-white">Change Issue Prefix Key</h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowPrefixModal(false)}
+                  className="text-zinc-400 hover:text-white"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <form onSubmit={handleUpdatePrefix} className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs text-zinc-300 font-medium">
+                    Prefix Key (e.g. TJAR, LIN, PROJ)
+                  </label>
+                  <input
+                    type="text"
+                    value={newPrefix}
+                    onChange={(e) => setNewPrefix(e.target.value.toUpperCase())}
+                    placeholder="e.g. TJAR"
+                    maxLength={10}
+                    autoFocus
+                    className="w-full bg-[#181926] border border-[#2b2c3a] rounded-lg px-3 py-2 text-sm text-white font-mono uppercase tracking-wider focus:outline-none focus:border-primary"
+                    required
+                  />
+                  <p className="text-[11px] text-zinc-500 leading-normal">
+                    All current issues under this project will automatically be renamed to this prefix (e.g.{' '}
+                    <span className="font-mono text-indigo-300">{newPrefix.trim().toUpperCase() || 'TJAR'}-1</span>
+                    ), and newly created issues will increment automatically ({newPrefix.trim().toUpperCase() || 'TJAR'}-2, etc.).
+                  </p>
+                </div>
+
+                <div className="flex items-center justify-end gap-2 pt-2">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowPrefixModal(false)}
+                    className="text-xs"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    variant="linear"
+                    size="sm"
+                    disabled={!newPrefix.trim() || updatingPrefix}
+                    className="text-xs px-3"
+                  >
+                    {updatingPrefix ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <Check className="w-3 h-3 mr-1" />}
+                    Save Prefix
+                  </Button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+      </div>
+    </AnimatePresence>
+  );
+}

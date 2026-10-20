@@ -1,0 +1,89 @@
+@import "tailwindcss";
+
+:root {
+  --background: #090a0f;
+  --foreground: #f4f4f5;
+  --card: #111218;
+  --card-foreground: #f4f4f5;
+  --popover: #12131a;
+  --popover-foreground: #f4f4f5;
+  --primary: #5e6ad2;
+  --primary-foreground: #ffffff;
+  --secondary: #1a1c26;
+  --secondary-foreground: #e4e4e7;
+  --muted: #1e202e;
+  --muted-foreground: #8b8d98;
+  --accent: #232536;
+  --accent-foreground: #ffffff;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: #222433;
+  --input: #1a1b26;
+  --ring: #5e6ad2;
+  --radius: 0.5rem;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+}
+
+* {
+  border-color: var(--border);
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Custom scrollbar for Linear look */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #272738;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #383a52;
+}
+
+/* Glassmorphism and subtle Linear glow */
+.linear-glass {
+  background: rgba(17, 18, 24, 0.75);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.linear-card-glow:hover {
+  border-color: rgba(94, 106, 210, 0.4);
+  box-shadow: 0 4px 20px -2px rgba(94, 106, 210, 0.12);
+}
