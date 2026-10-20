@@ -1,0 +1,92 @@
+services:
+  # ==========================================
+  # PostgreSQL Database Service
+  # ==========================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: motion-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgrespassword}
+      POSTGRES_DB: ${POSTGRES_DB:-linear_db}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d linear_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - motion-network
+
+  # ==========================================
+  # Motion NestJS Backend & Socket.IO
+  # ==========================================
+  backend:
+    container_name: motion-backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prod
+    restart: unless-stopped
+    ports:
+      - "${BACKEND_PORT:-4000}:4000"
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgrespassword}@postgres:5432/${POSTGRES_DB:-linear_db}?schema=public
+      JWT_SECRET: ${JWT_SECRET:-motion_super_secure_jwt_secret_production_2026}
+      PORT: 4000
+      BASE_URL: ${BASE_URL:-http://localhost:4000}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3002}
+      UPLOAD_DEST: ./uploads
+      NODE_ENV: production
+      SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
+      SMTP_PORT: ${SMTP_PORT:-465}
+      SMTP_USER: ${SMTP_USER:-fiqrianandahakin@gmail.com}
+      SMTP_PASS: ${SMTP_PASS:-bubmvvdghlaqhfag}
+      SMTP_SECURE: ${SMTP_SECURE:-true}
+      EMAIL_FROM: ${EMAIL_FROM:-"Motion" <fiqrianandahakin@gmail.com>}
+    volumes:
+      - backend_uploads:/app/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - motion-network
+
+  # ==========================================
+  # Motion Next.js 16 Frontend
+  # ==========================================
+  frontend:
+    container_name: motion-frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:4000}
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-3002}:3002"
+    environment:
+      NODE_ENV: production
+      PORT: 3002
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:4000}
+    depends_on:
+      - backend
+    networks:
+      - motion-network
+
+# ==========================================
+# Persistent Volumes & Networks
+# ==========================================
+volumes:
+  postgres_data:
+    driver: local
+  backend_uploads:
+    driver: local
+
+networks:
+  motion-network:
+    driver: bridge
