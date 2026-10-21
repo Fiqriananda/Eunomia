@@ -13,8 +13,8 @@ import {
   Link as LinkIcon,
   Image as ImageIcon,
   AtSign,
-  Eye,
   Edit3,
+  Check,
   Loader2,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
@@ -41,9 +41,12 @@ export function LinearRichEditor({
   onImageClick,
   members = [],
 }: LinearRichEditorProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [activeTab, setActiveTab] = useState<'write' | 'preview'>('write');
+
+  // Live View by default; switches to edit mode on click/focus
+  const [isEditing, setIsEditing] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [text, setText] = useState(value || '');
 
@@ -75,15 +78,41 @@ export function LinearRichEditor({
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
       const scrollH = textareaRef.current.scrollHeight;
-      textareaRef.current.style.height = `${Math.max(140, scrollH)}px`;
+      textareaRef.current.style.height = `${Math.max(120, scrollH)}px`;
     }
   }, []);
 
   useEffect(() => {
-    if (activeTab !== 'preview') {
+    if (isEditing) {
       adjustHeight();
     }
-  }, [text, activeTab, adjustHeight]);
+  }, [text, isEditing, adjustHeight]);
+
+  // Enter edit mode and focus textarea
+  const enterEditMode = () => {
+    setIsEditing(true);
+    setTimeout(() => {
+      if (textareaRef.current) {
+        textareaRef.current.focus();
+        adjustHeight();
+      }
+    }, 20);
+  };
+
+  // Exit edit mode and trigger save
+  const exitEditMode = () => {
+    setMentionQuery(null);
+    setIsEditing(false);
+    if (onBlur) onBlur();
+  };
+
+  // Handle focus leaving container
+  const handleContainerBlur = (e: React.FocusEvent<HTMLDivElement>) => {
+    if (containerRef.current?.contains(e.relatedTarget as Node)) {
+      return;
+    }
+    exitEditMode();
+  };
 
   // Insert mention tag into text
   const handleSelectMention = (userName: string) => {
@@ -219,6 +248,13 @@ export function LinearRichEditor({
         setMentionQuery(null);
         return;
       }
+    }
+
+    // Escape exits edit mode to Live View
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      exitEditMode();
+      return;
     }
 
     // Tab key for indentation
@@ -416,146 +452,144 @@ export function LinearRichEditor({
 
   return (
     <div
-      className={cn(
-        'relative w-full rounded-lg border border-border/40 bg-[#0d0e15] transition-colors focus-within:border-border/80',
-        className,
-      )}
+      ref={containerRef}
+      onBlur={handleContainerBlur}
       onDrop={handleDrop}
       onDragOver={(e) => e.preventDefault()}
+      className={cn(
+        'relative w-full rounded-lg border transition-colors',
+        isEditing
+          ? 'border-border/80 bg-[#0d0e15]'
+          : 'border-border/30 bg-[#0d0e15]/40 hover:border-border/60',
+        className,
+      )}
     >
-      {/* Sleek, minimal toolbar */}
-      <div className="flex items-center justify-between px-2.5 py-1.5 border-b border-border/30 bg-[#11121b]/60 text-xs select-none rounded-t-lg">
-        {/* Formatting Actions */}
-        <div className="flex items-center gap-0.5">
-          <button
-            type="button"
-            onClick={() => insertSnippet('### ', '', 'Heading')}
-            className="p-1 rounded hover:bg-zinc-800/70 text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer"
-            title="Heading (### )"
-          >
-            <Heading3 className="w-3.5 h-3.5" />
-          </button>
-          <button
-            type="button"
-            onClick={() => insertSnippet('**', '**', 'bold text')}
-            className="p-1 rounded hover:bg-zinc-800/70 text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer"
-            title="Bold (⌘B)"
-          >
-            <Bold className="w-3.5 h-3.5" />
-          </button>
-          <button
-            type="button"
-            onClick={() => insertSnippet('*', '*', 'italic text')}
-            className="p-1 rounded hover:bg-zinc-800/70 text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer"
-            title="Italic (⌘I)"
-          >
-            <Italic className="w-3.5 h-3.5" />
-          </button>
+      {/* Edit Mode Toolbar (Only visible when active editing) */}
+      {isEditing && (
+        <div className="flex items-center justify-between px-2.5 py-1.5 border-b border-border/30 bg-[#11121b]/80 text-xs select-none rounded-t-lg animate-in fade-in duration-100">
+          {/* Formatting Actions */}
+          <div className="flex items-center gap-0.5">
+            <button
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => insertSnippet('### ', '', 'Heading')}
+              className="p-1 rounded hover:bg-zinc-800/70 text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer"
+              title="Heading (### )"
+            >
+              <Heading3 className="w-3.5 h-3.5" />
+            </button>
+            <button
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => insertSnippet('**', '**', 'bold text')}
+              className="p-1 rounded hover:bg-zinc-800/70 text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer"
+              title="Bold (⌘B)"
+            >
+              <Bold className="w-3.5 h-3.5" />
+            </button>
+            <button
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => insertSnippet('*', '*', 'italic text')}
+              className="p-1 rounded hover:bg-zinc-800/70 text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer"
+              title="Italic (⌘I)"
+            >
+              <Italic className="w-3.5 h-3.5" />
+            </button>
 
-          <span className="w-px h-3 bg-border/40 mx-1" />
+            <span className="w-px h-3 bg-border/40 mx-1" />
 
-          <button
-            type="button"
-            onClick={() => insertSnippet('\n- ', '', 'List item')}
-            className="p-1 rounded hover:bg-zinc-800/70 text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer"
-            title="Bullet List"
-          >
-            <List className="w-3.5 h-3.5" />
-          </button>
-          <button
-            type="button"
-            onClick={() => insertSnippet('\n[ ] ', '', 'Task item')}
-            className="p-1 rounded hover:bg-zinc-800/70 text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer"
-            title="Checklist ([ ])"
-          >
-            <ListTodo className="w-3.5 h-3.5" />
-          </button>
-          <button
-            type="button"
-            onClick={() => insertSnippet('`', '`', 'code')}
-            className="p-1 rounded hover:bg-zinc-800/70 text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer"
-            title="Inline Code (`code`)"
-          >
-            <Code className="w-3.5 h-3.5" />
-          </button>
+            <button
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => insertSnippet('\n- ', '', 'List item')}
+              className="p-1 rounded hover:bg-zinc-800/70 text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer"
+              title="Bullet List"
+            >
+              <List className="w-3.5 h-3.5" />
+            </button>
+            <button
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => insertSnippet('\n[ ] ', '', 'Task item')}
+              className="p-1 rounded hover:bg-zinc-800/70 text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer"
+              title="Checklist ([ ])"
+            >
+              <ListTodo className="w-3.5 h-3.5" />
+            </button>
+            <button
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => insertSnippet('`', '`', 'code')}
+              className="p-1 rounded hover:bg-zinc-800/70 text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer"
+              title="Inline Code (`code`)"
+            >
+              <Code className="w-3.5 h-3.5" />
+            </button>
 
-          <span className="w-px h-3 bg-border/40 mx-1" />
+            <span className="w-px h-3 bg-border/40 mx-1" />
 
-          <button
-            type="button"
-            onClick={handleMentionButtonClick}
-            className="p-1 rounded hover:bg-zinc-800/70 text-indigo-400 hover:text-indigo-300 transition-colors cursor-pointer"
-            title="Mention team member (@)"
-          >
-            <AtSign className="w-3.5 h-3.5" />
-          </button>
-          <button
-            type="button"
-            onClick={() =>
-              insertSnippet('[', '](https://example.com)', 'link text')
-            }
-            className="p-1 rounded hover:bg-zinc-800/70 text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer"
-            title="Insert link (⌘K)"
-          >
-            <LinkIcon className="w-3.5 h-3.5" />
-          </button>
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            className="p-1 rounded hover:bg-zinc-800/70 text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer"
-            title="Attach image"
-          >
-            <ImageIcon className="w-3.5 h-3.5" />
-          </button>
-
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) {
-                uploadAndInsertImage(file);
-                e.target.value = '';
+            <button
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={handleMentionButtonClick}
+              className="p-1 rounded hover:bg-zinc-800/70 text-indigo-400 hover:text-indigo-300 transition-colors cursor-pointer"
+              title="Mention team member (@)"
+            >
+              <AtSign className="w-3.5 h-3.5" />
+            </button>
+            <button
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() =>
+                insertSnippet('[', '](https://example.com)', 'link text')
               }
-            }}
-          />
-        </div>
+              className="p-1 rounded hover:bg-zinc-800/70 text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer"
+              title="Insert link (⌘K)"
+            >
+              <LinkIcon className="w-3.5 h-3.5" />
+            </button>
+            <button
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => fileInputRef.current?.click()}
+              className="p-1 rounded hover:bg-zinc-800/70 text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer"
+              title="Attach image"
+            >
+              <ImageIcon className="w-3.5 h-3.5" />
+            </button>
 
-        {/* Minimal Mode Switcher: Write / Preview */}
-        <div className="flex items-center gap-1 bg-[#161722]/80 p-0.5 rounded border border-border/40">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  uploadAndInsertImage(file);
+                  e.target.value = '';
+                }
+              }}
+            />
+          </div>
+
+          {/* Done / Close Editor Button */}
           <button
             type="button"
-            onClick={() => setActiveTab('write')}
-            className={cn(
-              'flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer',
-              activeTab === 'write'
-                ? 'bg-zinc-800 text-zinc-100 shadow-none'
-                : 'text-zinc-400 hover:text-zinc-200',
-            )}
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={exitEditMode}
+            className="flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-zinc-800 hover:bg-zinc-700 text-zinc-200 transition-colors cursor-pointer"
+            title="Finish editing (Esc or click outside)"
           >
-            <Edit3 className="w-3 h-3" />
-            <span>Write</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab('preview')}
-            className={cn(
-              'flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer',
-              activeTab === 'preview'
-                ? 'bg-zinc-800 text-zinc-100 shadow-none'
-                : 'text-zinc-400 hover:text-zinc-200',
-            )}
-          >
-            <Eye className="w-3 h-3" />
-            <span>Preview</span>
+            <Check className="w-3 h-3 text-emerald-400" />
+            <span>Done</span>
           </button>
         </div>
-      </div>
+      )}
 
       {/* Floating Mentions Autocomplete Dropdown */}
-      {mentionQuery !== null && matchingMembers.length > 0 && (
+      {isEditing && mentionQuery !== null && matchingMembers.length > 0 && (
         <div
           ref={mentionDropdownRef}
           className="absolute left-3 top-9 z-50 w-64 max-h-56 overflow-y-auto rounded-lg border border-border/70 bg-[#12131d] shadow-2xl p-1 animate-in fade-in zoom-in-95 duration-100"
@@ -605,22 +639,41 @@ export function LinearRichEditor({
 
       {/* Editor Body */}
       <div className="p-3">
-        {activeTab === 'write' ? (
+        {isEditing ? (
+          /* Active Editing: Raw Markdown Textarea with Hotkeys & @ Mentions */
           <textarea
             ref={textareaRef}
             value={text}
             onChange={handleTextChange}
             onKeyDown={handleKeyDown}
             onPaste={handlePaste}
-            onBlur={() => {
-              setTimeout(() => setMentionQuery(null), 150);
-              if (onBlur) onBlur();
-            }}
             placeholder={placeholder}
-            className="w-full min-h-[140px] bg-transparent resize-none outline-none text-sm text-zinc-100 placeholder:text-zinc-500 leading-relaxed font-sans cursor-text font-normal transition-all"
+            className="w-full min-h-[120px] bg-transparent resize-none outline-none text-sm text-zinc-100 placeholder:text-zinc-500 leading-relaxed font-sans cursor-text font-normal transition-all"
           />
         ) : (
-          <div className="min-h-[140px] py-1">
+          /* Live View: Seamless Rendered Markdown (Linear / Notion Style) */
+          <div
+            onClick={(e) => {
+              // Don't enter edit mode if user clicked an interactive link, checkbox, or image
+              const target = e.target as HTMLElement;
+              if (
+                target.closest('a') ||
+                target.closest('input[type="checkbox"]') ||
+                target.closest('img')
+              ) {
+                return;
+              }
+              enterEditMode();
+            }}
+            className="group relative cursor-pointer min-h-[90px] py-0.5 rounded transition-colors"
+            title="Click to edit description"
+          >
+            {/* Subtle hover edit hint */}
+            <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 text-[11px] text-zinc-500 bg-zinc-800/60 px-1.5 py-0.5 rounded border border-border/40 select-none">
+              <Edit3 className="w-3 h-3" />
+              <span>Edit</span>
+            </div>
+
             {text.trim() ? (
               <MarkdownRenderer
                 content={text}
@@ -632,11 +685,9 @@ export function LinearRichEditor({
                 }}
               />
             ) : (
-              <div
-                onClick={() => setActiveTab('write')}
-                className="text-sm text-zinc-500 italic py-6 text-center cursor-pointer hover:text-zinc-400"
-              >
-                Nothing to preview. Click here or switch to &quot;Write&quot; to add content.
+              <div className="text-sm text-zinc-500 italic py-2 flex items-center gap-2">
+                <Edit3 className="w-3.5 h-3.5 text-zinc-600" />
+                <span>{placeholder || 'Add a description... (click to edit)'}</span>
               </div>
             )}
           </div>
