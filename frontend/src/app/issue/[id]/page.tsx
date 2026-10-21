@@ -1354,85 +1354,19 @@ function IssueDetailContent() {
             )}
           </div>
 
-          {/* Description Section (Seamless document editor with Markdown toolbar & Preview) */}
-          <div className="space-y-3 pt-2">
-            <div className="flex items-center justify-between text-xs font-semibold text-zinc-400">
+          {/* Description Section */}
+          <div className="space-y-2 pt-2">
+            <div className="flex items-center justify-between text-xs text-zinc-400">
               <div className="flex items-center gap-2">
-                <span>Description:</span>
+                <span className="font-medium text-zinc-400 text-xs">Description</span>
                 {typingIndicator && typingIndicator.field === 'description' && (
                   <span className="flex items-center gap-1.5 text-xs text-indigo-400 font-normal animate-pulse">
                     <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 inline-block animate-ping" />
                     {typingIndicator.userName} is typing...
                   </span>
                 )}
-                <div className="flex items-center gap-1 bg-[#141522] p-0.5 rounded border border-border/50">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const text = description ? `${description} **bold**` : '**bold**';
-                      setDescription(text);
-                      triggerSave({ description: text });
-                    }}
-                    className="px-1.5 py-0.5 rounded hover:bg-zinc-800 text-zinc-400 hover:text-white font-bold text-[11px]"
-                    title="Bold (**text**)"
-                  >
-                    B
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const text = description ? `${description} *italic*` : '*italic*';
-                      setDescription(text);
-                      triggerSave({ description: text });
-                    }}
-                    className="px-1.5 py-0.5 rounded hover:bg-zinc-800 text-zinc-400 hover:text-white italic text-[11px]"
-                    title="Italic (*text*)"
-                  >
-                    I
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const text = description ? `${description}\n\`code\`` : '`code`';
-                      setDescription(text);
-                      triggerSave({ description: text });
-                    }}
-                    className="px-1.5 py-0.5 rounded hover:bg-zinc-800 text-zinc-400 hover:text-white font-mono text-[10px]"
-                    title="Inline Code"
-                  >
-                    &lt;/&gt;
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const text = description ? `${description}\n- ` : '- ';
-                      setDescription(text);
-                      triggerSave({ description: text });
-                    }}
-                    className="px-1.5 py-0.5 rounded hover:bg-zinc-800 text-zinc-400 hover:text-white text-[11px]"
-                    title="Bullet List"
-                  >
-                    • List
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const text = description ? `${description} @` : '@';
-                      setDescription(text);
-                    }}
-                    className="px-1.5 py-0.5 rounded hover:bg-zinc-800 text-indigo-400 hover:text-indigo-300 text-[11px] font-bold"
-                    title="Mention team member"
-                  >
-                    @
-                  </button>
-                </div>
               </div>
-
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] text-zinc-600 font-normal">
-                  Auto-saves
-                </span>
-              </div>
+              <span className="text-[10px] text-zinc-600 font-normal">Auto-saves</span>
             </div>
 
             <LinearRichEditor

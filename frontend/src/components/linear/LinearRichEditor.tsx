@@ -1,24 +1,21 @@
 'use client';
 
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { api } from '../../lib/api';
 import { MarkdownRenderer, resolveMediaUrl } from '../ui/MarkdownRenderer';
 import {
   Code,
   ListTodo,
+  List,
   Bold,
   Italic,
-  Strikethrough,
-  Heading2,
   Heading3,
-  Quote,
-  Table as TableIcon,
   Link as LinkIcon,
   Image as ImageIcon,
+  AtSign,
   Eye,
   Edit3,
   Loader2,
-  Columns,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { WorkspaceMember } from '../../types';
@@ -39,28 +36,46 @@ export function LinearRichEditor({
   onChange,
   onBlur,
   taskId,
-  placeholder = 'Add description, requirements, bullet points, or context... (Supports code ```, checklists [ ], and tables)',
+  placeholder = 'Add description, requirements, bullet points, or context... (Supports code ```, checklists [ ], and @mentions)',
   className,
   onImageClick,
   members = [],
 }: LinearRichEditorProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [activeTab, setActiveTab] = useState<'write' | 'preview' | 'split'>('write');
+  const [activeTab, setActiveTab] = useState<'write' | 'preview'>('write');
   const [isUploading, setIsUploading] = useState(false);
   const [text, setText] = useState(value || '');
 
-  // Keep internal text state in sync with external value
+  // Mention Tagging State
+  const [mentionQuery, setMentionQuery] = useState<string | null>(null);
+  const [mentionIndex, setMentionIndex] = useState<number>(0);
+  const [mentionCursorPos, setMentionCursorPos] = useState<number>(-1);
+  const mentionDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Sync internal text with incoming value
   useEffect(() => {
     setText(value || '');
   }, [value]);
+
+  // Matching team members for @mention
+  const matchingMembers = useMemo(() => {
+    if (mentionQuery === null) return [];
+    const q = mentionQuery.toLowerCase().trim();
+    if (!q) return members;
+    return members.filter(
+      (m) =>
+        m.user?.name?.toLowerCase().includes(q) ||
+        m.user?.email?.toLowerCase().includes(q),
+    );
+  }, [members, mentionQuery]);
 
   // Auto-resize textarea height
   const adjustHeight = useCallback(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
       const scrollH = textareaRef.current.scrollHeight;
-      textareaRef.current.style.height = `${Math.max(160, scrollH)}px`;
+      textareaRef.current.style.height = `${Math.max(140, scrollH)}px`;
     }
   }, []);
 
@@ -70,11 +85,76 @@ export function LinearRichEditor({
     }
   }, [text, activeTab, adjustHeight]);
 
+  // Insert mention tag into text
+  const handleSelectMention = (userName: string) => {
+    if (mentionCursorPos === -1) return;
+    const textarea = textareaRef.current;
+    const currentVal = textarea?.value || text;
+    const textBeforeAt = currentVal.slice(0, mentionCursorPos);
+    const currentCursor =
+      textarea?.selectionStart ||
+      mentionCursorPos + (mentionQuery?.length || 0) + 1;
+    const textAfterCursor = currentVal.slice(currentCursor);
+
+    const inserted = `${textBeforeAt}@${userName} ${textAfterCursor}`;
+    setText(inserted);
+    onChange(inserted);
+    setMentionQuery(null);
+
+    setTimeout(() => {
+      if (textarea) {
+        textarea.focus();
+        const newPos = mentionCursorPos + userName.length + 2;
+        textarea.setSelectionRange(newPos, newPos);
+        adjustHeight();
+      }
+    }, 10);
+  };
+
   // Handle text input changes
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newVal = e.target.value;
     setText(newVal);
     onChange(newVal);
+
+    // Detect @mention trigger
+    const cursor = e.target.selectionStart;
+    const textBeforeCursor = newVal.slice(0, cursor);
+    const lastAtPos = textBeforeCursor.lastIndexOf('@');
+
+    if (lastAtPos !== -1) {
+      const charBeforeAt = lastAtPos > 0 ? textBeforeCursor[lastAtPos - 1] : ' ';
+      if (charBeforeAt === ' ' || charBeforeAt === '\n' || lastAtPos === 0) {
+        const textAfterAt = textBeforeCursor.slice(lastAtPos + 1);
+        if (!textAfterAt.includes(' ') && !textAfterAt.includes('\n')) {
+          setMentionQuery(textAfterAt);
+          setMentionCursorPos(lastAtPos);
+          setMentionIndex(0);
+          return;
+        }
+      }
+    }
+    setMentionQuery(null);
+  };
+
+  // Trigger @ mention from toolbar button
+  const handleMentionButtonClick = () => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+    textarea.focus();
+    const start = textarea.selectionStart;
+    const current = textarea.value;
+    const nextVal = current.substring(0, start) + '@' + current.substring(start);
+    setText(nextVal);
+    onChange(nextVal);
+    setMentionQuery('');
+    setMentionCursorPos(start);
+    setMentionIndex(0);
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(start + 1, start + 1);
+      adjustHeight();
+    }, 10);
   };
 
   // Insert markdown snippet at cursor
@@ -107,19 +187,47 @@ export function LinearRichEditor({
     }, 10);
   };
 
-  // Keyboard enhancements: Enter on checklists, Tab indentation, hotkeys
+  // Keyboard navigation
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     const textarea = textareaRef.current;
     if (!textarea) return;
 
-    // 1. Tab key for indentation
+    // Mention keyboard navigation
+    if (mentionQuery !== null && matchingMembers.length > 0) {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setMentionIndex((prev) => (prev + 1) % matchingMembers.length);
+        return;
+      }
+      if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setMentionIndex(
+          (prev) => (prev - 1 + matchingMembers.length) % matchingMembers.length,
+        );
+        return;
+      }
+      if (e.key === 'Enter' || e.key === 'Tab') {
+        e.preventDefault();
+        const selected = matchingMembers[mentionIndex];
+        if (selected) {
+          handleSelectMention(selected.user?.name || 'User');
+        }
+        return;
+      }
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        setMentionQuery(null);
+        return;
+      }
+    }
+
+    // Tab key for indentation
     if (e.key === 'Tab') {
       e.preventDefault();
       const start = textarea.selectionStart;
       const end = textarea.selectionEnd;
 
       if (e.shiftKey) {
-        // Shift+Tab: un-indent 2 spaces
         const beforeCursor = textarea.value.substring(0, start);
         if (beforeCursor.endsWith('  ')) {
           const newVal =
@@ -131,7 +239,6 @@ export function LinearRichEditor({
           }, 0);
         }
       } else {
-        // Tab: insert 2 spaces
         const newVal =
           textarea.value.substring(0, start) +
           '  ' +
@@ -145,16 +252,15 @@ export function LinearRichEditor({
       return;
     }
 
-    // 2. Enter key: auto-continue lists and checklists
+    // Enter key: continue checklists and lists
     if (e.key === 'Enter') {
       const start = textarea.selectionStart;
       const current = textarea.value;
 
-      // Find current line
       const lastNewLine = current.lastIndexOf('\n', start - 1);
       const currentLine = current.substring(lastNewLine + 1, start);
 
-      // Checklist match: "- [ ] ", "* [ ] ", "1. [ ] ", "[ ] "
+      // Checklist match
       const checkMatch = currentLine.match(
         /^(\s*(?:[-*+]|\d+\.)?\s*\[[ xX]\]\s+)(.*)$/,
       );
@@ -164,7 +270,6 @@ export function LinearRichEditor({
         const contentAfter = checkMatch[2].trim();
 
         if (!contentAfter) {
-          // If user pressed enter on empty checkbox, clear the prefix
           const lineStart = lastNewLine + 1;
           const newVal =
             current.substring(0, lineStart) + current.substring(start);
@@ -176,7 +281,6 @@ export function LinearRichEditor({
           return;
         }
 
-        // Auto-continue checkbox on next line
         const insertion = `\n${prefix}`;
         const newVal =
           current.substring(0, start) + insertion + current.substring(start);
@@ -190,7 +294,7 @@ export function LinearRichEditor({
         return;
       }
 
-      // Bullet / numbered list match: "- ", "* ", "+ ", "1. "
+      // Bullet / numbered list match
       const listMatch = currentLine.match(/^(\s*(?:[-*+]|\d+\.)\s+)(.*)$/);
       if (listMatch) {
         e.preventDefault();
@@ -198,7 +302,6 @@ export function LinearRichEditor({
         const contentAfter = listMatch[2].trim();
 
         if (!contentAfter) {
-          // Clear empty list bullet
           const lineStart = lastNewLine + 1;
           const newVal =
             current.substring(0, lineStart) + current.substring(start);
@@ -231,7 +334,7 @@ export function LinearRichEditor({
       }
     }
 
-    // 3. Hotkeys: ⌘B / Ctrl+B for Bold, ⌘I / Ctrl+I for Italic, ⌘K for Link
+    // Hotkeys: ⌘B / Ctrl+B for Bold, ⌘I / Ctrl+I for Italic, ⌘K for Link
     if (e.metaKey || e.ctrlKey) {
       if (e.key.toLowerCase() === 'b') {
         e.preventDefault();
@@ -241,7 +344,7 @@ export function LinearRichEditor({
         insertSnippet('*', '*', 'italic text');
       } else if (e.key.toLowerCase() === 'k') {
         e.preventDefault();
-        insertSnippet('[', '](url)', 'link text');
+        insertSnippet('[', '](https://example.com)', 'link text');
       }
     }
   };
@@ -314,122 +417,97 @@ export function LinearRichEditor({
   return (
     <div
       className={cn(
-        'relative w-full rounded-xl border border-border/60 bg-[#0e1019] shadow-sm transition-all focus-within:border-indigo-500/80',
+        'relative w-full rounded-lg border border-border/40 bg-[#0d0e15] transition-colors focus-within:border-border/80',
         className,
       )}
       onDrop={handleDrop}
       onDragOver={(e) => e.preventDefault()}
     >
-      {/* Top Toolbar: Format Helpers & Mode Tabs */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-border/50 bg-[#121422] rounded-t-xl text-xs select-none">
-        {/* Markdown Action Buttons */}
-        <div className="flex items-center gap-0.5 flex-wrap">
+      {/* Sleek, minimal toolbar */}
+      <div className="flex items-center justify-between px-2.5 py-1.5 border-b border-border/30 bg-[#11121b]/60 text-xs select-none rounded-t-lg">
+        {/* Formatting Actions */}
+        <div className="flex items-center gap-0.5">
           <button
             type="button"
             onClick={() => insertSnippet('### ', '', 'Heading')}
-            className="p-1.5 rounded hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors cursor-pointer"
-            title="Heading 3 (### )"
+            className="p-1 rounded hover:bg-zinc-800/70 text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer"
+            title="Heading (### )"
           >
             <Heading3 className="w-3.5 h-3.5" />
           </button>
           <button
             type="button"
             onClick={() => insertSnippet('**', '**', 'bold text')}
-            className="p-1.5 rounded hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors cursor-pointer"
-            title="Bold (**text**)"
+            className="p-1 rounded hover:bg-zinc-800/70 text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer"
+            title="Bold (⌘B)"
           >
             <Bold className="w-3.5 h-3.5" />
           </button>
           <button
             type="button"
             onClick={() => insertSnippet('*', '*', 'italic text')}
-            className="p-1.5 rounded hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors cursor-pointer"
-            title="Italic (*text*)"
+            className="p-1 rounded hover:bg-zinc-800/70 text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer"
+            title="Italic (⌘I)"
           >
             <Italic className="w-3.5 h-3.5" />
           </button>
+
+          <span className="w-px h-3 bg-border/40 mx-1" />
+
           <button
             type="button"
-            onClick={() => insertSnippet('~~', '~~', 'strikethrough')}
-            className="p-1.5 rounded hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors cursor-pointer"
-            title="Strikethrough (~~text~~)"
+            onClick={() => insertSnippet('\n- ', '', 'List item')}
+            className="p-1 rounded hover:bg-zinc-800/70 text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer"
+            title="Bullet List"
           >
-            <Strikethrough className="w-3.5 h-3.5" />
+            <List className="w-3.5 h-3.5" />
           </button>
-
-          <span className="w-px h-3.5 bg-border/60 mx-1" />
-
-          {/* Checklist / Task Button */}
           <button
             type="button"
             onClick={() => insertSnippet('\n[ ] ', '', 'Task item')}
-            className="p-1.5 rounded hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors flex items-center gap-1 cursor-pointer"
-            title="Task List ([ ] task)"
+            className="p-1 rounded hover:bg-zinc-800/70 text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer"
+            title="Checklist ([ ])"
           >
-            <ListTodo className="w-3.5 h-3.5 text-indigo-400" />
-            <span className="text-[11px] font-mono">[ ]</span>
+            <ListTodo className="w-3.5 h-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => insertSnippet('`', '`', 'code')}
+            className="p-1 rounded hover:bg-zinc-800/70 text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer"
+            title="Inline Code (`code`)"
+          >
+            <Code className="w-3.5 h-3.5" />
           </button>
 
-          {/* Code Block Button */}
+          <span className="w-px h-3 bg-border/40 mx-1" />
+
+          <button
+            type="button"
+            onClick={handleMentionButtonClick}
+            className="p-1 rounded hover:bg-zinc-800/70 text-indigo-400 hover:text-indigo-300 transition-colors cursor-pointer"
+            title="Mention team member (@)"
+          >
+            <AtSign className="w-3.5 h-3.5" />
+          </button>
           <button
             type="button"
             onClick={() =>
-              insertSnippet(
-                '\n```typescript\n',
-                '\n```\n',
-                '// Enter code here',
-              )
+              insertSnippet('[', '](https://example.com)', 'link text')
             }
-            className="p-1.5 rounded hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors flex items-center gap-1 cursor-pointer"
-            title="Code Block (```)"
-          >
-            <Code className="w-3.5 h-3.5 text-indigo-400" />
-            <span className="text-[11px] font-mono">```</span>
-          </button>
-
-          {/* Table Button */}
-          <button
-            type="button"
-            onClick={() =>
-              insertSnippet(
-                '\n| Column 1 | Column 2 | Column 3 |\n| :--- | :---: | ---: |\n| Item 1 | Item 2 | Item 3 |\n',
-              )
-            }
-            className="p-1.5 rounded hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors cursor-pointer"
-            title="Insert Table"
-          >
-            <TableIcon className="w-3.5 h-3.5" />
-          </button>
-
-          {/* Quote Button */}
-          <button
-            type="button"
-            onClick={() => insertSnippet('> ', '', 'quote text')}
-            className="p-1.5 rounded hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors cursor-pointer"
-            title="Quote (> )"
-          >
-            <Quote className="w-3.5 h-3.5" />
-          </button>
-
-          {/* Link Button */}
-          <button
-            type="button"
-            onClick={() => insertSnippet('[', '](https://example.com)', 'link text')}
-            className="p-1.5 rounded hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors cursor-pointer"
-            title="Insert Link"
+            className="p-1 rounded hover:bg-zinc-800/70 text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer"
+            title="Insert link (⌘K)"
           >
             <LinkIcon className="w-3.5 h-3.5" />
           </button>
-
-          {/* Image Upload Button */}
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="p-1.5 rounded hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors cursor-pointer"
-            title="Upload / Embed Image"
+            className="p-1 rounded hover:bg-zinc-800/70 text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer"
+            title="Attach image"
           >
-            <ImageIcon className="w-3.5 h-3.5 text-emerald-400" />
+            <ImageIcon className="w-3.5 h-3.5" />
           </button>
+
           <input
             ref={fileInputRef}
             type="file"
@@ -445,15 +523,15 @@ export function LinearRichEditor({
           />
         </div>
 
-        {/* View Mode Tabs: Write, Preview, Split */}
-        <div className="flex items-center gap-1 bg-[#181a28] p-0.5 rounded-lg border border-border/50">
+        {/* Minimal Mode Switcher: Write / Preview */}
+        <div className="flex items-center gap-1 bg-[#161722]/80 p-0.5 rounded border border-border/40">
           <button
             type="button"
             onClick={() => setActiveTab('write')}
             className={cn(
-              'flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium transition-all cursor-pointer',
+              'flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer',
               activeTab === 'write'
-                ? 'bg-indigo-600 text-white shadow-sm'
+                ? 'bg-zinc-800 text-zinc-100 shadow-none'
                 : 'text-zinc-400 hover:text-zinc-200',
             )}
           >
@@ -464,50 +542,85 @@ export function LinearRichEditor({
             type="button"
             onClick={() => setActiveTab('preview')}
             className={cn(
-              'flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium transition-all cursor-pointer',
+              'flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer',
               activeTab === 'preview'
-                ? 'bg-indigo-600 text-white shadow-sm'
+                ? 'bg-zinc-800 text-zinc-100 shadow-none'
                 : 'text-zinc-400 hover:text-zinc-200',
             )}
           >
             <Eye className="w-3 h-3" />
             <span>Preview</span>
           </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab('split')}
-            className={cn(
-              'hidden sm:flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] font-medium transition-all cursor-pointer',
-              activeTab === 'split'
-                ? 'bg-indigo-600 text-white shadow-sm'
-                : 'text-zinc-400 hover:text-zinc-200',
-            )}
-            title="Split Side-by-Side View"
-          >
-            <Columns className="w-3 h-3" />
-          </button>
         </div>
       </div>
 
-      {/* Editor Body Area */}
+      {/* Floating Mentions Autocomplete Dropdown */}
+      {mentionQuery !== null && matchingMembers.length > 0 && (
+        <div
+          ref={mentionDropdownRef}
+          className="absolute left-3 top-9 z-50 w-64 max-h-56 overflow-y-auto rounded-lg border border-border/70 bg-[#12131d] shadow-2xl p-1 animate-in fade-in zoom-in-95 duration-100"
+        >
+          <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-500 border-b border-border/40 mb-1">
+            Mention team member
+          </div>
+          <div className="space-y-0.5">
+            {matchingMembers.map((m, idx) => (
+              <button
+                key={m.id || m.userId}
+                type="button"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  handleSelectMention(m.user?.name || 'User');
+                }}
+                className={cn(
+                  'w-full flex items-center gap-2.5 px-2 py-1.5 rounded text-left text-xs transition-colors cursor-pointer',
+                  idx === mentionIndex
+                    ? 'bg-indigo-600/30 text-white font-medium'
+                    : 'text-zinc-300 hover:bg-zinc-800/60',
+                )}
+              >
+                <img
+                  src={
+                    m.user?.avatarUrl ||
+                    `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
+                      m.user?.name || 'User',
+                    )}`
+                  }
+                  alt={m.user?.name || 'User'}
+                  className="w-5 h-5 rounded-full object-cover ring-1 ring-border/50 shrink-0"
+                />
+                <div className="flex flex-col min-w-0">
+                  <span className="truncate">{m.user?.name || 'Team Member'}</span>
+                  {m.user?.email && (
+                    <span className="text-[10px] text-zinc-500 truncate">
+                      {m.user.email}
+                    </span>
+                  )}
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Editor Body */}
       <div className="p-3">
-        {/* Write Mode */}
-        {activeTab === 'write' && (
+        {activeTab === 'write' ? (
           <textarea
             ref={textareaRef}
             value={text}
             onChange={handleTextChange}
             onKeyDown={handleKeyDown}
             onPaste={handlePaste}
-            onBlur={onBlur}
+            onBlur={() => {
+              setTimeout(() => setMentionQuery(null), 150);
+              if (onBlur) onBlur();
+            }}
             placeholder={placeholder}
-            className="w-full min-h-[160px] bg-transparent resize-none outline-none text-sm text-zinc-100 placeholder:text-zinc-500 leading-relaxed font-sans cursor-text font-normal transition-all"
+            className="w-full min-h-[140px] bg-transparent resize-none outline-none text-sm text-zinc-100 placeholder:text-zinc-500 leading-relaxed font-sans cursor-text font-normal transition-all"
           />
-        )}
-
-        {/* Preview Mode: Rendered GitHub Markdown */}
-        {activeTab === 'preview' && (
-          <div className="min-h-[160px] py-1">
+        ) : (
+          <div className="min-h-[140px] py-1">
             {text.trim() ? (
               <MarkdownRenderer
                 content={text}
@@ -528,69 +641,15 @@ export function LinearRichEditor({
             )}
           </div>
         )}
-
-        {/* Split Side-by-Side Mode */}
-        {activeTab === 'split' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 min-h-[180px]">
-            <div className="border-r border-border/40 pr-3">
-              <span className="block text-[10px] uppercase font-mono text-zinc-500 mb-1.5 font-semibold">
-                Editor (Markdown)
-              </span>
-              <textarea
-                ref={textareaRef}
-                value={text}
-                onChange={handleTextChange}
-                onKeyDown={handleKeyDown}
-                onPaste={handlePaste}
-                onBlur={onBlur}
-                placeholder={placeholder}
-                className="w-full min-h-[160px] bg-transparent resize-none outline-none text-xs text-zinc-100 placeholder:text-zinc-500 leading-relaxed font-mono cursor-text"
-              />
-            </div>
-            <div className="pl-1 overflow-y-auto max-h-[500px]">
-              <span className="block text-[10px] uppercase font-mono text-indigo-400 mb-1.5 font-semibold">
-                Live GitHub Preview
-              </span>
-              {text.trim() ? (
-                <MarkdownRenderer
-                  content={text}
-                  membersList={members}
-                  onImageClick={onImageClick}
-                  onContentChange={(newMd) => {
-                    setText(newMd);
-                    onChange(newMd);
-                  }}
-                />
-              ) : (
-                <div className="text-xs text-zinc-600 italic py-4">
-                  Preview will appear here...
-                </div>
-              )}
-            </div>
-          </div>
-        )}
       </div>
 
-      {/* Subtle Bottom Bar */}
-      <div className="flex items-center justify-between px-3.5 py-2 border-t border-border/40 text-[11px] text-zinc-500 bg-[#0c0d16]/60 rounded-b-xl">
-        <div className="flex items-center gap-2">
-          <span className="text-zinc-400">
-            Paste images directly (⌘V) or drag & drop files
-          </span>
-          {isUploading && (
-            <span className="flex items-center gap-1.5 text-indigo-400 font-medium animate-pulse ml-2">
-              <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              <span>Uploading image...</span>
-            </span>
-          )}
+      {/* Floating Upload Indicator */}
+      {isUploading && (
+        <div className="absolute bottom-2 right-3 flex items-center gap-1.5 text-xs text-indigo-400 bg-zinc-900/90 border border-border/40 px-2 py-1 rounded shadow-lg animate-pulse">
+          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+          <span>Uploading image...</span>
         </div>
-        <div className="flex items-center gap-3">
-          <span className="text-[10px] text-zinc-500 font-mono">
-            {text.length} chars
-          </span>
-          <span className="text-[10px] text-zinc-600">Auto-saves</span>
-        </div>
-      </div>
+      )}
     </div>
   );
 }
