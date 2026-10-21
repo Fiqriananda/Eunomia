@@ -9,6 +9,7 @@ import { FileUploader } from './FileUploader';
 import { X, Sparkles, Loader2, RotateCw } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input, Textarea } from '../ui/input';
+import { LinearRichEditor } from './LinearRichEditor';
 
 interface CreateTaskModalProps {
   isOpen: boolean;
@@ -181,12 +182,11 @@ export function CreateTaskModal({
             </div>
 
             <div>
-              <Textarea
-                rows={4}
+              <LinearRichEditor
                 value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Add description..."
-                className="bg-[#141520] border-border/80 text-sm leading-relaxed"
+                onChange={setDescription}
+                placeholder="Add description, requirements, code ```, or checklist [ ]..."
+                members={members}
               />
             </div>
 

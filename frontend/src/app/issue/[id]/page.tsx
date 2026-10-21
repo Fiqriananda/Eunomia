@@ -279,6 +279,21 @@ function IssueDetailContent() {
       if (data.taskId === taskId) {
         setComments((prev) => {
           if (prev.some((c) => c.id === data.comment.id)) return prev;
+
+          // Reconcile optimistic temp comment if one exists matching this user and content
+          const tempIndex = prev.findIndex(
+            (c) =>
+              c.id.startsWith('temp-') &&
+              (c.userId === data.comment.userId || c.userId === 'me') &&
+              c.content === data.comment.content
+          );
+
+          if (tempIndex !== -1) {
+            const next = [...prev];
+            next[tempIndex] = data.comment;
+            return next;
+          }
+
           return [...prev, data.comment];
         });
       }
@@ -966,7 +981,13 @@ function IssueDetailContent() {
 
     try {
       const serverComment = await api.tasks.addComment(task.id, content);
-      setComments((prev) => prev.map((c) => (c.id === tempComment.id ? serverComment : c)));
+      setComments((prev) => {
+        const alreadyHasServerComment = prev.some((c) => c.id === serverComment.id);
+        if (alreadyHasServerComment) {
+          return prev.filter((c) => c.id !== tempComment.id);
+        }
+        return prev.map((c) => (c.id === tempComment.id ? serverComment : c));
+      });
     } catch (err) {
       console.error('Failed to post comment:', err);
       setComments((prev) => prev.filter((c) => c.id !== tempComment.id));

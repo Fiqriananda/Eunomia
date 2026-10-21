@@ -526,12 +526,19 @@ export function TaskDetailModal({
 
     try {
       const serverComment = await api.tasks.addComment(task.id, content);
-      setComments((prev) =>
-        prev.map((c) => (c.id === tempComment.id ? serverComment : c)),
-      );
+      setComments((prev) => {
+        const alreadyHasServerComment = prev.some((c) => c.id === serverComment.id);
+        if (alreadyHasServerComment) {
+          return prev.filter((c) => c.id !== tempComment.id);
+        }
+        return prev.map((c) => (c.id === tempComment.id ? serverComment : c));
+      });
       // Update task in parent state
       onUpdate(task.id, {
-        comments: [...(task.comments || []).filter((c) => c.id !== tempComment.id), serverComment],
+        comments: [
+          ...(task.comments || []).filter((c) => c.id !== tempComment.id && c.id !== serverComment.id),
+          serverComment,
+        ],
       });
     } catch (err) {
       console.error('Failed to post comment:', err);

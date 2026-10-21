@@ -1,20 +1,39 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
 import { WorkspaceMember } from '../../types';
 import { cn } from '../../lib/utils';
-import { ExternalLink, Loader2, Image as ImageIcon } from 'lucide-react';
+import {
+  ExternalLink,
+  Loader2,
+  Image as ImageIcon,
+  Check,
+  Copy,
+  Info,
+  Lightbulb,
+  AlertTriangle,
+  Flame,
+  AlertCircle,
+} from 'lucide-react';
 
 interface MarkdownRendererProps {
   content: string;
   membersList?: WorkspaceMember[];
   className?: string;
   onImageClick?: (url: string) => void;
+  onContentChange?: (newContent: string) => void;
 }
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
 export function resolveMediaUrl(url: string): string {
   if (!url) return '';
-  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('blob:') || url.startsWith('data:')) {
+  if (
+    url.startsWith('http://') ||
+    url.startsWith('https://') ||
+    url.startsWith('blob:') ||
+    url.startsWith('data:')
+  ) {
     return url;
   }
   if (url.startsWith('/')) {
@@ -23,11 +42,139 @@ export function resolveMediaUrl(url: string): string {
   return `${API_BASE}/${url}`;
 }
 
+/**
+ * Syntax colorizer helper for code blocks
+ */
+function highlightCode(code: string, lang: string): React.ReactNode[] {
+  const lines = code.split('\n');
+
+  return lines.map((line, lineIdx) => {
+    // Regex tokens: keywords, strings, comments, numbers, booleans
+    const tokenRegex =
+      /(\/\/.*$|#.*$|\/\*[\s\S]*?\*\/|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|`(?:\\.|[^`\\])*`|\b(?:const|let|var|function|return|import|export|from|class|extends|interface|type|public|private|protected|async|await|if|else|switch|case|break|for|while|try|catch|finally|throw|new|typeof|instanceof|void|default|as)\b|\b(?:true|false|null|undefined)\b|\b\d+(?:\.\d+)?\b)/g;
+
+    const parts: React.ReactNode[] = [];
+    let lastIdx = 0;
+    let match: RegExpExecArray | null;
+
+    while ((match = tokenRegex.exec(line)) !== null) {
+      if (match.index > lastIdx) {
+        parts.push(
+          <span key={`txt-${lineIdx}-${lastIdx}`} className="text-zinc-200">
+            {line.substring(lastIdx, match.index)}
+          </span>,
+        );
+      }
+
+      const token = match[0];
+      let colorClass = 'text-zinc-200';
+
+      if (token.startsWith('//') || token.startsWith('#') || token.startsWith('/*')) {
+        colorClass = 'text-zinc-500 italic';
+      } else if (
+        token.startsWith('"') ||
+        token.startsWith("'") ||
+        token.startsWith('`')
+      ) {
+        colorClass = 'text-emerald-400';
+      } else if (
+        /^(const|let|var|function|return|import|export|from|class|extends|interface|type|public|private|protected|async|await|if|else|switch|case|break|for|while|try|catch|finally|throw|new|typeof|instanceof|void|default|as)$/.test(
+          token,
+        )
+      ) {
+        colorClass = 'text-indigo-400 font-medium';
+      } else if (/^(true|false|null|undefined)$/.test(token)) {
+        colorClass = 'text-rose-400 font-medium';
+      } else if (/^\d+(?:\.\d+)?$/.test(token)) {
+        colorClass = 'text-amber-300';
+      }
+
+      parts.push(
+        <span key={`tok-${lineIdx}-${match.index}`} className={colorClass}>
+          {token}
+        </span>,
+      );
+
+      lastIdx = tokenRegex.lastIndex;
+    }
+
+    if (lastIdx < line.length) {
+      parts.push(
+        <span key={`tail-${lineIdx}-${lastIdx}`} className="text-zinc-200">
+          {line.substring(lastIdx)}
+        </span>,
+      );
+    }
+
+    return (
+      <div key={`line-${lineIdx}`} className="table-row">
+        <span className="table-cell pr-4 text-right select-none text-zinc-600 font-mono text-[11px] w-8">
+          {lineIdx + 1}
+        </span>
+        <span className="table-cell font-mono text-xs whitespace-pre">
+          {parts.length > 0 ? parts : ' '}
+        </span>
+      </div>
+    );
+  });
+}
+
+/**
+ * Code Block with Language Badge & Copy Button
+ */
+function CodeBlockComponent({ code, lang }: { code: string; lang: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(code).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
+  const displayLang = (lang || 'code').toUpperCase();
+
+  return (
+    <div className="my-3 rounded-xl border border-border/70 bg-[#090a10] overflow-hidden shadow-lg group/code">
+      {/* Code Header Bar */}
+      <div className="flex items-center justify-between px-3.5 py-1.5 bg-[#10121d] border-b border-border/50 text-xs">
+        <span className="text-[11px] font-mono font-semibold tracking-wider text-indigo-400">
+          {displayLang}
+        </span>
+        <button
+          type="button"
+          onClick={handleCopy}
+          className="flex items-center gap-1 px-2 py-0.5 rounded text-[11px] text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors cursor-pointer"
+          title="Copy code to clipboard"
+        >
+          {copied ? (
+            <>
+              <Check className="w-3.5 h-3.5 text-emerald-400" />
+              <span className="text-emerald-400">Copied!</span>
+            </>
+          ) : (
+            <>
+              <Copy className="w-3.5 h-3.5 text-zinc-400 group-hover/code:text-zinc-200" />
+              <span>Copy</span>
+            </>
+          )}
+        </button>
+      </div>
+
+      {/* Code Content with Line Numbers */}
+      <div className="p-3.5 overflow-x-auto text-xs leading-relaxed font-mono">
+        <div className="table w-full">{highlightCode(code, lang)}</div>
+      </div>
+    </div>
+  );
+}
+
 export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
   content,
   membersList = [],
   className,
   onImageClick,
+  onContentChange,
 }) => {
   if (!content) return null;
 
@@ -35,25 +182,53 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
     .map((m) => m.user?.name)
     .filter(Boolean) as string[];
 
-  // Tokenize by lines and markdown blocks
-  const lines = content.split('\n');
+  // Helper to toggle checkbox on a specific line
+  const handleToggleCheckbox = (lineIndex: number, currentChecked: boolean) => {
+    if (!onContentChange) return;
+    const rawLines = content.split('\n');
+    if (lineIndex < 0 || lineIndex >= rawLines.length) return;
 
-  // Helper to parse inline markdown (images, links, bold, code, mentions)
+    const targetLine = rawLines[lineIndex];
+    let newTargetLine = targetLine;
+
+    if (currentChecked) {
+      // Toggle to unchecked
+      newTargetLine = targetLine.replace(
+        /^(\s*(?:[-*+]|\d+\.)?\s*)\[[xX]\]/,
+        '$1[ ]',
+      );
+    } else {
+      // Toggle to checked
+      newTargetLine = targetLine.replace(
+        /^(\s*(?:[-*+]|\d+\.)?\s*)\[\s*\]/,
+        '$1[x]',
+      );
+    }
+
+    rawLines[lineIndex] = newTargetLine;
+    onContentChange(rawLines.join('\n'));
+  };
+
+  // Helper to parse inline markdown (images, links, bold, italic, strikethrough, code, mentions)
   const renderInline = (text: string, keyPrefix: string): React.ReactNode[] => {
-    // Regex for markdown images: ![alt](url)
-    // Regex for links: [text](url)
-    // Regex for code: `code`
-    // Regex for bold: **text**
-    // Regex for italic: *text*
-    // Regex for mentions: @username
-    const masterRegex = /(!\[(.*?)\]\((.*?)\)|\[(.*?)\]\((.*?)\)|`([^`]+)`|\*\*([^*]+)\*\*|\*([^*]+)\*|(@[a-zA-Z0-9_\-\.\s]+?(?=\s|$|[.,!?])))/g;
+    // Regex for:
+    // 1. Image: ![alt](url)
+    // 2. Link: [text](url)
+    // 3. Strikethrough: ~~text~~
+    // 4. Bold + Italic: ***text*** or ___text___
+    // 5. Bold: **text** or __text__
+    // 6. Italic: *text* or _text_
+    // 7. Inline code: `code`
+    // 8. Mentions: @username
+    // 9. Autolinks: https://...
+    const masterRegex =
+      /(!\[(.*?)\]\((.*?)\)|\[(.*?)\]\((.*?)\)|~~([^~]+)~~|\*\*\*([^*]+)\*\*\*|\*\*([^*]+)\*\*|\*([^*]+)\*|`([^`]+)`|(@[a-zA-Z0-9_\-\.\s]+?(?=\s|$|[.,!?]))|(https?:\/\/[^\s]+))/g;
 
     const nodes: React.ReactNode[] = [];
     let lastIdx = 0;
     let match: RegExpExecArray | null;
 
     while ((match = masterRegex.exec(text)) !== null) {
-      // Add preceding plain text
       if (match.index > lastIdx) {
         nodes.push(
           <span key={`${keyPrefix}-txt-${lastIdx}`}>
@@ -70,7 +245,6 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
         const rawUrl = match[3] || '';
 
         if (!rawUrl || altText.toLowerCase().includes('uploading')) {
-          // GitHub style uploading placeholder
           nodes.push(
             <div
               key={`${keyPrefix}-img-upload-${match.index}`}
@@ -88,7 +262,11 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
               className="block my-2 max-w-full"
             >
               <span
-                onClick={() => onImageClick ? onImageClick(finalUrl) : window.open(finalUrl, '_blank')}
+                onClick={() =>
+                  onImageClick
+                    ? onImageClick(finalUrl)
+                    : window.open(finalUrl, '_blank')
+                }
                 className="group relative inline-block cursor-pointer overflow-hidden rounded-xl border border-border/70 bg-[#0e0f18] shadow-md hover:border-primary/60 transition-all max-w-full"
               >
                 <img
@@ -97,15 +275,14 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
                   loading="lazy"
                   className="max-h-[480px] max-w-full w-auto object-contain rounded-xl transition-all duration-200 group-hover:brightness-105"
                   onError={(e) => {
-                    // Fallback on broken image
                     const target = e.currentTarget;
                     target.style.display = 'none';
                     if (target.nextElementSibling) {
-                      (target.nextElementSibling as HTMLElement).style.display = 'flex';
+                      (target.nextElementSibling as HTMLElement).style.display =
+                        'flex';
                     }
                   }}
                 />
-                {/* Fallback container if load fails */}
                 <span
                   style={{ display: 'none' }}
                   className="p-3 items-center gap-2 text-xs text-zinc-400"
@@ -113,7 +290,6 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
                   <ImageIcon className="w-4 h-4 text-zinc-500" />
                   <span>{altText} (Image failed to load)</span>
                 </span>
-                {/* Hover overlay hint */}
                 <span className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-black/80 backdrop-blur-md text-[11px] text-zinc-200 px-2.5 py-1 rounded-md flex items-center gap-1 shadow-lg pointer-events-none">
                   <ExternalLink className="w-3 h-3 text-zinc-400" />
                   <span>View full size</span>
@@ -133,28 +309,40 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
             href={linkHref}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-primary hover:underline font-medium inline-flex items-center gap-0.5"
+            className="text-indigo-400 hover:text-indigo-300 underline font-medium inline-flex items-center gap-0.5"
           >
             <span>{linkText}</span>
             <ExternalLink className="w-2.5 h-2.5 opacity-70" />
           </a>,
         );
       }
-      // 3. Inline Code: `code`
-      else if (fullMatch.startsWith('`')) {
-        const codeText = match[6];
+      // 3. Strikethrough: ~~text~~
+      else if (fullMatch.startsWith('~~')) {
+        const strikeText = match[6];
         nodes.push(
-          <code
-            key={`${keyPrefix}-code-${match.index}`}
-            className="px-1.5 py-0.5 rounded bg-[#161824] border border-border/50 text-indigo-300 text-[11px] font-mono"
+          <del
+            key={`${keyPrefix}-del-${match.index}`}
+            className="line-through text-zinc-500"
           >
-            {codeText}
-          </code>,
+            {strikeText}
+          </del>,
         );
       }
-      // 4. Bold: **text**
+      // 4. Bold + Italic: ***text***
+      else if (fullMatch.startsWith('***')) {
+        const biText = match[7];
+        nodes.push(
+          <strong
+            key={`${keyPrefix}-bi-${match.index}`}
+            className="font-bold italic text-white"
+          >
+            {biText}
+          </strong>,
+        );
+      }
+      // 5. Bold: **text**
       else if (fullMatch.startsWith('**')) {
-        const boldText = match[7];
+        const boldText = match[8];
         nodes.push(
           <strong
             key={`${keyPrefix}-bold-${match.index}`}
@@ -164,9 +352,9 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
           </strong>,
         );
       }
-      // 5. Italic: *text*
+      // 6. Italic: *text*
       else if (fullMatch.startsWith('*')) {
-        const italicText = match[8];
+        const italicText = match[9];
         nodes.push(
           <em
             key={`${keyPrefix}-italic-${match.index}`}
@@ -176,7 +364,19 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
           </em>,
         );
       }
-      // 6. Mention: @username
+      // 7. Inline Code: `code`
+      else if (fullMatch.startsWith('`')) {
+        const codeText = match[10];
+        nodes.push(
+          <code
+            key={`${keyPrefix}-code-${match.index}`}
+            className="px-1.5 py-0.5 rounded bg-[#161824] border border-border/60 text-indigo-300 text-[11px] font-mono"
+          >
+            {codeText}
+          </code>,
+        );
+      }
+      // 8. Mention: @username
       else if (fullMatch.startsWith('@')) {
         const mentionName = fullMatch.slice(1).trim();
         const isKnownMember = memberNames.some(
@@ -196,6 +396,21 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
           </span>,
         );
       }
+      // 9. Autolink: https://...
+      else if (fullMatch.startsWith('http')) {
+        nodes.push(
+          <a
+            key={`${keyPrefix}-autolink-${match.index}`}
+            href={fullMatch}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-indigo-400 hover:text-indigo-300 underline font-medium inline-flex items-center gap-0.5 break-all"
+          >
+            <span>{fullMatch}</span>
+            <ExternalLink className="w-2.5 h-2.5 opacity-70 shrink-0" />
+          </a>,
+        );
+      }
 
       lastIdx = masterRegex.lastIndex;
     }
@@ -211,133 +426,357 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
     return nodes;
   };
 
-  // Render multi-line blocks
+  const lines = content.split('\n');
   const elements: React.ReactNode[] = [];
-  let inCodeBlock = false;
-  let codeBlockLines: string[] = [];
 
-  for (let i = 0; i < lines.length; i++) {
+  let i = 0;
+  while (i < lines.length) {
     const line = lines[i];
 
-    // Check code blocks ```
-    if (line.trim().startsWith('```')) {
-      if (inCodeBlock) {
-        // End of code block
-        elements.push(
-          <pre
-            key={`codeblock-${i}`}
-            className="my-3 p-3 rounded-lg bg-[#0b0c13] border border-border/70 overflow-x-auto text-xs font-mono text-zinc-200"
-          >
-            <code>{codeBlockLines.join('\n')}</code>
-          </pre>,
-        );
-        codeBlockLines = [];
-        inCodeBlock = false;
-      } else {
-        inCodeBlock = true;
+    // 1. Code Block: ``` or ````
+    const codeBlockMatch = line.trim().match(/^(`{3,4})(.*)$/);
+    if (codeBlockMatch) {
+      const fence = codeBlockMatch[1];
+      const lang = codeBlockMatch[2].trim();
+      const codeLines: string[] = [];
+      i++;
+
+      while (i < lines.length) {
+        if (lines[i].trim().startsWith(fence)) {
+          break;
+        }
+        codeLines.push(lines[i]);
+        i++;
       }
-      continue;
-    }
 
-    if (inCodeBlock) {
-      codeBlockLines.push(line);
-      continue;
-    }
-
-    // Headers
-    if (line.startsWith('### ')) {
       elements.push(
-        <h4 key={`h3-${i}`} className="text-sm font-bold text-white mt-3 mb-1">
-          {renderInline(line.slice(4), `h3-${i}`)}
+        <CodeBlockComponent
+          key={`codeblock-${i}`}
+          code={codeLines.join('\n')}
+          lang={lang}
+        />,
+      );
+      i++;
+      continue;
+    }
+
+    // 2. Table Block: lines with |
+    if (line.trim().startsWith('|') && line.trim().endsWith('|')) {
+      const tableLines: string[] = [];
+      while (
+        i < lines.length &&
+        lines[i].trim().startsWith('|') &&
+        lines[i].trim().endsWith('|')
+      ) {
+        tableLines.push(lines[i]);
+        i++;
+      }
+
+      if (tableLines.length >= 2) {
+        const headerCells = tableLines[0]
+          .split('|')
+          .slice(1, -1)
+          .map((c) => c.trim());
+        const alignCells = tableLines[1]
+          .split('|')
+          .slice(1, -1)
+          .map((c) => {
+            const trim = c.trim();
+            if (trim.startsWith(':') && trim.endsWith(':')) return 'center';
+            if (trim.endsWith(':')) return 'right';
+            return 'left';
+          });
+
+        const bodyRows = tableLines.slice(2).map((row) =>
+          row
+            .split('|')
+            .slice(1, -1)
+            .map((c) => c.trim()),
+        );
+
+        elements.push(
+          <div
+            key={`table-${i}`}
+            className="my-3 overflow-x-auto rounded-xl border border-border/70 bg-[#0c0d16] shadow-md"
+          >
+            <table className="w-full text-xs text-left border-collapse">
+              <thead>
+                <tr className="bg-[#121422] border-b border-border/70">
+                  {headerCells.map((header, hIdx) => (
+                    <th
+                      key={`th-${hIdx}`}
+                      style={{ textAlign: alignCells[hIdx] || 'left' }}
+                      className="px-3.5 py-2.5 font-semibold text-zinc-100 uppercase tracking-wider text-[11px]"
+                    >
+                      {renderInline(header, `th-${hIdx}`)}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border/40">
+                {bodyRows.map((row, rIdx) => (
+                  <tr
+                    key={`tr-${rIdx}`}
+                    className="hover:bg-indigo-500/5 transition-colors even:bg-[#0f101b]"
+                  >
+                    {row.map((cell, cIdx) => (
+                      <td
+                        key={`td-${rIdx}-${cIdx}`}
+                        style={{ textAlign: alignCells[cIdx] || 'left' }}
+                        className="px-3.5 py-2 text-zinc-300"
+                      >
+                        {renderInline(cell, `td-${rIdx}-${cIdx}`)}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>,
+        );
+        continue;
+      }
+    }
+
+    // 3. GitHub Callout Alert: > [!NOTE], > [!TIP], > [!IMPORTANT], > [!WARNING], > [!CAUTION]
+    const alertMatch = line.match(/^>\s*\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]/i);
+    if (alertMatch) {
+      const alertType = alertMatch[1].toUpperCase();
+      const alertLines: string[] = [];
+      i++;
+
+      while (i < lines.length && lines[i].startsWith('>')) {
+        alertLines.push(lines[i].replace(/^>\s?/, ''));
+        i++;
+      }
+
+      let alertStyles = {
+        border: 'border-blue-500/40 bg-blue-500/10 text-blue-200',
+        badge: 'text-blue-400',
+        icon: <Info className="w-4 h-4 text-blue-400 shrink-0" />,
+      };
+
+      if (alertType === 'TIP') {
+        alertStyles = {
+          border: 'border-emerald-500/40 bg-emerald-500/10 text-emerald-200',
+          badge: 'text-emerald-400',
+          icon: <Lightbulb className="w-4 h-4 text-emerald-400 shrink-0" />,
+        };
+      } else if (alertType === 'IMPORTANT') {
+        alertStyles = {
+          border: 'border-purple-500/40 bg-purple-500/10 text-purple-200',
+          badge: 'text-purple-400',
+          icon: <AlertCircle className="w-4 h-4 text-purple-400 shrink-0" />,
+        };
+      } else if (alertType === 'WARNING') {
+        alertStyles = {
+          border: 'border-amber-500/40 bg-amber-500/10 text-amber-200',
+          badge: 'text-amber-400',
+          icon: <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />,
+        };
+      } else if (alertType === 'CAUTION') {
+        alertStyles = {
+          border: 'border-rose-500/40 bg-rose-500/10 text-rose-200',
+          badge: 'text-rose-400',
+          icon: <Flame className="w-4 h-4 text-rose-400 shrink-0" />,
+        };
+      }
+
+      elements.push(
+        <div
+          key={`alert-${i}`}
+          className={cn(
+            'my-3 p-3.5 rounded-xl border flex gap-3 text-xs leading-relaxed shadow-sm',
+            alertStyles.border,
+          )}
+        >
+          {alertStyles.icon}
+          <div className="space-y-1">
+            <span
+              className={cn(
+                'font-bold uppercase tracking-wider text-[11px] block',
+                alertStyles.badge,
+              )}
+            >
+              {alertType}
+            </span>
+            <div className="text-zinc-200">
+              {alertLines.map((al, alIdx) => (
+                <p key={`al-${alIdx}`}>{renderInline(al, `al-${i}-${alIdx}`)}</p>
+              ))}
+            </div>
+          </div>
+        </div>,
+      );
+      continue;
+    }
+
+    // 4. Checklist / Task Item:
+    // Matches:
+    // "- [ ] task"
+    // "* [ ] task"
+    // "1. [ ] task"
+    // "[ ] task"  (Directly accepted without bullet!)
+    const checklistRegex =
+      /^(\s*(?:[-*+]|\d+\.)?\s*)\[([ xX])\]\s*(.*)$/;
+    const checkMatch = line.match(checklistRegex);
+
+    if (checkMatch) {
+      const isChecked = checkMatch[2].toLowerCase() === 'x';
+      const taskText = checkMatch[3];
+      const currentLineIdx = i;
+
+      elements.push(
+        <div
+          key={`checklist-${i}`}
+          className="flex items-start gap-2.5 my-1.5 text-xs group/item"
+        >
+          <button
+            type="button"
+            onClick={() => handleToggleCheckbox(currentLineIdx, isChecked)}
+            disabled={!onContentChange}
+            className={cn(
+              'mt-0.5 w-4 h-4 rounded border flex items-center justify-center transition-all shrink-0',
+              onContentChange ? 'cursor-pointer hover:border-indigo-400' : 'cursor-default',
+              isChecked
+                ? 'bg-indigo-600 border-indigo-600 text-white shadow-sm'
+                : 'border-zinc-600 bg-zinc-900/80 hover:bg-zinc-800',
+            )}
+            title={onContentChange ? 'Click to toggle task' : undefined}
+          >
+            {isChecked && <Check className="w-3 h-3 stroke-[3]" />}
+          </button>
+          <span
+            className={cn(
+              'leading-relaxed transition-colors',
+              isChecked
+                ? 'line-through text-zinc-500 select-none'
+                : 'text-zinc-200',
+            )}
+          >
+            {renderInline(taskText, `check-${i}`)}
+          </span>
+        </div>,
+      );
+      i++;
+      continue;
+    }
+
+    // 5. Headers: # to ######
+    if (line.startsWith('###### ')) {
+      elements.push(
+        <h6
+          key={`h6-${i}`}
+          className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mt-3 mb-1"
+        >
+          {renderInline(line.slice(7), `h6-${i}`)}
+        </h6>,
+      );
+    } else if (line.startsWith('##### ')) {
+      elements.push(
+        <h5
+          key={`h5-${i}`}
+          className="text-xs font-semibold text-zinc-200 mt-3 mb-1"
+        >
+          {renderInline(line.slice(6), `h5-${i}`)}
+        </h5>,
+      );
+    } else if (line.startsWith('#### ')) {
+      elements.push(
+        <h4
+          key={`h4-${i}`}
+          className="text-sm font-semibold text-white mt-3.5 mb-1.5"
+        >
+          {renderInline(line.slice(5), `h4-${i}`)}
         </h4>,
+      );
+    } else if (line.startsWith('### ')) {
+      elements.push(
+        <h3
+          key={`h3-${i}`}
+          className="text-base font-bold text-white mt-4 mb-1.5"
+        >
+          {renderInline(line.slice(4), `h3-${i}`)}
+        </h3>,
       );
     } else if (line.startsWith('## ')) {
       elements.push(
-        <h3 key={`h2-${i}`} className="text-base font-bold text-white mt-4 mb-1.5">
+        <h2
+          key={`h2-${i}`}
+          className="text-lg font-bold text-white mt-5 mb-2"
+        >
           {renderInline(line.slice(3), `h2-${i}`)}
-        </h3>,
+        </h2>,
       );
     } else if (line.startsWith('# ')) {
       elements.push(
-        <h2 key={`h1-${i}`} className="text-lg font-bold text-white mt-4 mb-2">
+        <h1
+          key={`h1-${i}`}
+          className="text-xl font-extrabold text-white mt-5 mb-2.5 border-b border-border/50 pb-1.5"
+        >
           {renderInline(line.slice(2), `h1-${i}`)}
-        </h2>,
+        </h1>,
       );
     }
-    // Blockquote
+    // 6. Horizontal Rule: ---, ***, ___
+    else if (/^(\*\*\*|---|___)$/.test(line.trim())) {
+      elements.push(<hr key={`hr-${i}`} className="my-4 border-border/50" />);
+    }
+    // 7. Standard Blockquote: > text
     else if (line.startsWith('> ')) {
       elements.push(
         <blockquote
           key={`quote-${i}`}
-          className="border-l-2 border-indigo-500/60 pl-3 my-2 text-zinc-400 italic text-xs"
+          className="border-l-3 border-indigo-500/70 pl-3.5 my-2.5 text-zinc-400 italic text-xs leading-relaxed"
         >
           {renderInline(line.slice(2), `quote-${i}`)}
         </blockquote>,
       );
     }
-    // Task list / Checkbox
-    else if (/^[-*]\s+\[([ xX])\]\s+(.*)/.test(line)) {
-      const match = line.match(/^[-*]\s+\[([ xX])\]\s+(.*)/);
-      if (match) {
-        const isChecked = match[1].toLowerCase() === 'x';
-        elements.push(
-          <div key={`task-${i}`} className="flex items-center gap-2 my-1 text-xs">
-            <input
-              type="checkbox"
-              readOnly
-              checked={isChecked}
-              className="rounded border-zinc-700 bg-zinc-900 text-indigo-500 pointer-events-none w-3.5 h-3.5"
-            />
-            <span className={cn(isChecked ? 'line-through text-zinc-500' : 'text-zinc-300')}>
-              {renderInline(match[2], `task-txt-${i}`)}
-            </span>
-          </div>,
-        );
-      }
-    }
-    // Bullet list
-    else if (/^[-*]\s+(.*)/.test(line)) {
-      const itemText = line.replace(/^[-*]\s+/, '');
+    // 8. Bullet list: - or * or +
+    else if (/^[-*+]\s+(.*)/.test(line)) {
+      const itemText = line.replace(/^[-*+]\s+/, '');
       elements.push(
-        <li key={`li-${i}`} className="ml-4 list-disc text-zinc-300 my-0.5 text-xs">
+        <li
+          key={`li-${i}`}
+          className="ml-5 list-disc text-zinc-300 my-0.5 text-xs leading-relaxed"
+        >
           {renderInline(itemText, `li-${i}`)}
         </li>,
       );
     }
-    // Numbered list
+    // 9. Numbered list: 1. 2. etc.
     else if (/^\d+\.\s+(.*)/.test(line)) {
       const itemText = line.replace(/^\d+\.\s+/, '');
       elements.push(
-        <li key={`oli-${i}`} className="ml-4 list-decimal text-zinc-300 my-0.5 text-xs">
+        <li
+          key={`oli-${i}`}
+          className="ml-5 list-decimal text-zinc-300 my-0.5 text-xs leading-relaxed"
+        >
           {renderInline(itemText, `oli-${i}`)}
         </li>,
       );
     }
-    // Regular line / Paragraph
+    // 10. Empty line / Paragraph
     else {
       if (line.trim() === '') {
         elements.push(<div key={`empty-${i}`} className="h-2" />);
       } else {
         elements.push(
-          <p key={`p-${i}`} className="my-1 text-zinc-300 text-xs leading-relaxed">
+          <p
+            key={`p-${i}`}
+            className="my-1 text-zinc-300 text-xs leading-relaxed"
+          >
             {renderInline(line, `p-${i}`)}
           </p>,
         );
       }
     }
+
+    i++;
   }
 
-  // Handle remaining unclosed codeblock
-  if (inCodeBlock && codeBlockLines.length > 0) {
-    elements.push(
-      <pre
-        key="codeblock-unclosed"
-        className="my-3 p-3 rounded-lg bg-[#0b0c13] border border-border/70 overflow-x-auto text-xs font-mono text-zinc-200"
-      >
-        <code>{codeBlockLines.join('\n')}</code>
-      </pre>,
-    );
-  }
-
-  return <div className={cn('markdown-body space-y-0.5', className)}>{elements}</div>;
+  return (
+    <div className={cn('markdown-body space-y-0.5', className)}>{elements}</div>
+  );
 };
