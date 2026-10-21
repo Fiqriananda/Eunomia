@@ -282,6 +282,45 @@ let WorkspacesService = class WorkspacesService {
             data: { columnOrder },
         });
     }
+    async updateWorkspace(workspaceId, userId, data) {
+        const membership = await this.prisma.workspaceMember.findUnique({
+            where: {
+                workspaceId_userId: {
+                    workspaceId,
+                    userId,
+                },
+            },
+        });
+        if (!membership) {
+            throw new ForbiddenException('You are not a member of this workspace');
+        }
+        if (membership.role !== 'OWNER' && membership.role !== 'ADMIN') {
+            throw new ForbiddenException('Only workspace owners or admins can update workspace settings');
+        }
+        const updateData = {};
+        if (data.name !== undefined)
+            updateData.name = data.name.trim();
+        if (data.cyclesEnabled !== undefined)
+            updateData.cyclesEnabled = data.cyclesEnabled;
+        const updated = await this.prisma.workspace.update({
+            where: { id: workspaceId },
+            data: updateData,
+            include: {
+                projects: true,
+                members: {
+                    include: {
+                        user: {
+                            select: { id: true, name: true, email: true, avatarUrl: true },
+                        },
+                    },
+                },
+            },
+        });
+        return {
+            ...updated,
+            role: membership.role,
+        };
+    }
     async updateMemberRole(workspaceId, memberId, role) {
         const member = await this.prisma.workspaceMember.findUnique({
             where: { id: memberId },

@@ -7,7 +7,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { TaskStatus, TaskPriority } from '@prisma/client';
 import { EmailService } from '../email/email.service.js';
@@ -621,12 +621,79 @@ let TasksService = class TasksService {
         }
         return comment;
     }
+    async updateComment(commentId, userId, content) {
+        const existing = await this.prisma.comment.findUnique({
+            where: { id: commentId },
+            include: {
+                task: {
+                    include: {
+                        workspace: {
+                            include: {
+                                members: true,
+                            },
+                        },
+                    },
+                },
+            },
+        });
+        if (!existing) {
+            throw new NotFoundException('Comment not found');
+        }
+        const member = existing.task.workspace?.members?.find((m) => m.userId === userId);
+        const isOwnerOrAdmin = member?.role === 'OWNER' || member?.role === 'ADMIN';
+        if (existing.userId !== userId && !isOwnerOrAdmin) {
+            throw new ForbiddenException('You do not have permission to edit this comment');
+        }
+        const updated = await this.prisma.comment.update({
+            where: { id: commentId },
+            data: {
+                content,
+            },
+            include: {
+                user: {
+                    select: { id: true, name: true, email: true, avatarUrl: true },
+                },
+            },
+        });
+        this.eventsGateway.emitCommentUpdated(existing.task.workspaceId, {
+            taskId: existing.taskId,
+            comment: updated,
+        });
+        return updated;
+    }
     async deleteComment(commentId, userId) {
-        return this.prisma.comment.delete({
+        const existing = await this.prisma.comment.findUnique({
+            where: { id: commentId },
+            include: {
+                task: {
+                    include: {
+                        workspace: {
+                            include: {
+                                members: true,
+                            },
+                        },
+                    },
+                },
+            },
+        });
+        if (!existing) {
+            throw new NotFoundException('Comment not found');
+        }
+        const member = existing.task.workspace?.members?.find((m) => m.userId === userId);
+        const isOwnerOrAdmin = member?.role === 'OWNER' || member?.role === 'ADMIN';
+        if (existing.userId !== userId && !isOwnerOrAdmin) {
+            throw new ForbiddenException('You do not have permission to delete this comment');
+        }
+        const deleted = await this.prisma.comment.delete({
             where: {
                 id: commentId,
             },
         });
+        this.eventsGateway.emitCommentDeleted(existing.task.workspaceId, {
+            taskId: existing.taskId,
+            commentId,
+        });
+        return deleted;
     }
     async createSubTask(parentId, userId, data) {
         const parentTask = await this.prisma.task.findUnique({

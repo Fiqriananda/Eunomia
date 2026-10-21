@@ -46,7 +46,7 @@ export function CommandMenu({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-start justify-center pt-24 p-4">
+      <div className="fixed inset-0 z-50 flex items-start justify-center pt-12 sm:pt-24 p-3 sm:p-4">
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -72,7 +72,7 @@ export function CommandMenu({
               />
             </div>
 
-            <Command.List className="max-h-80 overflow-y-auto p-2 space-y-1 text-xs">
+            <Command.List className="max-h-[60vh] sm:max-h-80 overflow-y-auto p-2 space-y-1 text-xs">
               <Command.Empty className="py-6 text-center text-muted-foreground">
                 No matching results found.
               </Command.Empty>

@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { WorkspaceMember } from '../../types';
 import { cn } from '../../lib/utils';
+import { useAuth } from '../../context/AuthContext';
 import {
   ExternalLink,
   Loader2,
@@ -178,9 +179,39 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
 }) => {
   if (!content) return null;
 
-  const memberNames = membersList
-    .map((m) => m.user?.name)
-    .filter(Boolean) as string[];
+  const { workspace } = useAuth();
+
+  const effectiveMembers = useMemo(() => {
+    if (membersList && membersList.length > 0) return membersList;
+    return workspace?.members || [];
+  }, [membersList, workspace?.members]);
+
+  const memberNames = useMemo(() => {
+    const names = new Set<string>();
+    effectiveMembers.forEach((m) => {
+      if (m.user?.name) names.add(m.user.name.trim());
+      if (m.user?.email) names.add(m.user.email.split('@')[0].trim());
+    });
+    return Array.from(names);
+  }, [effectiveMembers]);
+
+  // Master regex for inline markdown, dynamically matching full workspace member names
+  const masterRegex = useMemo(() => {
+    const escapedMembers = [...memberNames]
+      .filter((n) => n && n.trim().length > 0)
+      .sort((a, b) => b.length - a.length)
+      .map((n) => n.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+
+    const mentionPattern =
+      escapedMembers.length > 0
+        ? `(@(?:${escapedMembers.join('|')}|[a-zA-Z0-9_\\-\\.]+)(?=$|[\\s.,!?:;]))`
+        : `(@[a-zA-Z0-9_\\-\\.]+(?=$|[\\s.,!?:;]))`;
+
+    return new RegExp(
+      `(!\\[(.*?)\\]\\((.*?)\\)|\\[(.*?)\\]\\((.*?)\\)|~~([^~]+)~~|\\*\\*\\*([^*]+)\\*\\*\\*|\\*\\*([^*]+)\\*\\*|\\*([^*]+)\\*|\`([^\`]+)\`|${mentionPattern}|(https?:\\/\\/[^\\s]+))`,
+      'gi',
+    );
+  }, [memberNames]);
 
   // Helper to toggle checkbox on a specific line
   const handleToggleCheckbox = (lineIndex: number, currentChecked: boolean) => {
@@ -211,24 +242,14 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
 
   // Helper to parse inline markdown (images, links, bold, italic, strikethrough, code, mentions)
   const renderInline = (text: string, keyPrefix: string): React.ReactNode[] => {
-    // Regex for:
-    // 1. Image: ![alt](url)
-    // 2. Link: [text](url)
-    // 3. Strikethrough: ~~text~~
-    // 4. Bold + Italic: ***text*** or ___text___
-    // 5. Bold: **text** or __text__
-    // 6. Italic: *text* or _text_
-    // 7. Inline code: `code`
-    // 8. Mentions: @username
-    // 9. Autolinks: https://...
-    const masterRegex =
-      /(!\[(.*?)\]\((.*?)\)|\[(.*?)\]\((.*?)\)|~~([^~]+)~~|\*\*\*([^*]+)\*\*\*|\*\*([^*]+)\*\*|\*([^*]+)\*|`([^`]+)`|(@[a-zA-Z0-9_\-\.\s]+?(?=\s|$|[.,!?]))|(https?:\/\/[^\s]+))/g;
+    const regex = new RegExp(masterRegex.source, masterRegex.flags);
+    regex.lastIndex = 0;
 
     const nodes: React.ReactNode[] = [];
     let lastIdx = 0;
     let match: RegExpExecArray | null;
 
-    while ((match = masterRegex.exec(text)) !== null) {
+    while ((match = regex.exec(text)) !== null) {
       if (match.index > lastIdx) {
         nodes.push(
           <span key={`${keyPrefix}-txt-${lastIdx}`}>
@@ -380,7 +401,9 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
       else if (fullMatch.startsWith('@')) {
         const mentionName = fullMatch.slice(1).trim();
         const isKnownMember = memberNames.some(
-          (n) => n.toLowerCase() === mentionName.toLowerCase(),
+          (n) =>
+            n.toLowerCase() === mentionName.toLowerCase() ||
+            n.toLowerCase().split(' ')[0] === mentionName.toLowerCase(),
         );
         nodes.push(
           <span
@@ -412,7 +435,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
         );
       }
 
-      lastIdx = masterRegex.lastIndex;
+      lastIdx = regex.lastIndex;
     }
 
     if (lastIdx < text.length) {

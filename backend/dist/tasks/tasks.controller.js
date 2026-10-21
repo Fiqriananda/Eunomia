@@ -76,6 +76,9 @@ let TasksController = class TasksController {
     async addComment(taskId, userId, body) {
         return this.tasksService.addComment(taskId, userId, body.content);
     }
+    async updateComment(taskId, commentId, userId, body) {
+        return this.tasksService.updateComment(commentId, userId, body.content);
+    }
     async deleteComment(commentId, userId) {
         return this.tasksService.deleteComment(commentId, userId);
     }
@@ -254,6 +257,19 @@ __decorate([
     __metadata("design:paramtypes", [String, String, Object]),
     __metadata("design:returntype", Promise)
 ], TasksController.prototype, "addComment", null);
+__decorate([
+    Patch(':id/comments/:commentId'),
+    ApiOperation({ summary: 'Update comment on task' }),
+    ApiParam({ name: 'id', description: 'Task ID' }),
+    ApiParam({ name: 'commentId', description: 'Comment ID' }),
+    __param(0, Param('id')),
+    __param(1, Param('commentId')),
+    __param(2, CurrentUser('id')),
+    __param(3, Body()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, String, Object]),
+    __metadata("design:returntype", Promise)
+], TasksController.prototype, "updateComment", null);
 __decorate([
     Delete(':id/comments/:commentId'),
     ApiOperation({ summary: 'Delete comment on task' }),

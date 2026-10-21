@@ -218,7 +218,7 @@ export function CyclesView({ workspace, onTaskClick, onOpenCreateTask }: CyclesV
       )}
 
       {/* Cycle Selector Tabs */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
         {cycles.map((c) => {
           const isSelected = c.id === displayedCycle?.id;
           return (

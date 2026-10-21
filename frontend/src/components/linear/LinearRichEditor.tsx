@@ -164,9 +164,21 @@ function markdownToHtml(md: string, membersList: WorkspaceMember[] = []): string
     const imgMatch = trimmed.match(/^!\[(.*?)\]\((.*?)\)$/);
     if (imgMatch) {
       closeList();
-      const resolvedUrl = resolveMediaUrl(imgMatch[2].trim());
+      const rawUrl = imgMatch[2].trim();
+      const resolvedUrl = resolveMediaUrl(rawUrl);
+      const altText = escapeHtml(imgMatch[1] || 'image');
       htmlLines.push(
-        `<div class="my-3"><img src="${resolvedUrl}" alt="${imgMatch[1]}" class="max-h-96 rounded-lg border border-border/40 object-contain shadow-md cursor-pointer block hover:opacity-95 transition-opacity" /></div>`,
+        `<div class="editor-image-card group relative inline-block my-3 max-w-full rounded-lg overflow-hidden border border-border/50 bg-[#161722] shadow-md select-none" contenteditable="false" data-image-url="${rawUrl}">` +
+          `<img src="${resolvedUrl}" alt="${altText}" class="max-h-96 rounded-lg object-contain block hover:opacity-95 transition-opacity" />` +
+          `<div class="image-actions absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-black/75 backdrop-blur-md px-1.5 py-1 rounded-md border border-white/10 shadow-lg">` +
+            `<button type="button" class="btn-preview-img p-1 text-zinc-300 hover:text-white rounded hover:bg-white/10 transition-colors cursor-pointer" title="Preview image">` +
+              `<svg class="w-3.5 h-3.5 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>` +
+            `</button>` +
+            `<button type="button" class="btn-delete-img p-1 text-zinc-400 hover:text-rose-400 rounded hover:bg-rose-500/20 transition-colors cursor-pointer" title="Delete image">` +
+              `<svg class="w-3.5 h-3.5 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>` +
+            `</button>` +
+          `</div>` +
+        `</div><p><br></p>`,
       );
       continue;
     }
@@ -205,13 +217,16 @@ function escapeHtml(text: string): string {
 function formatInline(text: string, membersList: WorkspaceMember[] = []): string {
   let res = escapeHtml(text);
 
-  // Match team member names first for accurate mentions
-  for (const m of membersList) {
+  // Match team member names first (longest names first) for accurate multi-word mentions
+  const sortedMembers = [...membersList].sort(
+    (a, b) => (b.user?.name?.length || 0) - (a.user?.name?.length || 0),
+  );
+  for (const m of sortedMembers) {
     if (m.user?.name) {
       const name = m.user.name;
       const escapedName = escapeHtml(name);
       const mentionRegex = new RegExp(
-        `@${escapedName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`,
+        `@${escapedName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=$|[\\s.,!?:;])`,
         'gi',
       );
       res = res.replace(
@@ -305,6 +320,9 @@ function htmlToMarkdown(node: Node): string {
     case 'a':
       return `[${childrenMd}](${el.getAttribute('href') || ''})`;
     case 'img': {
+      if (el.closest('.editor-image-card')) {
+        return '';
+      }
       const src = el.getAttribute('src') || '';
       const alt = el.getAttribute('alt') || 'image';
       return `\n![${alt}](${src})\n\n`;
@@ -322,6 +340,15 @@ function htmlToMarkdown(node: Node): string {
       }
       return childrenMd;
     case 'div':
+      if (el.classList.contains('editor-image-card')) {
+        const img = el.querySelector('img');
+        if (img) {
+          const src = img.getAttribute('src') || el.getAttribute('data-image-url') || '';
+          const alt = img.getAttribute('alt') || 'image';
+          return `\n![${alt}](${src})\n\n`;
+        }
+        return '';
+      }
       if (el.classList.contains('task-checkbox-item')) {
         const input = el.querySelector(
           'input[type="checkbox"]',
@@ -606,16 +633,68 @@ export function LinearRichEditor({
       return;
     }
 
-    // Image click lightbox
+    // Delete image action
+    const deleteBtn = target.closest('.btn-delete-img');
+    if (deleteBtn) {
+      e.preventDefault();
+      e.stopPropagation();
+      const card = deleteBtn.closest('.editor-image-card');
+      if (card) {
+        const attachmentId = card.getAttribute('data-attachment-id');
+        if (attachmentId) {
+          api.uploads.delete(attachmentId).catch((err) => console.warn('Could not delete upload:', err));
+        }
+        const nextEl = card.nextElementSibling;
+        const parent = card.parentElement;
+        card.remove();
+
+        if (nextEl && nextEl.tagName.toLowerCase() === 'p') {
+          const range = document.createRange();
+          range.setStart(nextEl, 0);
+          range.collapse(true);
+          const sel = window.getSelection();
+          sel?.removeAllRanges();
+          sel?.addRange(range);
+        } else if (parent) {
+          const p = document.createElement('p');
+          p.innerHTML = '<br>';
+          parent.appendChild(p);
+          const range = document.createRange();
+          range.setStart(p, 0);
+          range.collapse(true);
+          const sel = window.getSelection();
+          sel?.removeAllRanges();
+          sel?.addRange(range);
+        }
+        syncMarkdown();
+      }
+      return;
+    }
+
+    // Preview image action
+    const previewBtn = target.closest('.btn-preview-img');
+    if (previewBtn) {
+      e.preventDefault();
+      e.stopPropagation();
+      const card = previewBtn.closest('.editor-image-card');
+      const img = card?.querySelector('img');
+      if (img?.src && onImageClick) {
+        onImageClick(img.src);
+      }
+      return;
+    }
+
+    // Direct image click also opens preview
     if (target.tagName.toLowerCase() === 'img') {
       const src = (target as HTMLImageElement).src;
       if (src && onImageClick) {
         onImageClick(src);
       }
+      return;
     }
   };
 
-  // Upload an image file and insert <img> element directly into contentEditable
+  // Upload an image file and insert interactive image card directly into contentEditable
   const uploadAndInsertImage = async (file: File) => {
     setIsUploading(true);
     try {
@@ -625,18 +704,44 @@ export function LinearRichEditor({
       if (!editorRef.current) return;
       editorRef.current.focus();
 
-      const img = document.createElement('img');
-      img.src = finalUrl;
-      img.alt = file.name || 'image';
-      img.className =
-        'max-h-96 rounded-lg border border-border/40 my-3 object-contain block shadow-md cursor-pointer hover:opacity-95 transition-opacity';
+      const card = document.createElement('div');
+      card.className =
+        'editor-image-card group relative inline-block my-3 max-w-full rounded-lg overflow-hidden border border-border/50 bg-[#161722] shadow-md select-none';
+      card.setAttribute('contenteditable', 'false');
+      card.setAttribute('data-image-url', res.url);
+      if (res.id) card.setAttribute('data-attachment-id', res.id);
+
+      const altText = escapeHtml(file.name || 'image');
+      card.innerHTML = `
+        <img src="${finalUrl}" alt="${altText}" class="max-h-96 rounded-lg object-contain block hover:opacity-95 transition-opacity" />
+        <div class="image-actions absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-black/75 backdrop-blur-md px-1.5 py-1 rounded-md border border-white/10 shadow-lg">
+          <button type="button" class="btn-preview-img p-1 text-zinc-300 hover:text-white rounded hover:bg-white/10 transition-colors cursor-pointer" title="Preview image">
+            <svg class="w-3.5 h-3.5 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+          </button>
+          <button type="button" class="btn-delete-img p-1 text-zinc-400 hover:text-rose-400 rounded hover:bg-rose-500/20 transition-colors cursor-pointer" title="Delete image">
+            <svg class="w-3.5 h-3.5 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+          </button>
+        </div>
+      `;
+
+      const afterP = document.createElement('p');
+      afterP.innerHTML = '<br>';
 
       const sel = window.getSelection();
       if (sel && sel.rangeCount > 0) {
         const range = sel.getRangeAt(0);
-        range.insertNode(img);
+        range.collapse(false);
+        range.insertNode(afterP);
+        range.insertNode(card);
+
+        const newRange = document.createRange();
+        newRange.setStart(afterP, 0);
+        newRange.collapse(true);
+        sel.removeAllRanges();
+        sel.addRange(newRange);
       } else {
-        editorRef.current.appendChild(img);
+        editorRef.current.appendChild(card);
+        editorRef.current.appendChild(afterP);
       }
       syncMarkdown();
     } catch (err) {

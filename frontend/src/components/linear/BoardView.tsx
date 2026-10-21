@@ -281,7 +281,7 @@ export function BoardView({
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <div className="flex gap-4 overflow-x-auto pb-6 pt-1 px-1">
+      <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-6 pt-1 px-2 sm:px-4 snap-x snap-mandatory sm:snap-none no-scrollbar">
         {groupBy === 'priority' ? (
           PRIORITY_COLUMNS.map((priority) => {
             const columnTasks = uniqueTasks
@@ -347,7 +347,7 @@ export function BoardView({
 
             {/* + Add Section Button & Inline Popover Form */}
             {onCreateSection && (
-              <div className="w-80 shrink-0">
+              <div className="w-[85vw] max-w-[340px] sm:w-80 shrink-0 snap-center sm:snap-align-none">
                 {!isAddingSection ? (
                   <button
                     onClick={() => setIsAddingSection(true)}

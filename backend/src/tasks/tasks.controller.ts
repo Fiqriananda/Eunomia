@@ -249,6 +249,19 @@ export class TasksController {
     return this.tasksService.addComment(taskId, userId, body.content);
   }
 
+  @Patch(':id/comments/:commentId')
+  @ApiOperation({ summary: 'Update comment on task' })
+  @ApiParam({ name: 'id', description: 'Task ID' })
+  @ApiParam({ name: 'commentId', description: 'Comment ID' })
+  async updateComment(
+    @Param('id') taskId: string,
+    @Param('commentId') commentId: string,
+    @CurrentUser('id') userId: string,
+    @Body() body: { content: string },
+  ) {
+    return this.tasksService.updateComment(commentId, userId, body.content);
+  }
+
   @Delete(':id/comments/:commentId')
   @ApiOperation({ summary: 'Delete comment on task' })
   @ApiParam({ name: 'id', description: 'Task ID' })

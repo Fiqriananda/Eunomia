@@ -198,7 +198,7 @@ export function TeamView({
   return (
     <div className="flex-1 flex flex-col h-full bg-[#090a0f] text-zinc-100 overflow-y-auto">
       {/* Top Header */}
-      <div className="border-b border-border/60 bg-[#0c0d14]/80 backdrop-blur px-6 py-6 sticky top-0 z-10">
+      <div className="border-b border-border/60 bg-[#0c0d14]/80 backdrop-blur px-4 sm:px-6 py-4 sm:py-6 sticky top-0 z-10">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2.5">
@@ -232,7 +232,7 @@ export function TeamView({
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto w-full px-6 py-6 space-y-6">
+      <div className="max-w-6xl mx-auto w-full px-4 sm:px-6 py-4 sm:py-6 space-y-6">
         {/* Metric Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="bg-[#12131d]/60 border border-border/50 rounded-xl p-4 flex items-center gap-3.5">

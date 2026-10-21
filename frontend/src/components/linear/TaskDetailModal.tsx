@@ -35,6 +35,9 @@ import {
   GitFork,
   Link as LinkIcon,
   Image as ImageIcon,
+  ArrowLeft,
+  Pencil,
+  Link2,
 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { api } from '../../lib/api';
@@ -135,6 +138,39 @@ export function TaskDetailModal({
   const [isUploadingDescImage, setIsUploadingDescImage] = useState(false);
   const [isUploadingCommentImage, setIsUploadingCommentImage] = useState(false);
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
+
+  // Comment edit & copy link state
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [editingCommentText, setEditingCommentText] = useState('');
+  const [isUpdatingComment, setIsUpdatingComment] = useState(false);
+  const [copiedCommentId, setCopiedCommentId] = useState<string | null>(null);
+  const [highlightedCommentId, setHighlightedCommentId] = useState<string | null>(null);
+
+  // Deep-link anchor detection for #comment-...
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const checkHash = () => {
+      const hash = window.location.hash;
+      if (hash && hash.startsWith('#comment-')) {
+        const commentId = hash.replace('#comment-', '');
+        setHighlightedCommentId(commentId);
+        setTimeout(() => {
+          const el = document.getElementById(`comment-${commentId}`);
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }, 300);
+        const timer = setTimeout(() => {
+          setHighlightedCommentId(null);
+        }, 4000);
+        return () => clearTimeout(timer);
+      }
+    };
+
+    checkHash();
+    window.addEventListener('hashchange', checkHash);
+    return () => window.removeEventListener('hashchange', checkHash);
+  }, [task?.id, comments.length]);
 
   // Collect all unique labels ever used in this workspace plus standard preset labels
   const allWorkspaceLabels = useMemo(() => {
@@ -560,11 +596,56 @@ export function TaskDetailModal({
     }
   };
 
+  const handleStartEditComment = (comment: TaskComment) => {
+    setEditingCommentId(comment.id);
+    setEditingCommentText(comment.content);
+  };
+
+  const handleCancelEditComment = () => {
+    setEditingCommentId(null);
+    setEditingCommentText('');
+  };
+
+  const handleSaveEditComment = async (commentId: string) => {
+    if (!task || !editingCommentText.trim() || isUpdatingComment) return;
+    setIsUpdatingComment(true);
+    const content = editingCommentText.trim();
+    try {
+      const updated = await api.tasks.updateComment(task.id, commentId, content);
+      setComments((prev) =>
+        prev.map((c) => (c.id === commentId ? { ...c, content: updated.content, updatedAt: updated.updatedAt } : c)),
+      );
+      onUpdate(task.id, {
+        comments: (task.comments || []).map((c) =>
+          c.id === commentId ? { ...c, content: updated.content, updatedAt: updated.updatedAt } : c,
+        ),
+      });
+      setEditingCommentId(null);
+      setEditingCommentText('');
+    } catch (err) {
+      console.error('Failed to update comment:', err);
+    } finally {
+      setIsUpdatingComment(false);
+    }
+  };
+
+  const handleCopyCommentLink = (commentId: string) => {
+    if (!task) return;
+    const url = `${window.location.origin}/issue/${task.id}#comment-${commentId}`;
+    navigator.clipboard.writeText(url);
+    window.history.replaceState(null, '', `#comment-${commentId}`);
+    setCopiedCommentId(commentId);
+    setHighlightedCommentId(commentId);
+    setTimeout(() => {
+      setCopiedCommentId((curr) => (curr === commentId ? null : curr));
+    }, 2000);
+  };
+
   const currentAssignee = members.find((m) => m.userId === assigneeId)?.user || task.assignee;
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4">
         {/* Backdrop */}
         <motion.div
           initial={{ opacity: 0 }}
@@ -580,24 +661,32 @@ export function TaskDetailModal({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.98, y: 10 }}
           transition={{ duration: 0.18, ease: 'easeOut' }}
-          className="relative w-full max-w-6xl h-[92vh] rounded-xl border border-border bg-[#0d0e15] shadow-2xl overflow-hidden flex flex-col z-10"
+          className="relative w-full max-w-6xl h-full sm:h-[92vh] rounded-none sm:rounded-xl border-0 sm:border border-border bg-[#0d0e15] shadow-2xl overflow-hidden flex flex-col z-10"
         >
           {/* Top Breadcrumb & Actions Bar (Matching screenshot) */}
-          <div className="flex h-12 items-center justify-between px-4 sm:px-6 border-b border-border/70 bg-[#11121c]/90 select-none shrink-0">
+          <div className="flex h-12 items-center justify-between px-3 sm:px-6 border-b border-border/70 bg-[#11121c]/90 select-none shrink-0">
             {/* Left: Breadcrumbs */}
-            <div className="flex items-center gap-2 text-xs text-muted-foreground overflow-hidden">
-              <div className="flex items-center gap-1.5 shrink-0 text-zinc-300 font-medium">
+            <div className="flex items-center gap-1.5 sm:gap-2 text-xs text-muted-foreground overflow-hidden">
+              <button
+                onClick={onClose}
+                className="p-1 -ml-1 rounded hover:bg-secondary text-zinc-400 hover:text-white sm:hidden mr-0.5"
+                title="Back"
+              >
+                <ArrowLeft className="w-4 h-4" />
+              </button>
+
+              <div className="hidden sm:flex items-center gap-1.5 shrink-0 text-zinc-300 font-medium">
                 <span className="w-4 h-4 rounded bg-[#5e6ad2] text-[10px] text-white flex items-center justify-center font-bold">
                   {workspace?.name?.[0] || 'L'}
                 </span>
                 <span>{workspace?.name || 'Workspace'}</span>
               </div>
 
-              <span>›</span>
+              <span className="hidden sm:inline">›</span>
 
-              <span className="shrink-0 text-zinc-400">Issues</span>
+              <span className="shrink-0 text-zinc-400 hidden sm:inline">Issues</span>
 
-              <span>›</span>
+              <span className="hidden sm:inline">›</span>
 
               <button
                 type="button"
@@ -735,9 +824,9 @@ export function TaskDetailModal({
           )}
 
           {/* Main Body: Two-column layout (Left: Title, Description, Uploads, Comments | Right: Properties sidebar) */}
-          <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
+          <div className="flex-1 flex flex-col lg:flex-row overflow-y-auto lg:overflow-hidden">
             {/* Left Main Area: Scrollable */}
-            <div className="flex-1 overflow-y-auto p-6 lg:p-8 space-y-8">
+            <div className="flex-1 overflow-y-visible lg:overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8">
               {/* Sub-issue parent link banner */}
               {task.parent && (
                 <div className="flex items-center gap-2">
@@ -863,7 +952,12 @@ export function TaskDetailModal({
                     comments.map((c) => (
                       <div
                         key={c.id}
-                        className="flex items-start gap-3 p-3.5 rounded-lg bg-[#12131d]/80 border border-border/50 hover:border-border transition-colors group relative"
+                        id={`comment-${c.id}`}
+                        className={`flex items-start gap-3 p-3.5 rounded-lg border transition-all duration-300 group relative ${
+                          highlightedCommentId === c.id
+                            ? 'bg-indigo-500/15 border-indigo-500/60 ring-2 ring-indigo-500/50 shadow-lg shadow-indigo-500/20'
+                            : 'bg-[#12131d]/80 border-border/50 hover:border-border'
+                        }`}
                       >
                         <img
                           src={
@@ -889,22 +983,114 @@ export function TaskDetailModal({
                                 minute: '2-digit',
                               })}
                             </span>
+                            {c.updatedAt &&
+                              new Date(c.updatedAt).getTime() - new Date(c.createdAt).getTime() > 2000 && (
+                                <span
+                                  className="text-[10px] text-zinc-500 italic"
+                                  title={`Edited at ${new Date(c.updatedAt).toLocaleTimeString()}`}
+                                >
+                                  (edited)
+                                </span>
+                              )}
                           </div>
 
-                          <div className="mt-1.5 text-xs text-zinc-300 leading-relaxed whitespace-pre-wrap">
-                            {renderCommentContentWithMentions(c.content, members)}
-                          </div>
+                          {editingCommentId === c.id ? (
+                            <div className="mt-2 space-y-2">
+                              <textarea
+                                value={editingCommentText}
+                                onChange={(e) => setEditingCommentText(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+                                    e.preventDefault();
+                                    handleSaveEditComment(c.id);
+                                  } else if (e.key === 'Escape') {
+                                    e.preventDefault();
+                                    handleCancelEditComment();
+                                  }
+                                }}
+                                rows={3}
+                                className="w-full bg-[#161726] border border-border focus:border-indigo-500 rounded-lg p-2.5 text-xs text-foreground placeholder:text-zinc-500 focus:outline-none resize-none leading-relaxed"
+                                autoFocus
+                              />
+                              <div className="flex items-center justify-between">
+                                <span className="text-[10px] text-zinc-500">
+                                  Esc to cancel • Cmd+Enter to save
+                                </span>
+                                <div className="flex items-center gap-1.5">
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={handleCancelEditComment}
+                                    disabled={isUpdatingComment}
+                                    className="h-6 text-xs px-2 text-zinc-400 hover:text-white"
+                                  >
+                                    Cancel
+                                  </Button>
+                                  <Button
+                                    type="button"
+                                    variant="linear"
+                                    size="sm"
+                                    onClick={() => handleSaveEditComment(c.id)}
+                                    disabled={!editingCommentText.trim() || isUpdatingComment}
+                                    className="h-6 text-xs px-2.5"
+                                  >
+                                    {isUpdatingComment ? (
+                                      <Loader2 className="w-3 h-3 animate-spin mr-1" />
+                                    ) : (
+                                      <Check className="w-3 h-3 mr-1" />
+                                    )}
+                                    Save
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="mt-1.5 text-xs text-zinc-300 leading-relaxed whitespace-pre-wrap">
+                              {renderCommentContentWithMentions(c.content, members)}
+                            </div>
+                          )}
                         </div>
 
-                        {c.userId === user?.id && (
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          {/* Copy Link to Comment */}
                           <button
-                            onClick={() => handleDeleteComment(c.id)}
-                            className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-destructive/20 text-zinc-500 hover:text-destructive transition-all"
-                            title="Delete comment"
+                            onClick={() => handleCopyCommentLink(c.id)}
+                            className="p-1 rounded hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors relative"
+                            title={copiedCommentId === c.id ? 'Copied!' : 'Copy link to comment'}
                           >
-                            <Trash2 className="w-3 h-3" />
+                            {copiedCommentId === c.id ? (
+                              <span className="flex items-center gap-1 text-[10px] text-emerald-400 font-medium px-1">
+                                <Check className="w-3 h-3 text-emerald-400" />
+                                <span>Copied</span>
+                              </span>
+                            ) : (
+                              <Link2 className="w-3 h-3" />
+                            )}
                           </button>
-                        )}
+
+                          {/* Edit Comment */}
+                          {(c.userId === user?.id || workspace?.role === 'OWNER' || workspace?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleStartEditComment(c)}
+                              className="p-1 rounded hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors"
+                              title="Edit comment"
+                            >
+                              <Pencil className="w-3 h-3" />
+                            </button>
+                          )}
+
+                          {/* Delete Comment */}
+                          {(c.userId === user?.id || workspace?.role === 'OWNER' || workspace?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteComment(c.id)}
+                              className="p-1 rounded hover:bg-destructive/20 text-zinc-500 hover:text-destructive transition-all"
+                              title="Delete comment"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </button>
+                          )}
+                        </div>
                       </div>
                     ))
                   )}
@@ -1078,7 +1264,7 @@ export function TaskDetailModal({
             </div>
 
             {/* Right Sidebar: Properties (Matches Linear sidebar from screenshot) */}
-            <div className="w-full lg:w-72 border-t lg:border-t-0 lg:border-l border-border/70 bg-[#0f1019] p-5 space-y-6 shrink-0 overflow-y-auto select-none">
+            <div className="w-full lg:w-72 border-t lg:border-t-0 lg:border-l border-border/70 bg-[#0f1019] p-4 sm:p-5 space-y-6 shrink-0 lg:overflow-y-auto select-none">
               <div className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">
                 Properties
               </div>

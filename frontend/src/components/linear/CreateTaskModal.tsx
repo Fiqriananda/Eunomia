@@ -10,6 +10,7 @@ import { X, Sparkles, Loader2, RotateCw } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input, Textarea } from '../ui/input';
 import { LinearRichEditor } from './LinearRichEditor';
+import { useAuth } from '../../context/AuthContext';
 
 interface CreateTaskModalProps {
   isOpen: boolean;
@@ -55,6 +56,7 @@ export function CreateTaskModal({
   sections = [],
   cycles = [],
 }: CreateTaskModalProps) {
+  const { workspace } = useAuth();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [projectId, setProjectId] = useState(defaultProjectId || (projects[0]?.id ?? ''));
@@ -126,7 +128,7 @@ export function CreateTaskModal({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4">
         {/* Backdrop */}
         <motion.div
           initial={{ opacity: 0 }}
@@ -142,10 +144,10 @@ export function CreateTaskModal({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 15 }}
           transition={{ type: 'spring', damping: 25, stiffness: 350 }}
-          className="relative w-full max-w-xl rounded-xl border border-border bg-[#0e1017] shadow-2xl overflow-hidden flex flex-col"
+          className="relative w-full max-w-xl max-h-[92vh] sm:max-h-[85vh] rounded-xl border border-border bg-[#0e1017] shadow-2xl overflow-hidden flex flex-col"
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-5 py-3.5 border-b border-border/70 bg-[#12131d]/80">
+          <div className="flex items-center justify-between px-4 sm:px-5 py-3 sm:py-3.5 border-b border-border/70 bg-[#12131d]/80 shrink-0">
             <div className="flex items-center gap-2.5">
               <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 New Issue
@@ -168,7 +170,7 @@ export function CreateTaskModal({
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="p-5 space-y-4">
+          <form onSubmit={handleSubmit} className="p-4 sm:p-5 space-y-4 overflow-y-auto flex-1">
             <div>
               <Input
                 autoFocus
@@ -191,7 +193,7 @@ export function CreateTaskModal({
             </div>
 
             {/* Selectors Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 pt-2 border-t border-border/40 text-xs">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 pt-2 border-t border-border/40 text-xs">
               {/* Project */}
               <div className="space-y-1">
                 <span className="text-[11px] text-muted-foreground font-medium">Project</span>
@@ -269,21 +271,23 @@ export function CreateTaskModal({
               </div>
 
               {/* Cycle / Sprint */}
-              <div className="space-y-1">
-                <span className="text-[11px] text-muted-foreground font-medium">Cycle (Sprint)</span>
-                <select
-                  value={cycleId}
-                  onChange={(e) => setCycleId(e.target.value)}
-                  className="w-full bg-[#1b1d2c] border border-border text-foreground rounded px-2 py-1.5 text-xs focus:ring-1 focus:ring-primary focus:outline-none cursor-pointer"
-                >
-                  <option value="">No Cycle</option>
-                  {cycles.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name} {c.status === 'ACTIVE' ? '(Active)' : ''}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              {workspace?.cyclesEnabled !== false && (
+                <div className="space-y-1">
+                  <span className="text-[11px] text-muted-foreground font-medium">Cycle (Sprint)</span>
+                  <select
+                    value={cycleId}
+                    onChange={(e) => setCycleId(e.target.value)}
+                    className="w-full bg-[#1b1d2c] border border-border text-foreground rounded px-2 py-1.5 text-xs focus:ring-1 focus:ring-primary focus:outline-none cursor-pointer"
+                  >
+                    <option value="">No Cycle</option>
+                    {cycles.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name} {c.status === 'ACTIVE' ? '(Active)' : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               {/* Story Points Estimate */}
               <div className="space-y-1">
@@ -316,7 +320,7 @@ export function CreateTaskModal({
             </div>
 
             {/* Actions */}
-            <div className="flex items-center justify-end gap-2 pt-3 border-t border-border/40">
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-border/40 shrink-0 sticky bottom-0 bg-[#0e1017]">
               <Button type="button" variant="ghost" onClick={onClose} disabled={submitting}>
                 Cancel
               </Button>

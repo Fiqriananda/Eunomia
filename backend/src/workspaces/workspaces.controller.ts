@@ -66,6 +66,26 @@ export class WorkspacesController {
     return this.workspacesService.getWorkspaceById(id, userId);
   }
 
+  @Patch(':id')
+  @ApiOperation({ summary: 'Update workspace settings (e.g. name, cyclesEnabled)' })
+  @ApiParam({ name: 'id', description: 'Workspace ID' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        name: { type: 'string', example: 'Acme Corp' },
+        cyclesEnabled: { type: 'boolean', example: false },
+      },
+    },
+  })
+  async updateWorkspace(
+    @Param('id') id: string,
+    @CurrentUser('id') userId: string,
+    @Body() body: { name?: string; cyclesEnabled?: boolean },
+  ) {
+    return this.workspacesService.updateWorkspace(id, userId, body);
+  }
+
   @Post()
   @ApiOperation({ summary: 'Create a new workspace' })
   @ApiBody({ schema: { type: 'object', required: ['name'], properties: { name: { type: 'string', example: 'Acme Corp' } } } })

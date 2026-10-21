@@ -1379,6 +1379,21 @@ export declare class TasksService {
         content: string;
         taskId: string;
     }>;
+    updateComment(commentId: string, userId: string, content: string): Promise<{
+        user: {
+            id: string;
+            email: string;
+            name: string;
+            avatarUrl: string | null;
+        };
+    } & {
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        userId: string;
+        content: string;
+        taskId: string;
+    }>;
     deleteComment(commentId: string, userId: string): Promise<{
         id: string;
         createdAt: Date;

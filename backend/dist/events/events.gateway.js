@@ -100,6 +100,12 @@ let EventsGateway = EventsGateway_1 = class EventsGateway {
     emitCommentCreated(workspaceId, payload) {
         this.server.to(`workspace_${workspaceId}`).emit('comment:created', payload);
     }
+    emitCommentUpdated(workspaceId, payload) {
+        this.server.to(`workspace_${workspaceId}`).emit('comment:updated', payload);
+    }
+    emitCommentDeleted(workspaceId, payload) {
+        this.server.to(`workspace_${workspaceId}`).emit('comment:deleted', payload);
+    }
     emitNotification(userId, notification) {
         this.server.to(`user_${userId}`).emit('notification:new', notification);
     }

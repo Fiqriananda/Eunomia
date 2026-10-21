@@ -20,6 +20,8 @@ import {
   Inbox,
   User as UserIcon,
   Users,
+  Settings,
+  Menu,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { EunomiaLogo } from '../ui/EunomiaLogo';
@@ -32,6 +34,8 @@ interface NavbarProps {
   onOpenInviteModal?: () => void;
   onOpenTeam?: () => void;
   onOpenInbox?: () => void;
+  onOpenWorkspaceSettings?: () => void;
+  onOpenMobileNav?: () => void;
   unreadInboxCount?: number;
   searchQuery: string;
   onSearchChange: (q: string) => void;
@@ -45,6 +49,8 @@ export function Navbar({
   onOpenInviteModal,
   onOpenTeam,
   onOpenInbox,
+  onOpenWorkspaceSettings,
+  onOpenMobileNav,
   unreadInboxCount,
   searchQuery,
   onSearchChange,
@@ -81,7 +87,18 @@ export function Navbar({
       {/* Top Bar */}
       <div className="flex h-12 items-center justify-between px-4 sm:px-6">
         {/* Left: Workspace & Project Switcher */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
+          {/* Mobile Menu Hamburger Button */}
+          {onOpenMobileNav && (
+            <button
+              onClick={onOpenMobileNav}
+              className="p-1.5 -ml-1 rounded-md text-zinc-400 hover:text-white hover:bg-secondary/70 md:hidden transition-colors"
+              title="Open Navigation Menu"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+          )}
+
           {/* Eunomia Brand Logo */}
           <div className="flex items-center gap-2 pr-2 border-r border-border/60">
             <div className="w-6 h-6 flex items-center justify-center drop-shadow-[0_0_8px_rgba(255,180,93,0.35)]">
@@ -100,14 +117,14 @@ export function Navbar({
                 setIsProjOpen(false);
               }}
               className={cn(
-                'flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium transition-colors border',
+                'flex items-center gap-1.5 px-2 sm:px-2.5 py-1 rounded text-xs font-medium transition-colors border',
                 isWsOpen
                   ? 'bg-[#181926] border-border text-white'
                   : 'border-transparent hover:bg-secondary/70 text-foreground',
               )}
             >
               <Building2 className="w-3.5 h-3.5 text-zinc-400" />
-              <span className="max-w-[140px] truncate">{workspace?.name || 'Workspace'}</span>
+              <span className="max-w-[90px] sm:max-w-[140px] truncate">{workspace?.name || 'Workspace'}</span>
               <ChevronDown
                 className={cn(
                   'w-3 h-3 text-zinc-500 transition-transform duration-150',
@@ -158,8 +175,21 @@ export function Navbar({
                   </div>
                 )}
 
-                {onOpenInviteModal && (
-                  <div className="pt-1 mt-1 border-t border-border/40">
+                <div className="pt-1 mt-1 border-t border-border/40 space-y-0.5">
+                  {onOpenWorkspaceSettings && (
+                    <button
+                      onClick={() => {
+                        setIsWsOpen(false);
+                        onOpenWorkspaceSettings();
+                      }}
+                      className="w-full text-left px-2 py-1.5 text-xs rounded hover:bg-secondary text-zinc-300 hover:text-white flex items-center gap-2 transition-colors font-medium"
+                    >
+                      <Settings className="w-3.5 h-3.5 text-zinc-400" />
+                      <span>Workspace settings</span>
+                    </button>
+                  )}
+
+                  {onOpenInviteModal && (
                     <button
                       onClick={() => {
                         setIsWsOpen(false);
@@ -170,16 +200,16 @@ export function Navbar({
                       <UserPlus className="w-3.5 h-3.5" />
                       <span>Invite team members</span>
                     </button>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             )}
           </div>
 
-          <span className="text-zinc-600 text-xs">/</span>
+          <span className="text-zinc-600 text-xs hidden sm:inline">/</span>
 
           {/* Project Switcher (Click to toggle) */}
-          <div ref={projRef} className="relative">
+          <div ref={projRef} className="relative hidden sm:block">
             <button
               onClick={() => {
                 setIsProjOpen((prev) => !prev);
@@ -261,7 +291,16 @@ export function Navbar({
         </div>
 
         {/* Right: Search, Cmd+K, New Issue, User */}
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-1.5 sm:gap-3">
+          {/* Mobile Search Button */}
+          <button
+            onClick={onOpenCommandMenu}
+            className="sm:hidden p-1.5 rounded-md hover:bg-secondary text-zinc-400 hover:text-white transition-colors"
+            title="Search issues"
+          >
+            <Search className="w-4 h-4" />
+          </button>
+
           {/* Search Bar / Cmd+K trigger */}
           <div
             onClick={onOpenCommandMenu}
@@ -279,10 +318,11 @@ export function Navbar({
             onClick={onOpenCreateTask}
             variant="linear"
             size="sm"
-            className="flex items-center gap-1.5 font-medium"
+            className="flex items-center gap-1 font-medium px-2.5 sm:px-3 text-xs"
           >
             <Plus className="w-3.5 h-3.5" />
-            <span>New Issue</span>
+            <span className="hidden sm:inline">New Issue</span>
+            <span className="sm:hidden">New</span>
             <kbd className="hidden md:inline-block ml-1 rounded bg-white/20 px-1 py-0.2 text-[9px] font-mono font-normal">
               C
             </kbd>
@@ -355,6 +395,19 @@ export function Navbar({
                       </button>
                     )}
 
+                    {onOpenWorkspaceSettings && (
+                      <button
+                        onClick={() => {
+                          setIsUserMenuOpen(false);
+                          onOpenWorkspaceSettings();
+                        }}
+                        className="w-full text-left px-2 py-1.5 text-xs rounded hover:bg-secondary text-zinc-200 hover:text-white flex items-center gap-2 transition-colors mt-0.5 font-medium"
+                      >
+                        <Settings className="w-3.5 h-3.5 text-zinc-400" />
+                        <span>Workspace Settings</span>
+                      </button>
+                    )}
+
                     <button
                       onClick={() => {
                         setIsUserMenuOpen(false);
@@ -374,20 +427,20 @@ export function Navbar({
       </div>
 
       {/* Sub Bar: View Switcher (Priority Board, Status Board, List View) */}
-      <div className="flex items-center justify-between px-4 sm:px-6 py-2 border-t border-border/40 bg-[#0d0e15]/60 text-xs">
-        <div className="flex items-center gap-1 bg-[#141520] p-0.5 rounded-lg border border-border/60">
+      <div className="flex items-center justify-between px-3 sm:px-6 py-1.5 sm:py-2 border-t border-border/40 bg-[#0d0e15]/60 text-xs overflow-x-auto no-scrollbar gap-2">
+        <div className="flex items-center gap-1 bg-[#141520] p-0.5 rounded-lg border border-border/60 shrink-0">
           <button
             onClick={() => onViewModeChange('board-priority')}
             className={cn(
-              'flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium transition-all duration-150',
+              'flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 rounded-md text-xs font-medium transition-all duration-150 shrink-0',
               viewMode === 'board-priority'
                 ? 'bg-[#5e6ad2] text-white shadow-[0_0_10px_rgba(94,106,210,0.3)]'
                 : 'text-zinc-400 hover:text-zinc-200 hover:bg-secondary/60',
             )}
           >
             <SlidersHorizontal className="w-3.5 h-3.5" />
-            <span>Priority Board</span>
-            <span className="text-[10px] px-1 py-0.2 rounded bg-black/30 ml-0.5 text-white/90">
+            <span>Priority</span>
+            <span className="hidden lg:inline text-[10px] px-1 py-0.2 rounded bg-black/30 ml-0.5 text-white/90">
               Drag & Drop
             </span>
           </button>
@@ -395,38 +448,38 @@ export function Navbar({
           <button
             onClick={() => onViewModeChange('board-status')}
             className={cn(
-              'flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium transition-all duration-150',
+              'flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 rounded-md text-xs font-medium transition-all duration-150 shrink-0',
               viewMode === 'board-status'
                 ? 'bg-[#5e6ad2] text-white shadow-[0_0_10px_rgba(94,106,210,0.3)]'
                 : 'text-zinc-400 hover:text-zinc-200 hover:bg-secondary/60',
             )}
           >
             <LayoutGrid className="w-3.5 h-3.5" />
-            <span>Status Board</span>
+            <span>Status</span>
           </button>
 
           <button
             onClick={() => onViewModeChange('list')}
             className={cn(
-              'flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium transition-all duration-150',
+              'flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 rounded-md text-xs font-medium transition-all duration-150 shrink-0',
               viewMode === 'list'
                 ? 'bg-[#5e6ad2] text-white shadow-[0_0_10px_rgba(94,106,210,0.3)]'
                 : 'text-zinc-400 hover:text-zinc-200 hover:bg-secondary/60',
             )}
           >
             <List className="w-3.5 h-3.5" />
-            <span>List View</span>
+            <span>List</span>
           </button>
         </div>
 
         {/* Inline Quick Filter Search on small screens */}
-        <div className="flex sm:hidden items-center">
+        <div className="flex sm:hidden items-center shrink-0">
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
-            placeholder="Search..."
-            className="h-7 w-28 bg-input text-xs px-2 rounded border border-border text-foreground"
+            placeholder="Filter..."
+            className="h-7 w-24 bg-input text-xs px-2 rounded border border-border text-foreground"
           />
         </div>
       </div>

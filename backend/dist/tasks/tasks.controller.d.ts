@@ -2286,6 +2286,23 @@ export declare class TasksController {
         content: string;
         taskId: string;
     }>;
+    updateComment(taskId: string, commentId: string, userId: string, body: {
+        content: string;
+    }): Promise<{
+        user: {
+            id: string;
+            email: string;
+            name: string;
+            avatarUrl: string | null;
+        };
+    } & {
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        userId: string;
+        content: string;
+        taskId: string;
+    }>;
     deleteComment(commentId: string, userId: string): Promise<{
         id: string;
         createdAt: Date;

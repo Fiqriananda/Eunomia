@@ -59,7 +59,7 @@ export function BoardColumn({
     <div
       ref={setNodeRef}
       className={cn(
-        'flex flex-col w-80 shrink-0 rounded-xl bg-[#0f1017]/80 border border-border/60 transition-all duration-200 select-none min-h-[580px]',
+        'flex flex-col w-[85vw] max-w-[340px] sm:w-80 shrink-0 snap-center sm:snap-align-none rounded-xl bg-[#0f1017]/80 border border-border/60 transition-all duration-200 select-none min-h-[500px] sm:min-h-[580px]',
         isOver && 'border-primary/60 bg-primary/[0.04] ring-1 ring-primary/30',
       )}
     >

@@ -12,13 +12,14 @@ import { CreateTaskModal } from '../components/linear/CreateTaskModal';
 import { CommandMenu } from '../components/linear/CommandMenu';
 import { Sidebar } from '../components/linear/Sidebar';
 import { InviteMemberModal } from '../components/linear/InviteMemberModal';
+import { WorkspaceSettingsModal } from '../components/linear/WorkspaceSettingsModal';
 import { InboxView } from '../components/linear/InboxView';
 import { CyclesView } from '../components/linear/CyclesView';
 import { TrashView } from '../components/linear/TrashView';
 import { TeamView } from '../components/linear/TeamView';
 import { Task, TaskPriority, TaskStatus, WorkflowSection, Cycle } from '../types';
 import { api } from '../lib/api';
-import { Loader2, Plus, SlidersHorizontal, Filter, X, Sparkles, UserPlus, RotateCw, Trash2 } from 'lucide-react';
+import { Loader2, Plus, SlidersHorizontal, Filter, X, Sparkles, UserPlus, RotateCw, Trash2, Layers, Inbox, Users, Menu } from 'lucide-react';
 import { Button } from '../components/ui/button';
 
 function Dashboard() {
@@ -49,6 +50,15 @@ function Dashboard() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isCommandOpen, setIsCommandOpen] = useState(false);
   const [isInviteOpen, setIsInviteOpen] = useState(false);
+  const [isWorkspaceSettingsOpen, setIsWorkspaceSettingsOpen] = useState(false);
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+
+  // Fallback to 'all' if user was on 'cycles' tab and cycles got disabled
+  useEffect(() => {
+    if (workspace?.cyclesEnabled === false && sidebarTab === 'cycles') {
+      setSidebarTab('all');
+    }
+  }, [workspace?.cyclesEnabled, sidebarTab]);
 
   // Group default for new task modal
   const [createDefaultPriority, setCreateDefaultPriority] = useState<TaskPriority>('NO_PRIORITY');
@@ -502,6 +512,8 @@ function Dashboard() {
     <div className="min-h-screen bg-[#090a0f] text-foreground flex font-sans">
       {/* Left Sidebar */}
       <Sidebar
+        isMobileOpen={isMobileNavOpen}
+        onMobileClose={() => setIsMobileNavOpen(false)}
         currentTab={sidebarTab}
         onTabChange={setSidebarTab}
         unreadInboxCount={unreadInboxCount}
@@ -512,6 +524,7 @@ function Dashboard() {
         }}
         onOpenInviteModal={() => setIsInviteOpen(true)}
         onOpenCommandMenu={() => setIsCommandOpen(true)}
+        onOpenWorkspaceSettings={() => setIsWorkspaceSettingsOpen(true)}
         taskCounts={{
           all: tasks.length,
           active: tasks.filter((t) => t.status === 'TODO' || t.status === 'IN_PROGRESS').length,
@@ -521,13 +534,14 @@ function Dashboard() {
       />
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 pb-14 md:pb-0">
         {/* Top Navigation */}
         <Navbar
           viewMode={viewMode}
           onViewModeChange={setViewMode}
           onOpenInbox={() => setSidebarTab('inbox')}
           unreadInboxCount={unreadInboxCount}
+          onOpenMobileNav={() => setIsMobileNavOpen(true)}
           onOpenCreateTask={() => {
             setCreateDefaultPriority('NO_PRIORITY');
             setCreateDefaultStatus('TODO');
@@ -535,6 +549,7 @@ function Dashboard() {
           }}
           onOpenCommandMenu={() => setIsCommandOpen(true)}
           onOpenInviteModal={() => setIsInviteOpen(true)}
+          onOpenWorkspaceSettings={() => setIsWorkspaceSettingsOpen(true)}
           onOpenTeam={() => setSidebarTab('team')}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
@@ -542,7 +557,7 @@ function Dashboard() {
 
         {sidebarTab === 'inbox' ? (
           <InboxView onUnreadCountChange={setUnreadInboxCount} />
-        ) : sidebarTab === 'cycles' && workspace ? (
+        ) : sidebarTab === 'cycles' && workspace && workspace.cyclesEnabled !== false ? (
           <CyclesView
             workspace={workspace}
             onTaskClick={handleTaskClick}
@@ -578,10 +593,10 @@ function Dashboard() {
         ) : (
           <>
             {/* Filter & Subheader Bar (Matching Linear's Active / Backlog / All tabs) */}
-            <div className="px-4 sm:px-6 py-2.5 border-b border-border/40 flex flex-wrap items-center justify-between gap-3 text-xs bg-[#090a0f]/80">
-              <div className="flex items-center gap-2 flex-wrap">
+            <div className="px-3 sm:px-6 py-2 sm:py-2.5 border-b border-border/40 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs bg-[#090a0f]/80 overflow-x-auto no-scrollbar">
+              <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 sm:pb-0 shrink-0">
                 {/* View tabs */}
-                <div className="flex items-center gap-1 bg-[#141520] p-0.5 rounded-md border border-border/60">
+                <div className="flex items-center gap-1 bg-[#141520] p-0.5 rounded-md border border-border/60 shrink-0">
                   <button
                     onClick={() => setSidebarTab('active')}
                     className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
@@ -614,16 +629,16 @@ function Dashboard() {
                   </button>
                 </div>
 
-                <div className="flex items-center gap-1.5 text-zinc-400 font-medium ml-2">
+                <div className="flex items-center gap-1.5 text-zinc-400 font-medium ml-1 shrink-0">
                   <Filter className="w-3.5 h-3.5" />
-                  <span>Filter:</span>
+                  <span className="hidden sm:inline">Filter:</span>
                 </div>
 
                 {/* Cycle Filter */}
                 <select
                   value={filterCycle}
                   onChange={(e) => setFilterCycle(e.target.value)}
-                  className="bg-[#141520] border border-border text-xs rounded px-2 py-1 text-zinc-300 focus:outline-none focus:border-primary cursor-pointer"
+                  className="bg-[#141520] border border-border text-xs rounded px-2 py-1 text-zinc-300 focus:outline-none focus:border-primary cursor-pointer shrink-0"
                 >
                   <option value="ALL">All Cycles</option>
                   <option value="NO_CYCLE">No Cycle</option>
@@ -637,7 +652,7 @@ function Dashboard() {
                 <select
                   value={filterPriority}
                   onChange={(e) => setFilterPriority(e.target.value)}
-                  className="bg-[#141520] border border-border text-xs rounded px-2 py-1 text-zinc-300 focus:outline-none focus:border-primary cursor-pointer"
+                  className="bg-[#141520] border border-border text-xs rounded px-2 py-1 text-zinc-300 focus:outline-none focus:border-primary cursor-pointer shrink-0"
                 >
                   <option value="ALL">All Priorities</option>
                   <option value="URGENT">Urgent</option>
@@ -650,7 +665,7 @@ function Dashboard() {
                 <select
                   value={filterStatus}
                   onChange={(e) => setFilterStatus(e.target.value)}
-                  className="bg-[#141520] border border-border text-xs rounded px-2 py-1 text-zinc-300 focus:outline-none focus:border-primary cursor-pointer"
+                  className="bg-[#141520] border border-border text-xs rounded px-2 py-1 text-zinc-300 focus:outline-none focus:border-primary cursor-pointer shrink-0"
                 >
                   <option value="ALL">All Statuses</option>
                   <option value="BACKLOG">Backlog</option>
@@ -670,7 +685,7 @@ function Dashboard() {
                       setFilterAssignee('ALL');
                       setSearchQuery('');
                     }}
-                    className="flex items-center gap-1 px-2 py-1 rounded text-zinc-400 hover:text-white hover:bg-secondary/60 transition-colors"
+                    className="flex items-center gap-1 px-2 py-1 rounded text-zinc-400 hover:text-white hover:bg-secondary/60 transition-colors shrink-0"
                   >
                     <X className="w-3 h-3" />
                     <span>Reset</span>
@@ -678,7 +693,7 @@ function Dashboard() {
                 )}
 
                 {filterAssignee !== 'ALL' && (
-                  <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 text-[11px] font-medium">
+                  <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 text-[11px] font-medium shrink-0">
                     <span>
                       Assignee:{' '}
                       {workspace?.members?.find((m) => m.userId === filterAssignee || m.user?.id === filterAssignee)?.user?.name || 'Member'}
@@ -690,13 +705,13 @@ function Dashboard() {
                 )}
               </div>
 
-              <div className="flex items-center gap-3">
+              <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0 pt-1 sm:pt-0">
                 <button
                   onClick={() => setIsInviteOpen(true)}
                   className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#5e6ad2]/15 border border-[#5e6ad2]/30 text-[#8a95ff] text-xs font-medium hover:bg-[#5e6ad2]/25 transition-colors"
                 >
                   <UserPlus className="w-3.5 h-3.5" />
-                  <span>+ Invite People</span>
+                  <span>+ Invite</span>
                 </button>
                 <div className="text-muted-foreground text-xs font-mono">
                   {filteredTasks.length} {filteredTasks.length === 1 ? 'issue' : 'issues'}
@@ -705,7 +720,7 @@ function Dashboard() {
             </div>
 
             {/* Main Content Area */}
-            <main className="flex-1 p-4 sm:p-6 overflow-x-auto">
+            <main className="flex-1 p-3 sm:p-6 overflow-x-auto">
               {tasksLoading ? (
                 <div className="flex items-center justify-center h-64">
                   <Loader2 className="w-6 h-6 animate-spin text-primary" />
@@ -799,6 +814,95 @@ function Dashboard() {
           }}
         />
       )}
+
+      {/* Workspace Settings Modal */}
+      {workspace && (
+        <WorkspaceSettingsModal
+          isOpen={isWorkspaceSettingsOpen}
+          onClose={() => setIsWorkspaceSettingsOpen(false)}
+        />
+      )}
+
+      {/* Mobile Bottom Navigation Bar */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 h-14 bg-[#0a0c12]/95 backdrop-blur-xl border-t border-border/80 z-30 flex items-center justify-around px-2">
+        {/* Issues Tab */}
+        <button
+          onClick={() => setSidebarTab('all')}
+          className={`flex flex-col items-center justify-center flex-1 py-1 transition-colors ${
+            sidebarTab === 'all' || sidebarTab === 'active' || sidebarTab === 'backlog'
+              ? 'text-indigo-400'
+              : 'text-zinc-400 hover:text-zinc-200'
+          }`}
+        >
+          <Layers className="w-4 h-4 mb-0.5" />
+          <span className="text-[10px] font-medium leading-none">Issues</span>
+        </button>
+
+        {/* Inbox Tab */}
+        <button
+          onClick={() => setSidebarTab('inbox')}
+          className={`relative flex flex-col items-center justify-center flex-1 py-1 transition-colors ${
+            sidebarTab === 'inbox' ? 'text-indigo-400' : 'text-zinc-400 hover:text-zinc-200'
+          }`}
+        >
+          <Inbox className="w-4 h-4 mb-0.5" />
+          {unreadInboxCount > 0 && (
+            <span className="absolute top-0.5 right-[24%] min-w-[14px] h-[14px] bg-indigo-500 text-[9px] font-bold text-white rounded-full flex items-center justify-center px-0.5">
+              {unreadInboxCount}
+            </span>
+          )}
+          <span className="text-[10px] font-medium leading-none">Inbox</span>
+        </button>
+
+        {/* Center Quick Create Button */}
+        <div className="flex items-center justify-center px-1">
+          <button
+            onClick={() => {
+              setCreateDefaultPriority('NO_PRIORITY');
+              setCreateDefaultStatus('TODO');
+              setIsCreateOpen(true);
+            }}
+            className="w-10 h-10 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-500/30 flex items-center justify-center active:scale-95 transition-transform"
+            aria-label="Create new issue"
+          >
+            <Plus className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Cycles or Team Tab */}
+        {workspace?.cyclesEnabled !== false ? (
+          <button
+            onClick={() => setSidebarTab('cycles')}
+            className={`flex flex-col items-center justify-center flex-1 py-1 transition-colors ${
+              sidebarTab === 'cycles' ? 'text-indigo-400' : 'text-zinc-400 hover:text-zinc-200'
+            }`}
+          >
+            <RotateCw className="w-4 h-4 mb-0.5" />
+            <span className="text-[10px] font-medium leading-none">Cycles</span>
+          </button>
+        ) : (
+          <button
+            onClick={() => setSidebarTab('team')}
+            className={`flex flex-col items-center justify-center flex-1 py-1 transition-colors ${
+              sidebarTab === 'team' ? 'text-indigo-400' : 'text-zinc-400 hover:text-zinc-200'
+            }`}
+          >
+            <Users className="w-4 h-4 mb-0.5" />
+            <span className="text-[10px] font-medium leading-none">Team</span>
+          </button>
+        )}
+
+        {/* Menu (Opens Drawer) */}
+        <button
+          onClick={() => setIsMobileNavOpen(true)}
+          className={`flex flex-col items-center justify-center flex-1 py-1 transition-colors ${
+            isMobileNavOpen ? 'text-indigo-400' : 'text-zinc-400 hover:text-zinc-200'
+          }`}
+        >
+          <Menu className="w-4 h-4 mb-0.5" />
+          <span className="text-[10px] font-medium leading-none">Menu</span>
+        </button>
+      </div>
     </div>
   );
 }

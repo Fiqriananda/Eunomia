@@ -35,6 +35,7 @@ export declare class WorkspacesController {
         updatedAt: Date;
         slug: string;
         columnOrder: string[];
+        cyclesEnabled: boolean;
     }[]>;
     getInvitationByToken(token: string): Promise<{
         workspace: {
@@ -69,6 +70,7 @@ export declare class WorkspacesController {
             updatedAt: Date;
             slug: string;
             columnOrder: string[];
+            cyclesEnabled: boolean;
         };
         membership: {
             user: {
@@ -109,6 +111,7 @@ export declare class WorkspacesController {
             updatedAt: Date;
             slug: string;
             columnOrder: string[];
+            cyclesEnabled: boolean;
         };
         membership: {
             user: {
@@ -157,6 +160,44 @@ export declare class WorkspacesController {
         updatedAt: Date;
         slug: string;
         columnOrder: string[];
+        cyclesEnabled: boolean;
+    }>;
+    updateWorkspace(id: string, userId: string, body: {
+        name?: string;
+        cyclesEnabled?: boolean;
+    }): Promise<{
+        role: "OWNER" | "ADMIN";
+        members: ({
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            role: import("@prisma/client").$Enums.WorkspaceRole;
+            userId: string;
+            workspaceId: string;
+        })[];
+        projects: {
+            id: string;
+            name: string;
+            createdAt: Date;
+            updatedAt: Date;
+            key: string;
+            description: string | null;
+            color: string | null;
+            workspaceId: string;
+        }[];
+        id: string;
+        name: string;
+        createdAt: Date;
+        updatedAt: Date;
+        slug: string;
+        columnOrder: string[];
+        cyclesEnabled: boolean;
     }>;
     createWorkspace(userId: string, body: {
         name: string;
@@ -178,6 +219,7 @@ export declare class WorkspacesController {
         updatedAt: Date;
         slug: string;
         columnOrder: string[];
+        cyclesEnabled: boolean;
     }>;
     getWorkspaceMembers(id: string): Promise<({
         user: {
@@ -310,5 +352,6 @@ export declare class WorkspacesController {
         updatedAt: Date;
         slug: string;
         columnOrder: string[];
+        cyclesEnabled: boolean;
     }>;
 }

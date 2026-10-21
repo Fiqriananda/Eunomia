@@ -87,3 +87,12 @@ body {
   border-color: rgba(94, 106, 210, 0.4);
   box-shadow: 0 4px 20px -2px rgba(94, 106, 210, 0.12);
 }
+
+/* Hide scrollbar for clean mobile touch experience */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

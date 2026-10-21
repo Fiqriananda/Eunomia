@@ -39,6 +39,9 @@ let WorkspacesController = class WorkspacesController {
     async getWorkspaceById(id, userId) {
         return this.workspacesService.getWorkspaceById(id, userId);
     }
+    async updateWorkspace(id, userId, body) {
+        return this.workspacesService.updateWorkspace(id, userId, body);
+    }
     async createWorkspace(userId, body) {
         return this.workspacesService.createWorkspace(userId, body);
     }
@@ -134,6 +137,26 @@ __decorate([
     __metadata("design:paramtypes", [String, String]),
     __metadata("design:returntype", Promise)
 ], WorkspacesController.prototype, "getWorkspaceById", null);
+__decorate([
+    Patch(':id'),
+    ApiOperation({ summary: 'Update workspace settings (e.g. name, cyclesEnabled)' }),
+    ApiParam({ name: 'id', description: 'Workspace ID' }),
+    ApiBody({
+        schema: {
+            type: 'object',
+            properties: {
+                name: { type: 'string', example: 'Acme Corp' },
+                cyclesEnabled: { type: 'boolean', example: false },
+            },
+        },
+    }),
+    __param(0, Param('id')),
+    __param(1, CurrentUser('id')),
+    __param(2, Body()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, Object]),
+    __metadata("design:returntype", Promise)
+], WorkspacesController.prototype, "updateWorkspace", null);
 __decorate([
     Post(),
     ApiOperation({ summary: 'Create a new workspace' }),

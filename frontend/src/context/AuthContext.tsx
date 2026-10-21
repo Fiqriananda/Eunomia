@@ -18,6 +18,7 @@ interface AuthContextType {
   register: (email: string, password: string, name: string) => Promise<void>;
   logout: () => void;
   refreshWorkspacesAndProjects: () => Promise<void>;
+  updateActiveWorkspace: (updated: Workspace) => void;
   updateProfile: (data: {
     name?: string;
     avatarUrl?: string;
@@ -171,6 +172,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const updateActiveWorkspace = (updated: Workspace) => {
+    setWorkspaceState((prev) => (prev && prev.id === updated.id ? { ...prev, ...updated } : updated));
+    setWorkspaces((prev) => prev.map((w) => (w.id === updated.id ? { ...w, ...updated } : w)));
+  };
+
   const updateProfile = async (data: {
     name?: string;
     avatarUrl?: string;
@@ -198,6 +204,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         register,
         logout,
         refreshWorkspacesAndProjects,
+        updateActiveWorkspace,
         updateProfile,
       }}
     >

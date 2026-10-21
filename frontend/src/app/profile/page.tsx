@@ -28,12 +28,15 @@ import {
   Upload,
   User as UserIcon,
   X,
+  Repeat,
+  Building2,
 } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 
 function ProfileContent() {
   const router = useRouter();
-  const { user, workspace, workspaces, updateProfile, logout, loading } = useAuth();
+  const { user, workspace, workspaces, updateProfile, logout, loading, updateActiveWorkspace } =
+    useAuth();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -50,8 +53,49 @@ function ProfileContent() {
   const [showNewPass, setShowNewPass] = useState(false);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isTogglingCycles, setIsTogglingCycles] = useState(false);
   const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [showUrlInput, setShowUrlInput] = useState(false);
+
+  // Current workspace permissions
+  const currentMember = workspace?.members?.find((m) => m.userId === user?.id);
+  const userRole = currentMember?.role || workspace?.role;
+  const canManageWorkspace = userRole === 'OWNER' || userRole === 'ADMIN';
+
+  const handleToggleWorkspaceCycles = async () => {
+    if (!workspace) return;
+    if (!canManageWorkspace) {
+      setStatusMessage({
+        type: 'error',
+        text: 'Only workspace owners and administrators can change feature settings.',
+      });
+      return;
+    }
+
+    const nextState = workspace.cyclesEnabled === false ? true : false;
+    setIsTogglingCycles(true);
+
+    try {
+      const updated = await api.workspaces.update(workspace.id, {
+        cyclesEnabled: nextState,
+      });
+
+      updateActiveWorkspace(updated);
+      setStatusMessage({
+        type: 'success',
+        text: nextState
+          ? 'Cycles feature enabled for active workspace.'
+          : 'Cycles feature disabled for active workspace.',
+      });
+    } catch (err: any) {
+      setStatusMessage({
+        type: 'error',
+        text: err.message || 'Failed to update workspace cycles feature.',
+      });
+    } finally {
+      setIsTogglingCycles(false);
+    }
+  };
 
   // Initialize form with user data
   useEffect(() => {
@@ -563,6 +607,93 @@ function ProfileContent() {
               ))}
             </div>
           </div>
+
+          {/* Card 5: Active Workspace Features & Cycles Toggle */}
+          {workspace && (
+            <div className="p-6 rounded-xl border border-border/70 bg-[#10111a]/80 backdrop-blur-sm space-y-4 shadow-xl">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-sm font-semibold text-white tracking-wide uppercase text-zinc-400 flex items-center gap-2">
+                    <Building2 className="w-4 h-4 text-primary" />
+                    <span>Active Workspace: {workspace.name}</span>
+                  </h2>
+                  <p className="text-xs text-zinc-400 mt-0.5">
+                    Configure feature toggles and workflow modules for this workspace.
+                  </p>
+                </div>
+
+                <span className="text-[10px] font-mono text-zinc-500 bg-[#151622] px-2.5 py-1 rounded-md border border-border">
+                  {canManageWorkspace ? 'Admin / Owner' : 'Member (Read-only)'}
+                </span>
+              </div>
+
+              <div className="pt-2">
+                <div
+                  className={`p-4 rounded-xl border transition-all duration-200 ${
+                    workspace.cyclesEnabled !== false
+                      ? 'bg-[#151622]/80 border-primary/30'
+                      : 'bg-[#12131d]/60 border-border/60'
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex items-start gap-3 min-w-0">
+                      <div
+                        className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 transition-colors ${
+                          workspace.cyclesEnabled !== false
+                            ? 'bg-primary/20 border border-primary/40 text-primary'
+                            : 'bg-zinc-800/60 border border-zinc-700 text-zinc-500'
+                        }`}
+                      >
+                        <Repeat className="w-4 h-4" />
+                      </div>
+
+                      <div className="space-y-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-semibold text-white">Cycles Feature</span>
+                          <span
+                            className={`text-[10px] font-medium px-2 py-0.2 rounded-full border ${
+                              workspace.cyclesEnabled !== false
+                                ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+                                : 'bg-zinc-800/80 border-zinc-700 text-zinc-400'
+                            }`}
+                          >
+                            {workspace.cyclesEnabled !== false ? 'Enabled' : 'Disabled'}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-zinc-400 leading-relaxed">
+                          Allow team members to organize and track issues into timeboxed sprints and cycles.
+                          Toggle off to hide cycles navigation, views, and issue assignments.
+                        </p>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={workspace.cyclesEnabled !== false}
+                      disabled={!canManageWorkspace || isTogglingCycles}
+                      onClick={handleToggleWorkspaceCycles}
+                      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed ${
+                        workspace.cyclesEnabled !== false ? 'bg-primary' : 'bg-zinc-700'
+                      }`}
+                    >
+                      <span className="sr-only">Toggle Cycles</span>
+                      <span
+                        aria-hidden="true"
+                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out flex items-center justify-center ${
+                          workspace.cyclesEnabled !== false ? 'translate-x-5' : 'translate-x-0'
+                        }`}
+                      >
+                        {isTogglingCycles && (
+                          <Loader2 className="w-3 h-3 animate-spin text-zinc-700" />
+                        )}
+                      </span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Bottom Sticky Action Bar */}
           <div className="sticky bottom-6 p-4 rounded-xl border border-border/80 bg-[#12131e]/95 backdrop-blur-xl shadow-2xl flex items-center justify-between gap-4 z-30">

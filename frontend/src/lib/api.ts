@@ -92,6 +92,11 @@ class ApiClient {
         method: 'POST',
         body: JSON.stringify(data),
       }),
+    update: (id: string, data: { name?: string; cyclesEnabled?: boolean }) =>
+      this.request<Workspace>(`/workspaces/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      }),
     getMembers: (workspaceId: string) =>
       this.request<WorkspaceMember[]>(`/workspaces/${workspaceId}/members`),
     inviteMember: (workspaceId: string, data: { email: string; name?: string; role?: string }) =>
@@ -336,6 +341,12 @@ class ApiClient {
     addComment: (taskId: string, content: string) =>
       this.request<TaskComment>(`/tasks/${taskId}/comments`, {
         method: 'POST',
+        body: JSON.stringify({ content }),
+      }),
+
+    updateComment: (taskId: string, commentId: string, content: string) =>
+      this.request<TaskComment>(`/tasks/${taskId}/comments/${commentId}`, {
+        method: 'PATCH',
         body: JSON.stringify({ content }),
       }),
 

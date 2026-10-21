@@ -34,6 +34,7 @@ export declare class AuthService {
             updatedAt: Date;
             slug: string;
             columnOrder: string[];
+            cyclesEnabled: boolean;
         };
         defaultProject: {
             id: string;
@@ -75,6 +76,7 @@ export declare class AuthService {
             updatedAt: Date;
             slug: string;
             columnOrder: string[];
+            cyclesEnabled: boolean;
         };
         defaultProject: {
             id: string;
@@ -125,6 +127,7 @@ export declare class AuthService {
                 updatedAt: Date;
                 slug: string;
                 columnOrder: string[];
+                cyclesEnabled: boolean;
             };
         } & {
             id: string;

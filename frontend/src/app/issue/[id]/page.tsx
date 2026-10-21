@@ -46,6 +46,8 @@ import {
   Target,
   Image as ImageIcon,
   ExternalLink,
+  Pencil,
+  Link2,
 } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
 import { api } from '../../../lib/api';
@@ -112,7 +114,13 @@ function IssueDetailContent() {
 
   const [task, setTask] = useState<Task | null>(null);
   const [allTasks, setAllTasks] = useState<Task[]>([]);
-  const [members, setMembers] = useState<WorkspaceMember[]>([]);
+  const [members, setMembers] = useState<WorkspaceMember[]>(workspace?.members || []);
+
+  useEffect(() => {
+    if (workspace?.members && workspace.members.length > 0 && members.length === 0) {
+      setMembers(workspace.members);
+    }
+  }, [workspace?.members, members.length]);
   const [loading, setLoading] = useState(true);
 
   // Form states
@@ -190,6 +198,11 @@ function IssueDetailContent() {
   const [activities, setActivities] = useState<TaskActivity[]>([]);
   const [newCommentText, setNewCommentText] = useState('');
   const [submittingComment, setSubmittingComment] = useState(false);
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [editingCommentText, setEditingCommentText] = useState('');
+  const [isUpdatingComment, setIsUpdatingComment] = useState(false);
+  const [copiedCommentId, setCopiedCommentId] = useState<string | null>(null);
+  const [highlightedCommentId, setHighlightedCommentId] = useState<string | null>(null);
 
   // UI state
   const [copiedLink, setCopiedLink] = useState(false);
@@ -299,6 +312,20 @@ function IssueDetailContent() {
       }
     };
 
+    const handleCommentUpdated = (data: { taskId: string; comment: TaskComment }) => {
+      if (data.taskId === taskId) {
+        setComments((prev) =>
+          prev.map((c) => (c.id === data.comment.id ? data.comment : c)),
+        );
+      }
+    };
+
+    const handleCommentDeleted = (data: { taskId: string; commentId: string }) => {
+      if (data.taskId === taskId) {
+        setComments((prev) => prev.filter((c) => c.id !== data.commentId));
+      }
+    };
+
     const handleTaskTyping = (data: {
       workspaceId?: string;
       taskId: string;
@@ -382,12 +409,16 @@ function IssueDetailContent() {
     };
 
     socket.on('comment:created', handleCommentCreated);
+    socket.on('comment:updated', handleCommentUpdated);
+    socket.on('comment:deleted', handleCommentDeleted);
     socket.on('task:typing', handleTaskTyping);
     socket.on('task:updated', handleTaskUpdated);
     socket.on('task:moved', handleTaskMoved);
 
     return () => {
       socket.off('comment:created', handleCommentCreated);
+      socket.off('comment:updated', handleCommentUpdated);
+      socket.off('comment:deleted', handleCommentDeleted);
       socket.off('task:typing', handleTaskTyping);
       socket.off('task:updated', handleTaskUpdated);
       socket.off('task:moved', handleTaskMoved);
@@ -396,6 +427,32 @@ function IssueDetailContent() {
       if (descTimerRef.current) clearTimeout(descTimerRef.current);
     };
   }, [socket, taskId, user?.id]);
+
+  // Deep-link anchor detection for #comment-...
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const checkHash = () => {
+      const hash = window.location.hash;
+      if (hash && hash.startsWith('#comment-')) {
+        const commentId = hash.replace('#comment-', '');
+        setHighlightedCommentId(commentId);
+        setTimeout(() => {
+          const el = document.getElementById(`comment-${commentId}`);
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }, 300);
+        const timer = setTimeout(() => {
+          setHighlightedCommentId(null);
+        }, 4000);
+        return () => clearTimeout(timer);
+      }
+    };
+
+    checkHash();
+    window.addEventListener('hashchange', checkHash);
+    return () => window.removeEventListener('hashchange', checkHash);
+  }, [taskId, comments.length]);
 
   // Fetch task and context
   useEffect(() => {
@@ -1006,6 +1063,45 @@ function IssueDetailContent() {
     }
   };
 
+  const handleStartEditComment = (comment: TaskComment) => {
+    setEditingCommentId(comment.id);
+    setEditingCommentText(comment.content);
+  };
+
+  const handleCancelEditComment = () => {
+    setEditingCommentId(null);
+    setEditingCommentText('');
+  };
+
+  const handleSaveEditComment = async (commentId: string) => {
+    if (!editingCommentText.trim() || isUpdatingComment || !task) return;
+    setIsUpdatingComment(true);
+    const content = editingCommentText.trim();
+    try {
+      const updated = await api.tasks.updateComment(task.id, commentId, content);
+      setComments((prev) =>
+        prev.map((c) => (c.id === commentId ? { ...c, content: updated.content, updatedAt: updated.updatedAt } : c)),
+      );
+      setEditingCommentId(null);
+      setEditingCommentText('');
+    } catch (err) {
+      console.error('Failed to update comment:', err);
+    } finally {
+      setIsUpdatingComment(false);
+    }
+  };
+
+  const handleCopyCommentLink = (commentId: string) => {
+    const url = `${window.location.origin}/issue/${task?.id || taskId}#comment-${commentId}`;
+    navigator.clipboard.writeText(url);
+    window.history.replaceState(null, '', `#comment-${commentId}`);
+    setCopiedCommentId(commentId);
+    setHighlightedCommentId(commentId);
+    setTimeout(() => {
+      setCopiedCommentId((curr) => (curr === commentId ? null : curr));
+    }, 2000);
+  };
+
   if (authLoading || loading) {
     return (
       <div className="min-h-screen bg-[#090a0f] flex items-center justify-center">
@@ -1510,7 +1606,12 @@ function IssueDetailContent() {
                 comments.map((c) => (
                   <div
                     key={c.id}
-                    className="flex items-start gap-3 p-3.5 rounded-lg bg-[#11121c]/70 border border-border/40 hover:border-border transition-colors group relative"
+                    id={`comment-${c.id}`}
+                    className={`flex items-start gap-3 p-3.5 rounded-lg border transition-all duration-300 group relative ${
+                      highlightedCommentId === c.id
+                        ? 'bg-indigo-500/15 border-indigo-500/60 ring-2 ring-indigo-500/50 shadow-lg shadow-indigo-500/20'
+                        : 'bg-[#11121c]/70 border-border/40 hover:border-border'
+                    }`}
                   >
                     <img
                       src={
@@ -1536,22 +1637,114 @@ function IssueDetailContent() {
                             minute: '2-digit',
                           })}
                         </span>
+                        {c.updatedAt &&
+                          new Date(c.updatedAt).getTime() - new Date(c.createdAt).getTime() > 2000 && (
+                            <span
+                              className="text-[10px] text-zinc-500 italic"
+                              title={`Edited at ${new Date(c.updatedAt).toLocaleTimeString()}`}
+                            >
+                              (edited)
+                            </span>
+                          )}
                       </div>
 
-                      <div className="mt-1.5 text-xs text-zinc-300 leading-relaxed whitespace-pre-wrap">
-                        {renderCommentContentWithMentions(c.content, members)}
-                      </div>
+                      {editingCommentId === c.id ? (
+                        <div className="mt-2 space-y-2">
+                          <textarea
+                            value={editingCommentText}
+                            onChange={(e) => setEditingCommentText(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+                                e.preventDefault();
+                                handleSaveEditComment(c.id);
+                              } else if (e.key === 'Escape') {
+                                e.preventDefault();
+                                handleCancelEditComment();
+                              }
+                            }}
+                            rows={3}
+                            className="w-full bg-[#161726] border border-border focus:border-indigo-500 rounded-lg p-2.5 text-xs text-foreground placeholder:text-zinc-500 focus:outline-none resize-none leading-relaxed"
+                            autoFocus
+                          />
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] text-zinc-500">
+                              Esc to cancel • Cmd+Enter to save
+                            </span>
+                            <div className="flex items-center gap-1.5">
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={handleCancelEditComment}
+                                disabled={isUpdatingComment}
+                                className="h-6 text-xs px-2 text-zinc-400 hover:text-white"
+                              >
+                                Cancel
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="linear"
+                                size="sm"
+                                onClick={() => handleSaveEditComment(c.id)}
+                                disabled={!editingCommentText.trim() || isUpdatingComment}
+                                className="h-6 text-xs px-2.5"
+                              >
+                                {isUpdatingComment ? (
+                                  <Loader2 className="w-3 h-3 animate-spin mr-1" />
+                                ) : (
+                                  <Check className="w-3 h-3 mr-1" />
+                                )}
+                                Save
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="mt-1.5 text-xs text-zinc-300 leading-relaxed whitespace-pre-wrap">
+                          {renderCommentContentWithMentions(c.content, members)}
+                        </div>
+                      )}
                     </div>
 
-                    {c.userId === user?.id && (
+                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      {/* Copy Link to Comment */}
                       <button
-                        onClick={() => handleDeleteComment(c.id)}
-                        className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-destructive/20 text-zinc-500 hover:text-destructive transition-all"
-                        title="Delete comment"
+                        onClick={() => handleCopyCommentLink(c.id)}
+                        className="p-1 rounded hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors relative"
+                        title={copiedCommentId === c.id ? 'Copied!' : 'Copy link to comment'}
                       >
-                        <Trash2 className="w-3 h-3" />
+                        {copiedCommentId === c.id ? (
+                          <span className="flex items-center gap-1 text-[10px] text-emerald-400 font-medium px-1">
+                            <Check className="w-3 h-3 text-emerald-400" />
+                            <span>Copied</span>
+                          </span>
+                        ) : (
+                          <Link2 className="w-3 h-3" />
+                        )}
                       </button>
-                    )}
+
+                      {/* Edit Comment */}
+                      {(c.userId === user?.id || workspace?.role === 'OWNER' || workspace?.role === 'ADMIN') && (
+                        <button
+                          onClick={() => handleStartEditComment(c)}
+                          className="p-1 rounded hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors"
+                          title="Edit comment"
+                        >
+                          <Pencil className="w-3 h-3" />
+                        </button>
+                      )}
+
+                      {/* Delete Comment */}
+                      {(c.userId === user?.id || workspace?.role === 'OWNER' || workspace?.role === 'ADMIN') && (
+                        <button
+                          onClick={() => handleDeleteComment(c.id)}
+                          className="p-1 rounded hover:bg-destructive/20 text-zinc-500 hover:text-destructive transition-all"
+                          title="Delete comment"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      )}
+                    </div>
                   </div>
                 ))
               )}
@@ -2303,73 +2496,75 @@ function IssueDetailContent() {
           </div>
 
           {/* Cycle (Sprint) Property Row */}
-          <div className="space-y-1.5 pt-4 border-t border-border/40 property-dropdown-container relative">
-            <div className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">
-              Cycle (Sprint)
-            </div>
+          {workspace?.cyclesEnabled !== false && (
+            <div className="space-y-1.5 pt-4 border-t border-border/40 property-dropdown-container relative">
+              <div className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">
+                Cycle (Sprint)
+              </div>
 
-            {(() => {
-              const activeCycleObj = cycles.find((c) => c.id === cycleId) || task.cycle;
-              return (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => setActiveDropdown(activeDropdown === 'cycle' ? null : 'cycle')}
-                    className="w-full flex items-center justify-between py-1.5 px-2.5 rounded-lg hover:bg-[#1a1b26] transition-colors cursor-pointer group text-left text-xs"
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <RotateCw className="w-3.5 h-3.5 text-indigo-400" />
-                      <span className="text-zinc-300 font-medium group-hover:text-white truncate">
-                        {activeCycleObj?.name || '··· No Cycle'}
-                      </span>
-                    </div>
-                  </button>
-
-                  {activeDropdown === 'cycle' && (
-                    <div className="absolute top-full left-0 mt-1.5 w-60 rounded-xl border border-[#2b2c3a] bg-[#191a24] shadow-[0_12px_36px_rgba(0,0,0,0.75)] p-1 z-50 animate-in fade-in-0 zoom-in-95 duration-100">
-                      <div className="px-2.5 py-1.5 text-xs text-zinc-400 font-normal border-b border-[#2b2c3a]/70 mb-1">
-                        Select Cycle (Sprint)...
+              {(() => {
+                const activeCycleObj = cycles.find((c) => c.id === cycleId) || task.cycle;
+                return (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setActiveDropdown(activeDropdown === 'cycle' ? null : 'cycle')}
+                      className="w-full flex items-center justify-between py-1.5 px-2.5 rounded-lg hover:bg-[#1a1b26] transition-colors cursor-pointer group text-left text-xs"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <RotateCw className="w-3.5 h-3.5 text-indigo-400" />
+                        <span className="text-zinc-300 font-medium group-hover:text-white truncate">
+                          {activeCycleObj?.name || '··· No Cycle'}
+                        </span>
                       </div>
-                      <button
-                        onClick={() => handleCycleChange(null)}
-                        className={cn(
-                          'w-full flex items-center justify-between px-2.5 py-1.5 text-xs rounded-lg transition-colors',
-                          cycleId === null
-                            ? 'bg-[#282a38] text-white font-medium'
-                            : 'text-zinc-400 hover:bg-[#232432] hover:text-white',
-                        )}
-                      >
-                        <span>No Cycle</span>
-                        {cycleId === null && <Check className="w-3.5 h-3.5 text-white stroke-[2.5]" />}
-                      </button>
-                      {cycles.map((c) => (
+                    </button>
+
+                    {activeDropdown === 'cycle' && (
+                      <div className="absolute top-full left-0 mt-1.5 w-60 rounded-xl border border-[#2b2c3a] bg-[#191a24] shadow-[0_12px_36px_rgba(0,0,0,0.75)] p-1 z-50 animate-in fade-in-0 zoom-in-95 duration-100">
+                        <div className="px-2.5 py-1.5 text-xs text-zinc-400 font-normal border-b border-[#2b2c3a]/70 mb-1">
+                          Select Cycle (Sprint)...
+                        </div>
                         <button
-                          key={c.id}
-                          onClick={() => handleCycleChange(c.id)}
+                          onClick={() => handleCycleChange(null)}
                           className={cn(
                             'w-full flex items-center justify-between px-2.5 py-1.5 text-xs rounded-lg transition-colors',
-                            c.id === cycleId
+                            cycleId === null
                               ? 'bg-[#282a38] text-white font-medium'
-                              : 'text-zinc-300 hover:bg-[#232432] hover:text-white',
+                              : 'text-zinc-400 hover:bg-[#232432] hover:text-white',
                           )}
                         >
-                          <div className="flex items-center gap-2 truncate">
-                            <span
-                              className={`w-2 h-2 rounded-full shrink-0 ${
-                                c.status === 'ACTIVE' ? 'bg-emerald-400' : 'bg-indigo-400'
-                              }`}
-                            />
-                            <span className="truncate">{c.name}</span>
-                          </div>
-                          {c.id === cycleId && <Check className="w-3.5 h-3.5 text-white stroke-[2.5]" />}
+                          <span>No Cycle</span>
+                          {cycleId === null && <Check className="w-3.5 h-3.5 text-white stroke-[2.5]" />}
                         </button>
-                      ))}
-                    </div>
-                  )}
-                </>
-              );
-            })()}
-          </div>
+                        {cycles.map((c) => (
+                          <button
+                            key={c.id}
+                            onClick={() => handleCycleChange(c.id)}
+                            className={cn(
+                              'w-full flex items-center justify-between px-2.5 py-1.5 text-xs rounded-lg transition-colors',
+                              c.id === cycleId
+                                ? 'bg-[#282a38] text-white font-medium'
+                                : 'text-zinc-300 hover:bg-[#232432] hover:text-white',
+                            )}
+                          >
+                            <div className="flex items-center gap-2 truncate">
+                              <span
+                                className={`w-2 h-2 rounded-full shrink-0 ${
+                                  c.status === 'ACTIVE' ? 'bg-emerald-400' : 'bg-indigo-400'
+                                }`}
+                              />
+                              <span className="truncate">{c.name}</span>
+                            </div>
+                            {c.id === cycleId && <Check className="w-3.5 h-3.5 text-white stroke-[2.5]" />}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
+            </div>
+          )}
 
           {/* Estimate (Story Points) Property Row */}
           <div className="space-y-1.5 pt-4 border-t border-border/40 property-dropdown-container relative">

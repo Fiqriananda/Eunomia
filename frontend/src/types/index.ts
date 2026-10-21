@@ -39,6 +39,7 @@ export interface Workspace {
   name: string;
   slug: string;
   columnOrder?: string[];
+  cyclesEnabled?: boolean;
   createdAt: string;
   updatedAt: string;
   projects?: Project[];
