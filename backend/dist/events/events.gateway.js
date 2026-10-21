@@ -106,6 +106,14 @@ let EventsGateway = EventsGateway_1 = class EventsGateway {
     emitCommentDeleted(workspaceId, payload) {
         this.server.to(`workspace_${workspaceId}`).emit('comment:deleted', payload);
     }
+    emitTaskReactionToggled(workspaceId, payload) {
+        const rooms = [`workspace_${workspaceId}`, `task_${payload.taskId}`];
+        this.server.to(rooms).emit('task:reaction:toggled', payload);
+    }
+    emitCommentReactionToggled(workspaceId, payload) {
+        const rooms = [`workspace_${workspaceId}`, `task_${payload.taskId}`];
+        this.server.to(rooms).emit('comment:reaction:toggled', payload);
+    }
     emitNotification(userId, notification) {
         this.server.to(`user_${userId}`).emit('notification:new', notification);
     }

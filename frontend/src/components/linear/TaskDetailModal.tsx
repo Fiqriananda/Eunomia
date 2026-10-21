@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Task, TaskPriority, TaskStatus, WorkspaceMember, TaskComment, Project } from '../../types';
+import { Task, TaskPriority, TaskStatus, WorkspaceMember, TaskComment, Project, TaskReaction } from '../../types';
 import { PriorityIcon, PRIORITY_CONFIG } from './PriorityIcon';
 import { StatusIcon, STATUS_CONFIG } from './StatusIcon';
 import { FileUploader } from './FileUploader';
@@ -38,15 +38,18 @@ import {
   ArrowLeft,
   Pencil,
   Link2,
+  Smile,
 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { api } from '../../lib/api';
 import { cn } from '../../lib/utils';
 import { useAuth } from '../../context/AuthContext';
+import { useSocket } from '../../context/SocketContext';
 import { SubIssuesSection } from './SubIssuesSection';
 import { RelatedIssuesSection } from './RelatedIssuesSection';
 import { MarkdownRenderer, resolveMediaUrl } from '../ui/MarkdownRenderer';
 import { LinearRichEditor } from './LinearRichEditor';
+import { ReactionsBar } from './ReactionsBar';
 
 const PRESET_LABEL_COLORS: Record<string, string> = {
   Bug: '#ef4444',
@@ -139,12 +142,24 @@ export function TaskDetailModal({
   const [isUploadingCommentImage, setIsUploadingCommentImage] = useState(false);
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
 
+  // Socket context for live reaction updates
+  const { socket } = useSocket();
+
+  // Task reactions state
+  const [taskReactions, setTaskReactions] = useState<TaskReaction[]>(task?.reactions || []);
+
   // Comment edit & copy link state
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editingCommentText, setEditingCommentText] = useState('');
   const [isUpdatingComment, setIsUpdatingComment] = useState(false);
   const [copiedCommentId, setCopiedCommentId] = useState<string | null>(null);
   const [highlightedCommentId, setHighlightedCommentId] = useState<string | null>(null);
+
+  // Edit Comment Mention Autocomplete state
+  const editCommentTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const [editingMentionQuery, setEditingMentionQuery] = useState<string | null>(null);
+  const [editingMentionIndex, setEditingMentionIndex] = useState(0);
+  const [editingMentionCursorPos, setEditingMentionCursorPos] = useState(-1);
 
   // Deep-link anchor detection for #comment-...
   useEffect(() => {
@@ -226,10 +241,95 @@ export function TaskDetailModal({
       setDueDate(task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : '');
       setLabels(task.labels || []);
       setComments(task.comments || []);
+      setTaskReactions(task.reactions || []);
       setShowDeleteConfirm(false);
       setShowLabelsDropdown(false);
     }
   }, [task]);
+
+  // Real-time reactions from WebSocket
+  useEffect(() => {
+    if (!socket || !task?.id) return;
+
+    const handleTaskReactionToggled = (data: {
+      taskId: string;
+      emoji: string;
+      userId: string;
+      user?: any;
+      action: 'added' | 'removed';
+    }) => {
+      if (data.taskId === task.id) {
+        setTaskReactions((prev) => {
+          if (data.action === 'added') {
+            const exists = prev.some((r) => r.emoji === data.emoji && r.userId === data.userId);
+            if (exists) return prev;
+            return [
+              ...prev,
+              {
+                id: `sock-${Date.now()}`,
+                emoji: data.emoji,
+                taskId: data.taskId,
+                userId: data.userId,
+                user: data.user,
+                createdAt: new Date().toISOString(),
+              },
+            ];
+          } else {
+            return prev.filter((r) => !(r.emoji === data.emoji && r.userId === data.userId));
+          }
+        });
+      }
+    };
+
+    const handleCommentReactionToggled = (data: {
+      taskId: string;
+      commentId: string;
+      emoji: string;
+      userId: string;
+      user?: any;
+      action: 'added' | 'removed';
+    }) => {
+      if (data.taskId === task.id) {
+        setComments((prev) =>
+          prev.map((c) => {
+            if (c.id !== data.commentId) return c;
+            const current = c.reactions || [];
+            if (data.action === 'added') {
+              const exists = current.some((r) => r.emoji === data.emoji && r.userId === data.userId);
+              if (exists) return c;
+              return {
+                ...c,
+                reactions: [
+                  ...current,
+                  {
+                    id: `sock-${Date.now()}`,
+                    emoji: data.emoji,
+                    commentId: data.commentId,
+                    userId: data.userId,
+                    user: data.user,
+                    createdAt: new Date().toISOString(),
+                  },
+                ],
+              };
+            } else {
+              return {
+                ...c,
+                reactions: current.filter((r) => !(r.emoji === data.emoji && r.userId === data.userId)),
+              };
+            }
+          }),
+        );
+      }
+    };
+
+    socket.on('task:reaction:toggled', handleTaskReactionToggled);
+    socket.on('comment:reaction:toggled', handleCommentReactionToggled);
+
+    return () => {
+      socket.off('task:reaction:toggled', handleTaskReactionToggled);
+      socket.off('comment:reaction:toggled', handleCommentReactionToggled);
+    };
+  }, [socket, task?.id]);
 
   if (!isOpen || !task) return null;
 
@@ -641,6 +741,183 @@ export function TaskDetailModal({
     }, 2000);
   };
 
+  // Edit Comment Mention Autocomplete Matching
+  const matchingEditMembers = useMemo(() => {
+    if (editingMentionQuery === null) return [];
+    const q = editingMentionQuery.toLowerCase().trim();
+    return members
+      .filter((m) => {
+        const name = (m.user?.name || '').toLowerCase();
+        const email = (m.user?.email || '').toLowerCase();
+        return name.includes(q) || email.includes(q);
+      })
+      .slice(0, 5);
+  }, [members, editingMentionQuery]);
+
+  const handleEditCommentTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const text = e.target.value;
+    const cursorPos = e.target.selectionStart;
+    setEditingCommentText(text);
+
+    const textBeforeCursor = text.slice(0, cursorPos);
+    const lastAtPos = textBeforeCursor.lastIndexOf('@');
+
+    if (lastAtPos !== -1) {
+      const textAfterAt = textBeforeCursor.slice(lastAtPos + 1);
+      const charBeforeAt = lastAtPos > 0 ? textBeforeCursor[lastAtPos - 1] : ' ';
+      if (
+        (charBeforeAt === ' ' || charBeforeAt === '\n' || lastAtPos === 0) &&
+        !textAfterAt.includes('\n') &&
+        textAfterAt.length <= 25
+      ) {
+        setEditingMentionQuery(textAfterAt);
+        setEditingMentionCursorPos(lastAtPos);
+        setEditingMentionIndex(0);
+        return;
+      }
+    }
+    setEditingMentionQuery(null);
+  };
+
+  const handleSelectEditMention = (userName: string) => {
+    if (editingMentionCursorPos === -1) return;
+    const textBeforeAt = editingCommentText.slice(0, editingMentionCursorPos);
+    const currentCursor =
+      editCommentTextareaRef.current?.selectionStart ||
+      editingMentionCursorPos + (editingMentionQuery?.length || 0) + 1;
+    const textAfterCursor = editingCommentText.slice(currentCursor);
+    const inserted = `${textBeforeAt}@${userName} ${textAfterCursor}`;
+    setEditingCommentText(inserted);
+    setEditingMentionQuery(null);
+
+    setTimeout(() => {
+      if (editCommentTextareaRef.current) {
+        editCommentTextareaRef.current.focus();
+        const newPos = editingMentionCursorPos + userName.length + 2;
+        editCommentTextareaRef.current.setSelectionRange(newPos, newPos);
+      }
+    }, 10);
+  };
+
+  const handleEditCommentKeyDown = (
+    e: React.KeyboardEvent<HTMLTextAreaElement>,
+    commentId: string,
+  ) => {
+    if (editingMentionQuery !== null && matchingEditMembers.length > 0) {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setEditingMentionIndex((prev) => (prev + 1) % matchingEditMembers.length);
+        return;
+      }
+      if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setEditingMentionIndex((prev) => (prev - 1 + matchingEditMembers.length) % matchingEditMembers.length);
+        return;
+      }
+      if (e.key === 'Enter' || e.key === 'Tab') {
+        e.preventDefault();
+        const selected = matchingEditMembers[editingMentionIndex];
+        if (selected?.user?.name) {
+          handleSelectEditMention(selected.user.name);
+        }
+        return;
+      }
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        setEditingMentionQuery(null);
+        return;
+      }
+    }
+
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      handleSaveEditComment(commentId);
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      handleCancelEditComment();
+    }
+  };
+
+  // Reactions Handlers
+  const handleToggleTaskReaction = async (emoji: string) => {
+    if (!task || !user) return;
+    const existing = taskReactions.find((r) => r.emoji === emoji && r.userId === user.id);
+    let updated: TaskReaction[];
+    if (existing) {
+      updated = taskReactions.filter((r) => r.id !== existing.id && !(r.emoji === emoji && r.userId === user.id));
+    } else {
+      const opt: TaskReaction = {
+        id: `opt-${Date.now()}`,
+        emoji,
+        taskId: task.id,
+        userId: user.id,
+        user: { id: user.id, name: user.name, email: user.email, avatarUrl: user.avatarUrl },
+        createdAt: new Date().toISOString(),
+      };
+      updated = [...taskReactions, opt];
+    }
+    setTaskReactions(updated);
+    onUpdate(task.id, { reactions: updated });
+
+    try {
+      const res = await api.tasks.toggleTaskReaction(task.id, emoji);
+      if (res.action === 'added' && res.reaction) {
+        setTaskReactions((prev) => [
+          ...prev.filter((r) => !(r.emoji === emoji && r.userId === user.id)),
+          res.reaction!,
+        ]);
+      }
+    } catch (err) {
+      console.error('Failed to toggle task reaction:', err);
+      setTaskReactions(task.reactions || []);
+    }
+  };
+
+  const handleToggleCommentReaction = async (commentId: string, emoji: string) => {
+    if (!task || !user) return;
+    setComments((prev) =>
+      prev.map((c) => {
+        if (c.id !== commentId) return c;
+        const currentReactions = c.reactions || [];
+        const existing = currentReactions.find((r) => r.emoji === emoji && r.userId === user.id);
+        const updatedReactions = existing
+          ? currentReactions.filter((r) => !(r.emoji === emoji && r.userId === user.id))
+          : [
+              ...currentReactions,
+              {
+                id: `opt-${Date.now()}`,
+                emoji,
+                commentId,
+                userId: user.id,
+                user: { id: user.id, name: user.name, email: user.email, avatarUrl: user.avatarUrl },
+                createdAt: new Date().toISOString(),
+              },
+            ];
+        return { ...c, reactions: updatedReactions };
+      }),
+    );
+
+    try {
+      const res = await api.tasks.toggleCommentReaction(task.id, commentId, emoji);
+      if (res.action === 'added' && res.reaction) {
+        setComments((prev) =>
+          prev.map((c) => {
+            if (c.id !== commentId) return c;
+            return {
+              ...c,
+              reactions: [
+                ...(c.reactions || []).filter((r) => !(r.emoji === emoji && r.userId === user.id)),
+                res.reaction!,
+              ],
+            };
+          }),
+        );
+      }
+    } catch (err) {
+      console.error('Failed to toggle comment reaction:', err);
+    }
+  };
+
   const currentAssignee = members.find((m) => m.userId === assigneeId)?.user || task.assignee;
 
   return (
@@ -888,6 +1165,16 @@ export function TaskDetailModal({
                   onImageClick={(url) => setLightboxUrl(url)}
                   placeholder="Click here to add description, notes, or links... (Paste images directly to embed inline)"
                 />
+
+                {/* Task Reactions */}
+                <div className="pt-2 flex items-center gap-2">
+                  <ReactionsBar
+                    reactions={taskReactions}
+                    currentUserId={user?.id}
+                    onToggleReaction={handleToggleTaskReaction}
+                    size="md"
+                  />
+                </div>
               </div>
 
               {/* Sub-issues Section */}
@@ -995,27 +1282,102 @@ export function TaskDetailModal({
                           </div>
 
                           {editingCommentId === c.id ? (
-                            <div className="mt-2 space-y-2">
+                            <div className="mt-2 space-y-2 relative">
+                              {/* Mentions autocomplete popup while editing comment */}
+                              {editingMentionQuery !== null && matchingEditMembers.length > 0 && (
+                                <div className="absolute left-0 bottom-full mb-1 z-50 w-64 rounded-xl border border-border/80 bg-[#0e0f18]/95 backdrop-blur-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-100">
+                                  <div className="px-3 py-1.5 border-b border-border/50 text-[10px] font-semibold text-zinc-400 uppercase tracking-wider flex items-center justify-between">
+                                    <div className="flex items-center gap-1.5">
+                                      <AtSign className="w-3 h-3 text-indigo-400" />
+                                      <span>Mention team member</span>
+                                    </div>
+                                    <span className="text-[10px] text-zinc-500 font-normal">↑↓ navigate, ↵ select</span>
+                                  </div>
+                                  <div className="space-y-0.5 max-h-48 overflow-y-auto p-1 custom-scrollbar">
+                                    {matchingEditMembers.map((m, idx) => (
+                                      <button
+                                        key={m.userId}
+                                        type="button"
+                                        onClick={() => handleSelectEditMention(m.user?.name || 'User')}
+                                        className={cn(
+                                          'w-full flex items-center gap-2.5 px-2.5 py-1.5 text-xs rounded-lg transition-colors text-left',
+                                          idx === editingMentionIndex
+                                            ? 'bg-indigo-600/20 text-white font-medium'
+                                            : 'text-zinc-300 hover:bg-[#232432] hover:text-white',
+                                        )}
+                                      >
+                                        <img
+                                          src={
+                                            m.user?.avatarUrl ||
+                                            `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
+                                              m.user?.name || 'User',
+                                            )}`
+                                          }
+                                          alt={m.user?.name || 'User'}
+                                          className="w-5 h-5 rounded-full object-cover shrink-0"
+                                        />
+                                        <div className="min-w-0 flex-1 truncate">
+                                          <div className="font-medium text-white truncate text-xs">
+                                            {m.user?.name}
+                                          </div>
+                                          <div className="text-[10px] text-zinc-500 truncate">
+                                            {m.user?.email}
+                                          </div>
+                                        </div>
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+
                               <textarea
+                                ref={editCommentTextareaRef}
                                 value={editingCommentText}
-                                onChange={(e) => setEditingCommentText(e.target.value)}
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
-                                    e.preventDefault();
-                                    handleSaveEditComment(c.id);
-                                  } else if (e.key === 'Escape') {
-                                    e.preventDefault();
-                                    handleCancelEditComment();
-                                  }
-                                }}
+                                onChange={handleEditCommentTextChange}
+                                onKeyDown={(e) => handleEditCommentKeyDown(e, c.id)}
                                 rows={3}
                                 className="w-full bg-[#161726] border border-border focus:border-indigo-500 rounded-lg p-2.5 text-xs text-foreground placeholder:text-zinc-500 focus:outline-none resize-none leading-relaxed"
                                 autoFocus
                               />
+
+                              {/* Comment image / mention live preview when editing */}
+                              {editingCommentText && (editingCommentText.includes('@') || editingCommentText.includes('![')) && (
+                                <div className="p-2 border border-border/40 bg-[#0a0b12]/60 rounded text-xs space-y-1">
+                                  <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-semibold block">
+                                    Live Preview
+                                  </span>
+                                  <MarkdownRenderer content={editingCommentText} membersList={members} />
+                                </div>
+                              )}
+
                               <div className="flex items-center justify-between">
-                                <span className="text-[10px] text-zinc-500">
-                                  Esc to cancel • Cmd+Enter to save
-                                </span>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-[10px] text-zinc-500">
+                                    Esc to cancel • Cmd+Enter to save
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const text = editingCommentText ? `${editingCommentText} @` : '@';
+                                      setEditingCommentText(text);
+                                      setEditingMentionQuery('');
+                                      setEditingMentionCursorPos(text.length - 1);
+                                      setEditingMentionIndex(0);
+                                      setTimeout(() => {
+                                        if (editCommentTextareaRef.current) {
+                                          editCommentTextareaRef.current.focus();
+                                          editCommentTextareaRef.current.setSelectionRange(text.length, text.length);
+                                        }
+                                      }, 10);
+                                    }}
+                                    className="flex items-center gap-1 text-[11px] text-zinc-400 hover:text-white px-1.5 py-0.5 rounded hover:bg-zinc-800 transition-colors"
+                                    title="Mention a team member"
+                                  >
+                                    <AtSign className="w-3.5 h-3.5 text-indigo-400" />
+                                    <span>Mention</span>
+                                  </button>
+                                </div>
+
                                 <div className="flex items-center gap-1.5">
                                   <Button
                                     type="button"
@@ -1046,8 +1408,20 @@ export function TaskDetailModal({
                               </div>
                             </div>
                           ) : (
-                            <div className="mt-1.5 text-xs text-zinc-300 leading-relaxed whitespace-pre-wrap">
-                              {renderCommentContentWithMentions(c.content, members)}
+                            <div>
+                              <div className="mt-1.5 text-xs text-zinc-300 leading-relaxed whitespace-pre-wrap">
+                                {renderCommentContentWithMentions(c.content, members)}
+                              </div>
+
+                              {/* Comment Reactions */}
+                              <div className="mt-2">
+                                <ReactionsBar
+                                  reactions={c.reactions || []}
+                                  currentUserId={user?.id}
+                                  onToggleReaction={(emoji) => handleToggleCommentReaction(c.id, emoji)}
+                                  size="sm"
+                                />
+                              </div>
                             </div>
                           )}
                         </div>

@@ -145,6 +145,29 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.server.to(`workspace_${workspaceId}`).emit('comment:deleted', payload);
   }
 
+  emitTaskReactionToggled(
+    workspaceId: string,
+    payload: { taskId: string; emoji: string; userId: string; user?: any; action: 'added' | 'removed' },
+  ) {
+    const rooms = [`workspace_${workspaceId}`, `task_${payload.taskId}`];
+    this.server.to(rooms).emit('task:reaction:toggled', payload);
+  }
+
+  emitCommentReactionToggled(
+    workspaceId: string,
+    payload: {
+      taskId: string;
+      commentId: string;
+      emoji: string;
+      userId: string;
+      user?: any;
+      action: 'added' | 'removed';
+    },
+  ) {
+    const rooms = [`workspace_${workspaceId}`, `task_${payload.taskId}`];
+    this.server.to(rooms).emit('comment:reaction:toggled', payload);
+  }
+
   emitNotification(userId: string, notification: any) {
     this.server.to(`user_${userId}`).emit('notification:new', notification);
   }

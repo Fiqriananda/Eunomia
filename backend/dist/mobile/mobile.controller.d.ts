@@ -31,6 +31,20 @@ export declare class MobileController {
                 name: string;
                 avatarUrl: string | null;
             };
+            reactions: ({
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+            } & {
+                id: string;
+                createdAt: Date;
+                userId: string;
+                emoji: string;
+                commentId: string;
+            })[];
         } & {
             id: string;
             createdAt: Date;
@@ -169,6 +183,20 @@ export declare class MobileController {
             size: number;
             uploaderId: string;
         }[];
+        reactions: ({
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            userId: string;
+            taskId: string;
+            emoji: string;
+        })[];
     } & {
         id: string;
         createdAt: Date;
@@ -212,6 +240,20 @@ export declare class MobileController {
                 name: string;
                 avatarUrl: string | null;
             };
+            reactions: ({
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+            } & {
+                id: string;
+                createdAt: Date;
+                userId: string;
+                emoji: string;
+                commentId: string;
+            })[];
         } & {
             id: string;
             createdAt: Date;
@@ -350,6 +392,20 @@ export declare class MobileController {
             size: number;
             uploaderId: string;
         }[];
+        reactions: ({
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            userId: string;
+            taskId: string;
+            emoji: string;
+        })[];
     } & {
         id: string;
         createdAt: Date;
@@ -393,6 +449,20 @@ export declare class MobileController {
                 name: string;
                 avatarUrl: string | null;
             };
+            reactions: ({
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+            } & {
+                id: string;
+                createdAt: Date;
+                userId: string;
+                emoji: string;
+                commentId: string;
+            })[];
         } & {
             id: string;
             createdAt: Date;
@@ -531,6 +601,20 @@ export declare class MobileController {
             size: number;
             uploaderId: string;
         }[];
+        reactions: ({
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            userId: string;
+            taskId: string;
+            emoji: string;
+        })[];
     } & {
         id: string;
         createdAt: Date;

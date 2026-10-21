@@ -47,12 +47,31 @@ export interface Workspace {
   role?: WorkspaceRole;
 }
 
+export interface TaskReaction {
+  id: string;
+  emoji: string;
+  taskId: string;
+  userId: string;
+  user: User;
+  createdAt: string;
+}
+
+export interface CommentReaction {
+  id: string;
+  emoji: string;
+  commentId: string;
+  userId: string;
+  user: User;
+  createdAt: string;
+}
+
 export interface TaskComment {
   id: string;
   content: string;
   taskId: string;
   userId: string;
   user: User;
+  reactions?: CommentReaction[];
   createdAt: string;
   updatedAt: string;
 }
@@ -180,6 +199,7 @@ export interface Task {
   }[];
   attachments?: Attachment[];
   comments?: TaskComment[];
+  reactions?: TaskReaction[];
   activities?: TaskActivity[];
   createdAt: string;
   updatedAt: string;

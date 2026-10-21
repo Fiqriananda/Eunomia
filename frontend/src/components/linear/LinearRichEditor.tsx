@@ -50,12 +50,18 @@ function markdownToHtml(md: string, membersList: WorkspaceMember[] = []): string
   const htmlLines: string[] = [];
   let inCodeBlock = false;
   let codeBuffer: string[] = [];
+  let codeBlockLang = '';
   let inList = false;
+  let inOrderedList = false;
 
   const closeList = () => {
     if (inList) {
       htmlLines.push('</ul>');
       inList = false;
+    }
+    if (inOrderedList) {
+      htmlLines.push('</ol>');
+      inOrderedList = false;
     }
   };
 
@@ -63,19 +69,27 @@ function markdownToHtml(md: string, membersList: WorkspaceMember[] = []): string
     const rawLine = lines[i];
     const trimmed = rawLine.trim();
 
-    // Code blocks
+    // Code blocks: ``` or ```javascript
     if (trimmed.startsWith('```')) {
       if (inCodeBlock) {
         htmlLines.push(
-          `<pre class="code-block bg-[#13141f] text-zinc-200 p-3 rounded-lg font-mono text-xs my-3 border border-border/50 overflow-x-auto"><code>${escapeHtml(
-            codeBuffer.join('\n'),
-          )}</code></pre>`,
+          `<div class="code-block-container my-3 rounded-lg overflow-hidden border border-border/60 bg-[#12131d]" data-lang="${codeBlockLang}">` +
+            `<div class="px-3 py-1 bg-[#181926] text-[10px] text-zinc-400 font-mono flex items-center justify-between border-b border-border/40 select-none">` +
+              `<span>${codeBlockLang || 'code'}</span>` +
+            `</div>` +
+            `<pre class="p-3 text-zinc-200 font-mono text-xs overflow-x-auto leading-relaxed"><code>${escapeHtml(
+              codeBuffer.join('\n'),
+            )}</code></pre>` +
+          `</div>`,
         );
         codeBuffer = [];
         inCodeBlock = false;
+        codeBlockLang = '';
       } else {
         closeList();
         inCodeBlock = true;
+        const matchLang = trimmed.slice(3).trim();
+        codeBlockLang = matchLang || '';
       }
       continue;
     }
@@ -85,7 +99,44 @@ function markdownToHtml(md: string, membersList: WorkspaceMember[] = []): string
       continue;
     }
 
-    // Headings
+    // Horizontal Rule: --- or *** or ___
+    if (/^(\*\*\*|---|___)$/.test(trimmed)) {
+      closeList();
+      htmlLines.push('<hr class="my-4 border-t border-border/60" />');
+      continue;
+    }
+
+    // Headings: # to ######
+    if (trimmed.startsWith('###### ')) {
+      closeList();
+      htmlLines.push(
+        `<h6 class="text-xs font-semibold text-zinc-400 uppercase tracking-wider mt-3 mb-1">${formatInline(
+          trimmed.slice(7),
+          membersList,
+        )}</h6>`,
+      );
+      continue;
+    }
+    if (trimmed.startsWith('##### ')) {
+      closeList();
+      htmlLines.push(
+        `<h5 class="text-xs font-semibold text-zinc-300 mt-3 mb-1">${formatInline(
+          trimmed.slice(6),
+          membersList,
+        )}</h5>`,
+      );
+      continue;
+    }
+    if (trimmed.startsWith('#### ')) {
+      closeList();
+      htmlLines.push(
+        `<h4 class="text-sm font-semibold text-zinc-100 mt-3.5 mb-1.5">${formatInline(
+          trimmed.slice(5),
+          membersList,
+        )}</h4>`,
+      );
+      continue;
+    }
     if (trimmed.startsWith('### ')) {
       closeList();
       htmlLines.push(
@@ -109,7 +160,7 @@ function markdownToHtml(md: string, membersList: WorkspaceMember[] = []): string
     if (trimmed.startsWith('# ')) {
       closeList();
       htmlLines.push(
-        `<h1 class="text-xl font-bold text-zinc-100 mt-4 mb-2">${formatInline(
+        `<h1 class="text-xl font-bold text-zinc-100 mt-4 mb-2 pb-1 border-b border-border/40">${formatInline(
           trimmed.slice(2),
           membersList,
         )}</h1>`,
@@ -135,11 +186,12 @@ function markdownToHtml(md: string, membersList: WorkspaceMember[] = []): string
       closeList();
       const isChecked = checklistMatch[1].toLowerCase() === 'x';
       const label = checklistMatch[2];
+      const isIndented = /^\s{2,}/.test(rawLine);
       htmlLines.push(
-        `<div class="task-checkbox-item flex items-center gap-2 my-1.5" data-checked="${isChecked}">` +
+        `<div class="task-checkbox-item flex items-start gap-2 my-1.5 ${isIndented ? 'ml-5' : ''}" data-checked="${isChecked}">` +
           `<input type="checkbox" ${
             isChecked ? 'checked' : ''
-          } class="w-4 h-4 rounded accent-indigo-500 cursor-pointer" />` +
+          } class="w-4 h-4 mt-0.5 rounded accent-indigo-500 cursor-pointer shrink-0" />` +
           `<span class="task-label ${
             isChecked ? 'line-through text-zinc-500' : 'text-zinc-200'
           }">${formatInline(label, membersList)}</span>` +
@@ -148,15 +200,33 @@ function markdownToHtml(md: string, membersList: WorkspaceMember[] = []): string
       continue;
     }
 
-    // Bullet lists
+    // Bullet lists: - or * or +
     const ulMatch = trimmed.match(/^[-*+]\s+(.*)$/);
     if (ulMatch) {
+      if (inOrderedList) closeList();
       if (!inList) {
-        closeList();
         htmlLines.push('<ul class="list-disc list-inside space-y-1 my-1.5">');
         inList = true;
       }
-      htmlLines.push(`<li>${formatInline(ulMatch[1], membersList)}</li>`);
+      const isIndented = /^\s{2,}/.test(rawLine);
+      htmlLines.push(
+        `<li class="${isIndented ? 'ml-5 list-circle' : ''}">${formatInline(
+          ulMatch[1],
+          membersList,
+        )}</li>`,
+      );
+      continue;
+    }
+
+    // Ordered lists: 1. 2. etc.
+    const olMatch = trimmed.match(/^(\d+)\.\s+(.*)$/);
+    if (olMatch) {
+      if (inList) closeList();
+      if (!inOrderedList) {
+        htmlLines.push('<ol class="list-decimal list-inside space-y-1 my-1.5">');
+        inOrderedList = true;
+      }
+      htmlLines.push(`<li>${formatInline(olMatch[2], membersList)}</li>`);
       continue;
     }
 
@@ -195,6 +265,19 @@ function markdownToHtml(md: string, membersList: WorkspaceMember[] = []): string
         )}</p>`,
       );
     }
+  }
+
+  if (inCodeBlock) {
+    htmlLines.push(
+      `<div class="code-block-container my-3 rounded-lg overflow-hidden border border-border/60 bg-[#12131d]" data-lang="${codeBlockLang}">` +
+        `<div class="px-3 py-1 bg-[#181926] text-[10px] text-zinc-400 font-mono flex items-center justify-between border-b border-border/40 select-none">` +
+          `<span>${codeBlockLang || 'code'}</span>` +
+        `</div>` +
+        `<pre class="p-3 text-zinc-200 font-mono text-xs overflow-x-auto leading-relaxed"><code>${escapeHtml(
+          codeBuffer.join('\n'),
+        )}</code></pre>` +
+      `</div>`,
+    );
   }
 
   closeList();
@@ -249,14 +332,20 @@ function formatInline(text: string, membersList: WorkspaceMember[] = []): string
   res = res.replace(/\*\*\*(.*?)\*\*\*/g, '<strong><em>$1</em></strong>');
   // Bold: **text**
   res = res.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+  // CriticMarkup / Insert / Highlight: ++text++
+  res = res.replace(
+    /\+\+([^+]+)\+\+/g,
+    '<strong class="text-zinc-100 font-semibold">$1</strong>',
+  );
   // Italic: *text*
-  res = res.replace(/\*(.*?)\*/g, '<em>$1</em>');
+  res = res.replace(/\*([^*\n]+)\*/g, '<em>$1</em>');
   // Strikethrough: ~~text~~
   res = res.replace(
     /~~(.*?)~~/g,
     '<del class="line-through text-zinc-500">$1</del>',
   );
   // Underline: <u>text</u>
+  res = res.replace(/&lt;u&gt;(.*?)&lt;\/u&gt;/g, '<u class="underline">$1</u>');
   res = res.replace(/<u>(.*?)<\/u>/g, '<u class="underline">$1</u>');
   // Inline Code: `code`
   res = res.replace(
@@ -287,6 +376,38 @@ function htmlToMarkdown(node: Node): string {
   const el = node as HTMLElement;
   const tag = el.tagName.toLowerCase();
 
+  // Handle special block components directly before generic child mapping
+  if (el.classList.contains('code-block-container')) {
+    const lang = el.getAttribute('data-lang') || '';
+    const codeText = el.querySelector('code')?.textContent || el.textContent || '';
+    return `\n\`\`\`${lang}\n${codeText.trim()}\n\`\`\`\n\n`;
+  }
+
+  if (el.classList.contains('editor-image-card')) {
+    const img = el.querySelector('img');
+    if (img) {
+      const src = img.getAttribute('src') || el.getAttribute('data-image-url') || '';
+      const alt = img.getAttribute('alt') || 'image';
+      return `\n![${alt}](${src})\n\n`;
+    }
+    return '';
+  }
+
+  if (el.classList.contains('task-checkbox-item')) {
+    const input = el.querySelector(
+      'input[type="checkbox"]',
+    ) as HTMLInputElement | null;
+    const isChecked =
+      input?.checked || el.getAttribute('data-checked') === 'true';
+    const labelEl = el.querySelector('.task-label');
+    const labelMd = labelEl
+      ? Array.from(labelEl.childNodes).map(htmlToMarkdown).join('').trim()
+      : (el.textContent || '').trim();
+    const isIndented = el.classList.contains('ml-5');
+    const prefix = isIndented ? '  ' : '';
+    return `${prefix}- [${isChecked ? 'x' : ' '}] ${labelMd}\n`;
+  }
+
   const childrenMd = Array.from(el.childNodes).map(htmlToMarkdown).join('');
 
   switch (tag) {
@@ -296,6 +417,14 @@ function htmlToMarkdown(node: Node): string {
       return `\n## ${childrenMd.trim()}\n\n`;
     case 'h3':
       return `\n### ${childrenMd.trim()}\n\n`;
+    case 'h4':
+      return `\n#### ${childrenMd.trim()}\n\n`;
+    case 'h5':
+      return `\n##### ${childrenMd.trim()}\n\n`;
+    case 'h6':
+      return `\n###### ${childrenMd.trim()}\n\n`;
+    case 'hr':
+      return `\n---\n\n`;
     case 'b':
     case 'strong':
       return `**${childrenMd}**`;
@@ -313,8 +442,15 @@ function htmlToMarkdown(node: Node): string {
         return childrenMd;
       }
       return `\`${childrenMd}\``;
-    case 'pre':
-      return `\n\`\`\`\n${childrenMd.trim()}\n\`\`\`\n\n`;
+    case 'pre': {
+      const codeEl = el.querySelector('code');
+      const lang =
+        el.getAttribute('data-lang') ||
+        el.closest('.code-block-container')?.getAttribute('data-lang') ||
+        '';
+      const text = (codeEl ? codeEl.textContent : el.textContent) || childrenMd;
+      return `\n\`\`\`${lang}\n${text.trim()}\n\`\`\`\n\n`;
+    }
     case 'blockquote':
       return `\n> ${childrenMd.trim()}\n\n`;
     case 'a':
@@ -340,27 +476,6 @@ function htmlToMarkdown(node: Node): string {
       }
       return childrenMd;
     case 'div':
-      if (el.classList.contains('editor-image-card')) {
-        const img = el.querySelector('img');
-        if (img) {
-          const src = img.getAttribute('src') || el.getAttribute('data-image-url') || '';
-          const alt = img.getAttribute('alt') || 'image';
-          return `\n![${alt}](${src})\n\n`;
-        }
-        return '';
-      }
-      if (el.classList.contains('task-checkbox-item')) {
-        const input = el.querySelector(
-          'input[type="checkbox"]',
-        ) as HTMLInputElement | null;
-        const isChecked =
-          input?.checked || el.getAttribute('data-checked') === 'true';
-        const label =
-          el.querySelector('.task-label')?.textContent ||
-          el.textContent ||
-          '';
-        return `- [${isChecked ? 'x' : ' '}] ${label.trim()}\n`;
-      }
       return `\n${childrenMd}`;
     case 'ul':
       return `\n${childrenMd}\n`;
@@ -368,12 +483,14 @@ function htmlToMarkdown(node: Node): string {
       return `\n${childrenMd}\n`;
     case 'li': {
       const parentTag = el.parentElement?.tagName.toLowerCase();
+      const isIndented = el.classList.contains('ml-5');
+      const prefix = isIndented ? '  ' : '';
       if (parentTag === 'ol') {
         const index =
           Array.from(el.parentElement?.children || []).indexOf(el) + 1;
-        return `${index}. ${childrenMd.trim()}\n`;
+        return `${prefix}${index}. ${childrenMd.trim()}\n`;
       }
-      return `- ${childrenMd.trim()}\n`;
+      return `${prefix}- ${childrenMd.trim()}\n`;
     }
     case 'p':
       return `\n${childrenMd}\n`;
@@ -751,20 +868,89 @@ export function LinearRichEditor({
     }
   };
 
-  // Handle image paste (⌘V)
+  // Handle paste (⌘V): images or rich markdown text
   const handlePaste = (e: React.ClipboardEvent<HTMLDivElement>) => {
+    // 1. Check for image files in clipboard
     const items = e.clipboardData?.items;
-    if (!items) return;
-
-    const imgItem = Array.from(items).find((item) =>
-      item.type.startsWith('image/'),
-    );
-    if (imgItem) {
-      e.preventDefault();
-      const file = imgItem.getAsFile();
-      if (file) {
-        uploadAndInsertImage(file);
+    if (items) {
+      const imgItem = Array.from(items).find((item) =>
+        item.type.startsWith('image/'),
+      );
+      if (imgItem) {
+        e.preventDefault();
+        const file = imgItem.getAsFile();
+        if (file) {
+          uploadAndInsertImage(file);
+        }
+        return;
       }
+    }
+
+    // 2. Check for pasted text
+    const plainText = e.clipboardData?.getData('text/plain');
+    if (!plainText) return;
+
+    // Detect if pasted text contains markdown structures or multiple formatted blocks
+    const isMarkdown =
+      /(?:^|\n)(?:#{1,6}\s|[-*+]\s*\[[ xX]\]|[-*+]\s+|\d+\.\s+|>{1,2}\s+|```|---|___|\*\*\*)/m.test(
+        plainText,
+      ) ||
+      /\*\*[^*]+\*\*/.test(plainText) ||
+      /\+\+[^+]+\+\+/.test(plainText) ||
+      /`[^`]+`/.test(plainText) ||
+      /\[[^\]]+\]\([^)]+\)/.test(plainText);
+
+    if (isMarkdown) {
+      e.preventDefault();
+
+      // Convert Markdown string to clean WYSIWYG HTML elements
+      const html = markdownToHtml(plainText, members);
+
+      if (!editorRef.current) return;
+
+      // If the editor is effectively empty, set HTML directly to avoid stray empty tags
+      const currentText = editorRef.current.innerText.trim();
+      const sel = window.getSelection();
+
+      if (!currentText || !sel || !sel.rangeCount) {
+        editorRef.current.innerHTML = html;
+        const newRange = document.createRange();
+        newRange.selectNodeContents(editorRef.current);
+        newRange.collapse(false);
+        sel?.removeAllRanges();
+        sel?.addRange(newRange);
+      } else {
+        let range = sel.getRangeAt(0);
+        // Ensure range is within this editor
+        if (!editorRef.current.contains(range.commonAncestorContainer)) {
+          range = document.createRange();
+          range.selectNodeContents(editorRef.current);
+          range.collapse(false);
+        }
+
+        range.deleteContents();
+
+        const temp = document.createElement('div');
+        temp.innerHTML = html;
+
+        const fragment = document.createDocumentFragment();
+        let lastNode: Node | null = null;
+        while (temp.firstChild) {
+          lastNode = fragment.appendChild(temp.firstChild);
+        }
+
+        range.insertNode(fragment);
+
+        if (lastNode) {
+          const newRange = document.createRange();
+          newRange.setStartAfter(lastNode);
+          newRange.collapse(true);
+          sel.removeAllRanges();
+          sel.addRange(newRange);
+        }
+      }
+
+      syncMarkdown();
     }
   };
 

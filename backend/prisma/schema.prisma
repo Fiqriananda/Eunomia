@@ -52,6 +52,8 @@ model User {
   notifications    InboxNotification[] @relation("UserNotifications")
   triggeredNotifications InboxNotification[] @relation("ActorNotifications")
   sentInvitations  WorkspaceInvitation[] @relation("SentInvitations")
+  taskReactions    TaskReaction[]
+  commentReactions CommentReaction[]
 }
 
 model Workspace {
@@ -177,6 +179,7 @@ model Task {
 
   attachments Attachment[]
   comments    Comment[]
+  reactions   TaskReaction[]
   activities  TaskActivity[]
   notifications InboxNotification[]
   createdAt   DateTime     @default(now())
@@ -204,14 +207,41 @@ model TaskRelation {
 }
 
 model Comment {
-  id        String   @id @default(uuid())
+  id        String            @id @default(uuid())
   content   String
+  taskId    String
+  task      Task              @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reactions CommentReaction[]
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+}
+
+model TaskReaction {
+  id        String   @id @default(uuid())
+  emoji     String
   taskId    String
   task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+
+  @@unique([taskId, userId, emoji])
+  @@index([taskId])
+}
+
+model CommentReaction {
+  id        String   @id @default(uuid())
+  emoji     String
+  commentId String
+  comment   Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([commentId, userId, emoji])
+  @@index([commentId])
 }
 
 model TaskActivity {

@@ -68,5 +68,20 @@ export declare class EventsGateway implements OnGatewayConnection, OnGatewayDisc
         taskId: string;
         commentId: string;
     }): void;
+    emitTaskReactionToggled(workspaceId: string, payload: {
+        taskId: string;
+        emoji: string;
+        userId: string;
+        user?: any;
+        action: 'added' | 'removed';
+    }): void;
+    emitCommentReactionToggled(workspaceId: string, payload: {
+        taskId: string;
+        commentId: string;
+        emoji: string;
+        userId: string;
+        user?: any;
+        action: 'added' | 'removed';
+    }): void;
     emitNotification(userId: string, notification: any): void;
 }

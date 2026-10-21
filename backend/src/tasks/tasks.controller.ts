@@ -272,4 +272,28 @@ export class TasksController {
   ) {
     return this.tasksService.deleteComment(commentId, userId);
   }
+
+  @Post(':id/reactions')
+  @ApiOperation({ summary: 'Toggle reaction on a task' })
+  @ApiParam({ name: 'id', description: 'Task ID' })
+  async toggleTaskReaction(
+    @Param('id') taskId: string,
+    @CurrentUser('id') userId: string,
+    @Body() body: { emoji: string },
+  ) {
+    return this.tasksService.toggleTaskReaction(taskId, userId, body.emoji);
+  }
+
+  @Post(':id/comments/:commentId/reactions')
+  @ApiOperation({ summary: 'Toggle reaction on a task comment' })
+  @ApiParam({ name: 'id', description: 'Task ID' })
+  @ApiParam({ name: 'commentId', description: 'Comment ID' })
+  async toggleCommentReaction(
+    @Param('id') taskId: string,
+    @Param('commentId') commentId: string,
+    @CurrentUser('id') userId: string,
+    @Body() body: { emoji: string },
+  ) {
+    return this.tasksService.toggleCommentReaction(taskId, commentId, userId, body.emoji);
+  }
 }

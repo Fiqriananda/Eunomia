@@ -12,6 +12,8 @@ import {
   TaskActivity,
   InboxNotification,
   Cycle,
+  TaskReaction,
+  CommentReaction,
   WorkspaceInvitation,
 } from '../types';
 
@@ -353,6 +355,29 @@ class ApiClient {
     deleteComment: (taskId: string, commentId: string) =>
       this.request<{ success: boolean }>(`/tasks/${taskId}/comments/${commentId}`, {
         method: 'DELETE',
+      }),
+
+    toggleTaskReaction: (taskId: string, emoji: string) =>
+      this.request<{
+        action: 'added' | 'removed';
+        reaction?: TaskReaction;
+        taskId: string;
+        userId: string;
+      }>(`/tasks/${taskId}/reactions`, {
+        method: 'POST',
+        body: JSON.stringify({ emoji }),
+      }),
+
+    toggleCommentReaction: (taskId: string, commentId: string, emoji: string) =>
+      this.request<{
+        action: 'added' | 'removed';
+        reaction?: CommentReaction;
+        commentId: string;
+        taskId: string;
+        userId: string;
+      }>(`/tasks/${taskId}/comments/${commentId}/reactions`, {
+        method: 'POST',
+        body: JSON.stringify({ emoji }),
       }),
 
     logActivity: (

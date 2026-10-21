@@ -64,10 +64,26 @@ const taskIncludeConfig = {
     },
   },
   attachments: true,
+  reactions: {
+    include: {
+      user: {
+        select: { id: true, name: true, email: true, avatarUrl: true },
+      },
+    },
+    orderBy: { createdAt: 'asc' as const },
+  },
   comments: {
     include: {
       user: {
         select: { id: true, name: true, email: true, avatarUrl: true },
+      },
+      reactions: {
+        include: {
+          user: {
+            select: { id: true, name: true, email: true, avatarUrl: true },
+          },
+        },
+        orderBy: { createdAt: 'asc' as const },
       },
     },
     orderBy: { createdAt: 'asc' as const },
@@ -997,5 +1013,137 @@ export class TasksService {
     }
 
     return this.getTaskById(taskId);
+  }
+
+  async toggleTaskReaction(taskId: string, userId: string, emoji: string) {
+    const task = await this.prisma.task.findUnique({
+      where: { id: taskId },
+      select: { id: true, workspaceId: true },
+    });
+    if (!task) {
+      throw new NotFoundException('Task not found');
+    }
+
+    const trimmedEmoji = emoji.trim();
+    if (!trimmedEmoji) {
+      throw new Error('Emoji is required');
+    }
+
+    const existing = await this.prisma.taskReaction.findUnique({
+      where: {
+        taskId_userId_emoji: {
+          taskId,
+          userId,
+          emoji: trimmedEmoji,
+        },
+      },
+    });
+
+    if (existing) {
+      await this.prisma.taskReaction.delete({
+        where: { id: existing.id },
+      });
+
+      this.eventsGateway.emitTaskReactionToggled(task.workspaceId, {
+        taskId,
+        emoji: trimmedEmoji,
+        userId,
+        action: 'removed',
+      });
+
+      return { action: 'removed', emoji: trimmedEmoji, taskId, userId };
+    } else {
+      const created = await this.prisma.taskReaction.create({
+        data: {
+          taskId,
+          userId,
+          emoji: trimmedEmoji,
+        },
+        include: {
+          user: {
+            select: { id: true, name: true, email: true, avatarUrl: true },
+          },
+        },
+      });
+
+      this.eventsGateway.emitTaskReactionToggled(task.workspaceId, {
+        taskId,
+        emoji: trimmedEmoji,
+        userId,
+        user: created.user,
+        action: 'added',
+      });
+
+      return { action: 'added', reaction: created, taskId, userId };
+    }
+  }
+
+  async toggleCommentReaction(taskId: string, commentId: string, userId: string, emoji: string) {
+    const comment = await this.prisma.comment.findUnique({
+      where: { id: commentId },
+      include: {
+        task: {
+          select: { id: true, workspaceId: true },
+        },
+      },
+    });
+    if (!comment) {
+      throw new NotFoundException('Comment not found');
+    }
+
+    const trimmedEmoji = emoji.trim();
+    if (!trimmedEmoji) {
+      throw new Error('Emoji is required');
+    }
+
+    const existing = await this.prisma.commentReaction.findUnique({
+      where: {
+        commentId_userId_emoji: {
+          commentId,
+          userId,
+          emoji: trimmedEmoji,
+        },
+      },
+    });
+
+    if (existing) {
+      await this.prisma.commentReaction.delete({
+        where: { id: existing.id },
+      });
+
+      this.eventsGateway.emitCommentReactionToggled(comment.task.workspaceId, {
+        taskId: comment.taskId,
+        commentId,
+        emoji: trimmedEmoji,
+        userId,
+        action: 'removed',
+      });
+
+      return { action: 'removed', emoji: trimmedEmoji, commentId, taskId: comment.taskId, userId };
+    } else {
+      const created = await this.prisma.commentReaction.create({
+        data: {
+          commentId,
+          userId,
+          emoji: trimmedEmoji,
+        },
+        include: {
+          user: {
+            select: { id: true, name: true, email: true, avatarUrl: true },
+          },
+        },
+      });
+
+      this.eventsGateway.emitCommentReactionToggled(comment.task.workspaceId, {
+        taskId: comment.taskId,
+        commentId,
+        emoji: trimmedEmoji,
+        userId,
+        user: created.user,
+        action: 'added',
+      });
+
+      return { action: 'added', reaction: created, commentId, taskId: comment.taskId, userId };
+    }
   }
 }

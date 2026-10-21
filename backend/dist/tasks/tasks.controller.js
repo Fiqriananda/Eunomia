@@ -82,6 +82,12 @@ let TasksController = class TasksController {
     async deleteComment(commentId, userId) {
         return this.tasksService.deleteComment(commentId, userId);
     }
+    async toggleTaskReaction(taskId, userId, body) {
+        return this.tasksService.toggleTaskReaction(taskId, userId, body.emoji);
+    }
+    async toggleCommentReaction(taskId, commentId, userId, body) {
+        return this.tasksService.toggleCommentReaction(taskId, commentId, userId, body.emoji);
+    }
 };
 __decorate([
     Get(),
@@ -281,6 +287,30 @@ __decorate([
     __metadata("design:paramtypes", [String, String]),
     __metadata("design:returntype", Promise)
 ], TasksController.prototype, "deleteComment", null);
+__decorate([
+    Post(':id/reactions'),
+    ApiOperation({ summary: 'Toggle reaction on a task' }),
+    ApiParam({ name: 'id', description: 'Task ID' }),
+    __param(0, Param('id')),
+    __param(1, CurrentUser('id')),
+    __param(2, Body()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, Object]),
+    __metadata("design:returntype", Promise)
+], TasksController.prototype, "toggleTaskReaction", null);
+__decorate([
+    Post(':id/comments/:commentId/reactions'),
+    ApiOperation({ summary: 'Toggle reaction on a task comment' }),
+    ApiParam({ name: 'id', description: 'Task ID' }),
+    ApiParam({ name: 'commentId', description: 'Comment ID' }),
+    __param(0, Param('id')),
+    __param(1, Param('commentId')),
+    __param(2, CurrentUser('id')),
+    __param(3, Body()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, String, Object]),
+    __metadata("design:returntype", Promise)
+], TasksController.prototype, "toggleCommentReaction", null);
 TasksController = __decorate([
     ApiTags('Tasks'),
     ApiBearerAuth('JWT-auth'),

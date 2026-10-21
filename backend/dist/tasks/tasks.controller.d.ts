@@ -23,6 +23,20 @@ export declare class TasksController {
                 name: string;
                 avatarUrl: string | null;
             };
+            reactions: ({
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+            } & {
+                id: string;
+                createdAt: Date;
+                userId: string;
+                emoji: string;
+                commentId: string;
+            })[];
         } & {
             id: string;
             createdAt: Date;
@@ -161,6 +175,20 @@ export declare class TasksController {
             size: number;
             uploaderId: string;
         }[];
+        reactions: ({
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            userId: string;
+            taskId: string;
+            emoji: string;
+        })[];
     } & {
         id: string;
         createdAt: Date;
@@ -204,6 +232,20 @@ export declare class TasksController {
                 name: string;
                 avatarUrl: string | null;
             };
+            reactions: ({
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+            } & {
+                id: string;
+                createdAt: Date;
+                userId: string;
+                emoji: string;
+                commentId: string;
+            })[];
         } & {
             id: string;
             createdAt: Date;
@@ -342,6 +384,20 @@ export declare class TasksController {
             size: number;
             uploaderId: string;
         }[];
+        reactions: ({
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            userId: string;
+            taskId: string;
+            emoji: string;
+        })[];
     } & {
         id: string;
         createdAt: Date;
@@ -399,6 +455,20 @@ export declare class TasksController {
                 name: string;
                 avatarUrl: string | null;
             };
+            reactions: ({
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+            } & {
+                id: string;
+                createdAt: Date;
+                userId: string;
+                emoji: string;
+                commentId: string;
+            })[];
         } & {
             id: string;
             createdAt: Date;
@@ -537,6 +607,20 @@ export declare class TasksController {
             size: number;
             uploaderId: string;
         }[];
+        reactions: ({
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            userId: string;
+            taskId: string;
+            emoji: string;
+        })[];
     } & {
         id: string;
         createdAt: Date;
@@ -595,6 +679,20 @@ export declare class TasksController {
                 name: string;
                 avatarUrl: string | null;
             };
+            reactions: ({
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+            } & {
+                id: string;
+                createdAt: Date;
+                userId: string;
+                emoji: string;
+                commentId: string;
+            })[];
         } & {
             id: string;
             createdAt: Date;
@@ -733,6 +831,20 @@ export declare class TasksController {
             size: number;
             uploaderId: string;
         }[];
+        reactions: ({
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            userId: string;
+            taskId: string;
+            emoji: string;
+        })[];
     } & {
         id: string;
         createdAt: Date;
@@ -786,6 +898,20 @@ export declare class TasksController {
                 name: string;
                 avatarUrl: string | null;
             };
+            reactions: ({
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+            } & {
+                id: string;
+                createdAt: Date;
+                userId: string;
+                emoji: string;
+                commentId: string;
+            })[];
         } & {
             id: string;
             createdAt: Date;
@@ -924,6 +1050,20 @@ export declare class TasksController {
             size: number;
             uploaderId: string;
         }[];
+        reactions: ({
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            userId: string;
+            taskId: string;
+            emoji: string;
+        })[];
     } & {
         id: string;
         createdAt: Date;
@@ -969,6 +1109,20 @@ export declare class TasksController {
                 name: string;
                 avatarUrl: string | null;
             };
+            reactions: ({
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+            } & {
+                id: string;
+                createdAt: Date;
+                userId: string;
+                emoji: string;
+                commentId: string;
+            })[];
         } & {
             id: string;
             createdAt: Date;
@@ -1107,6 +1261,20 @@ export declare class TasksController {
             size: number;
             uploaderId: string;
         }[];
+        reactions: ({
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            userId: string;
+            taskId: string;
+            emoji: string;
+        })[];
     } & {
         id: string;
         createdAt: Date;
@@ -1150,6 +1318,20 @@ export declare class TasksController {
                 name: string;
                 avatarUrl: string | null;
             };
+            reactions: ({
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+            } & {
+                id: string;
+                createdAt: Date;
+                userId: string;
+                emoji: string;
+                commentId: string;
+            })[];
         } & {
             id: string;
             createdAt: Date;
@@ -1288,6 +1470,20 @@ export declare class TasksController {
             size: number;
             uploaderId: string;
         }[];
+        reactions: ({
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            userId: string;
+            taskId: string;
+            emoji: string;
+        })[];
     } & {
         id: string;
         createdAt: Date;
@@ -1334,6 +1530,20 @@ export declare class TasksController {
                 name: string;
                 avatarUrl: string | null;
             };
+            reactions: ({
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+            } & {
+                id: string;
+                createdAt: Date;
+                userId: string;
+                emoji: string;
+                commentId: string;
+            })[];
         } & {
             id: string;
             createdAt: Date;
@@ -1472,6 +1682,20 @@ export declare class TasksController {
             size: number;
             uploaderId: string;
         }[];
+        reactions: ({
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            userId: string;
+            taskId: string;
+            emoji: string;
+        })[];
     } & {
         id: string;
         createdAt: Date;
@@ -1515,6 +1739,20 @@ export declare class TasksController {
                 name: string;
                 avatarUrl: string | null;
             };
+            reactions: ({
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+            } & {
+                id: string;
+                createdAt: Date;
+                userId: string;
+                emoji: string;
+                commentId: string;
+            })[];
         } & {
             id: string;
             createdAt: Date;
@@ -1653,6 +1891,20 @@ export declare class TasksController {
             size: number;
             uploaderId: string;
         }[];
+        reactions: ({
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            userId: string;
+            taskId: string;
+            emoji: string;
+        })[];
     } & {
         id: string;
         createdAt: Date;
@@ -1701,6 +1953,20 @@ export declare class TasksController {
                 name: string;
                 avatarUrl: string | null;
             };
+            reactions: ({
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+            } & {
+                id: string;
+                createdAt: Date;
+                userId: string;
+                emoji: string;
+                commentId: string;
+            })[];
         } & {
             id: string;
             createdAt: Date;
@@ -1839,6 +2105,20 @@ export declare class TasksController {
             size: number;
             uploaderId: string;
         }[];
+        reactions: ({
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            userId: string;
+            taskId: string;
+            emoji: string;
+        })[];
     } & {
         id: string;
         createdAt: Date;
@@ -1904,6 +2184,20 @@ export declare class TasksController {
                 name: string;
                 avatarUrl: string | null;
             };
+            reactions: ({
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+            } & {
+                id: string;
+                createdAt: Date;
+                userId: string;
+                emoji: string;
+                commentId: string;
+            })[];
         } & {
             id: string;
             createdAt: Date;
@@ -2042,6 +2336,20 @@ export declare class TasksController {
             size: number;
             uploaderId: string;
         }[];
+        reactions: ({
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            userId: string;
+            taskId: string;
+            emoji: string;
+        })[];
     } & {
         id: string;
         createdAt: Date;
@@ -2085,6 +2393,20 @@ export declare class TasksController {
                 name: string;
                 avatarUrl: string | null;
             };
+            reactions: ({
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+            } & {
+                id: string;
+                createdAt: Date;
+                userId: string;
+                emoji: string;
+                commentId: string;
+            })[];
         } & {
             id: string;
             createdAt: Date;
@@ -2223,6 +2545,20 @@ export declare class TasksController {
             size: number;
             uploaderId: string;
         }[];
+        reactions: ({
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            userId: string;
+            taskId: string;
+            emoji: string;
+        })[];
     } & {
         id: string;
         createdAt: Date;
@@ -2310,5 +2646,63 @@ export declare class TasksController {
         userId: string;
         content: string;
         taskId: string;
+    }>;
+    toggleTaskReaction(taskId: string, userId: string, body: {
+        emoji: string;
+    }): Promise<{
+        action: string;
+        emoji: string;
+        taskId: string;
+        userId: string;
+        reaction?: undefined;
+    } | {
+        action: string;
+        reaction: {
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            userId: string;
+            taskId: string;
+            emoji: string;
+        };
+        taskId: string;
+        userId: string;
+        emoji?: undefined;
+    }>;
+    toggleCommentReaction(taskId: string, commentId: string, userId: string, body: {
+        emoji: string;
+    }): Promise<{
+        action: string;
+        emoji: string;
+        commentId: string;
+        taskId: string;
+        userId: string;
+        reaction?: undefined;
+    } | {
+        action: string;
+        reaction: {
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            userId: string;
+            emoji: string;
+            commentId: string;
+        };
+        commentId: string;
+        taskId: string;
+        userId: string;
+        emoji?: undefined;
     }>;
 }
