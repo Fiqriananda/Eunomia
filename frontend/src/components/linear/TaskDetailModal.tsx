@@ -787,20 +787,18 @@ export function TaskDetailModal({
                   </span>
                 </div>
 
-                <div className="rounded-lg border border-border/50 bg-[#12141f]/70 p-2 focus-within:border-primary/80 transition-all">
-                  <LinearRichEditor
-                    value={description}
-                    onChange={(val) => {
-                      setDescription(val);
-                      onUpdate(task.id, { description: val });
-                    }}
-                    onBlur={handleDescBlur}
-                    taskId={task.id}
-                    members={members}
-                    onImageClick={(url) => setLightboxUrl(url)}
-                    placeholder="Click here to add description, notes, or links... (Paste images directly to embed inline)"
-                  />
-                </div>
+                <LinearRichEditor
+                  value={description}
+                  onChange={(val) => {
+                    setDescription(val);
+                    onUpdate(task.id, { description: val });
+                  }}
+                  onBlur={handleDescBlur}
+                  taskId={task.id}
+                  members={members}
+                  onImageClick={(url) => setLightboxUrl(url)}
+                  placeholder="Click here to add description, notes, or links... (Paste images directly to embed inline)"
+                />
               </div>
 
               {/* Sub-issues Section */}

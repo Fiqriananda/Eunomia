@@ -5,14 +5,15 @@ import { api } from '../../lib/api';
 import { resolveMediaUrl } from '../ui/MarkdownRenderer';
 import {
   Code,
-  ListTodo,
   List,
   Bold,
   Italic,
+  Strikethrough,
+  Underline,
   Heading3,
   Link as LinkIcon,
+  Quote,
   Image as ImageIcon,
-  AtSign,
   Loader2,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
@@ -30,12 +31,22 @@ interface LinearRichEditorProps {
 }
 
 /**
- * Converts Markdown string into styled HTML for contentEditable (Live WYSIWYG)
+ * Converts Markdown string into styled HTML for live WYSIWYG
  */
-function markdownToHtml(md: string): string {
+function markdownToHtml(md: string, membersList: WorkspaceMember[] = []): string {
   if (!md || !md.trim()) return '';
 
-  const lines = md.split('\n');
+  // 1. Normalize multi-line image tags where ] and ( are separated by newlines
+  let normalized = md.replace(
+    /!\[([\s\S]*?)\]\s*\(([\s\S]*?)\)/g,
+    (_, alt, url) => {
+      const cleanAlt = alt.trim().replace(/\n+/g, ' ');
+      const cleanUrl = url.trim().replace(/\s+/g, '');
+      return `\n\n![${cleanAlt}](${cleanUrl})\n\n`;
+    },
+  );
+
+  const lines = normalized.split('\n');
   const htmlLines: string[] = [];
   let inCodeBlock = false;
   let codeBuffer: string[] = [];
@@ -56,7 +67,7 @@ function markdownToHtml(md: string): string {
     if (trimmed.startsWith('```')) {
       if (inCodeBlock) {
         htmlLines.push(
-          `<pre class="code-block bg-[#13141f] text-zinc-200 p-2.5 rounded-lg font-mono text-xs my-2 border border-border/50 overflow-x-auto"><code>${escapeHtml(
+          `<pre class="code-block bg-[#13141f] text-zinc-200 p-3 rounded-lg font-mono text-xs my-3 border border-border/50 overflow-x-auto"><code>${escapeHtml(
             codeBuffer.join('\n'),
           )}</code></pre>`,
         );
@@ -78,8 +89,9 @@ function markdownToHtml(md: string): string {
     if (trimmed.startsWith('### ')) {
       closeList();
       htmlLines.push(
-        `<h3 class="text-base font-semibold text-zinc-100 mt-2 mb-1">${formatInline(
+        `<h3 class="text-base font-semibold text-zinc-100 mt-3 mb-1">${formatInline(
           trimmed.slice(4),
+          membersList,
         )}</h3>`,
       );
       continue;
@@ -87,8 +99,9 @@ function markdownToHtml(md: string): string {
     if (trimmed.startsWith('## ')) {
       closeList();
       htmlLines.push(
-        `<h2 class="text-lg font-bold text-zinc-100 mt-2.5 mb-1">${formatInline(
+        `<h2 class="text-lg font-bold text-zinc-100 mt-3.5 mb-1.5">${formatInline(
           trimmed.slice(3),
+          membersList,
         )}</h2>`,
       );
       continue;
@@ -96,9 +109,22 @@ function markdownToHtml(md: string): string {
     if (trimmed.startsWith('# ')) {
       closeList();
       htmlLines.push(
-        `<h1 class="text-xl font-bold text-zinc-100 mt-3 mb-1.5">${formatInline(
+        `<h1 class="text-xl font-bold text-zinc-100 mt-4 mb-2">${formatInline(
           trimmed.slice(2),
+          membersList,
         )}</h1>`,
+      );
+      continue;
+    }
+
+    // Blockquote
+    if (trimmed.startsWith('> ')) {
+      closeList();
+      htmlLines.push(
+        `<blockquote class="border-l-2 border-indigo-500/60 pl-3 my-2 text-zinc-400 italic">${formatInline(
+          trimmed.slice(2),
+          membersList,
+        )}</blockquote>`,
       );
       continue;
     }
@@ -110,13 +136,13 @@ function markdownToHtml(md: string): string {
       const isChecked = checklistMatch[1].toLowerCase() === 'x';
       const label = checklistMatch[2];
       htmlLines.push(
-        `<div class="task-checkbox-item flex items-center gap-2 my-1" data-checked="${isChecked}">` +
+        `<div class="task-checkbox-item flex items-center gap-2 my-1.5" data-checked="${isChecked}">` +
           `<input type="checkbox" ${
             isChecked ? 'checked' : ''
-          } class="w-3.5 h-3.5 rounded accent-indigo-500 cursor-pointer" />` +
+          } class="w-4 h-4 rounded accent-indigo-500 cursor-pointer" />` +
           `<span class="task-label ${
             isChecked ? 'line-through text-zinc-500' : 'text-zinc-200'
-          }">${formatInline(label)}</span>` +
+          }">${formatInline(label, membersList)}</span>` +
           `</div>`,
       );
       continue;
@@ -126,10 +152,11 @@ function markdownToHtml(md: string): string {
     const ulMatch = trimmed.match(/^[-*+]\s+(.*)$/);
     if (ulMatch) {
       if (!inList) {
-        htmlLines.push('<ul class="list-disc list-inside space-y-1 my-1">');
+        closeList();
+        htmlLines.push('<ul class="list-disc list-inside space-y-1 my-1.5">');
         inList = true;
       }
-      htmlLines.push(`<li>${formatInline(ulMatch[1])}</li>`);
+      htmlLines.push(`<li>${formatInline(ulMatch[1], membersList)}</li>`);
       continue;
     }
 
@@ -137,8 +164,9 @@ function markdownToHtml(md: string): string {
     const imgMatch = trimmed.match(/^!\[(.*?)\]\((.*?)\)$/);
     if (imgMatch) {
       closeList();
+      const resolvedUrl = resolveMediaUrl(imgMatch[2].trim());
       htmlLines.push(
-        `<div class="my-2"><img src="${imgMatch[2]}" alt="${imgMatch[1]}" class="max-h-72 rounded-lg border border-border/60 object-contain block" /></div>`,
+        `<div class="my-3"><img src="${resolvedUrl}" alt="${imgMatch[1]}" class="max-h-96 rounded-lg border border-border/40 object-contain shadow-md cursor-pointer block hover:opacity-95 transition-opacity" /></div>`,
       );
       continue;
     }
@@ -148,7 +176,12 @@ function markdownToHtml(md: string): string {
     if (!trimmed) {
       htmlLines.push('<p><br></p>');
     } else {
-      htmlLines.push(`<p class="my-0.5">${formatInline(trimmed)}</p>`);
+      htmlLines.push(
+        `<p class="my-1 text-sm leading-relaxed text-zinc-200">${formatInline(
+          trimmed,
+          membersList,
+        )}</p>`,
+      );
     }
   }
 
@@ -169,8 +202,33 @@ function escapeHtml(text: string): string {
 /**
  * Formats inline Markdown into HTML elements
  */
-function formatInline(text: string): string {
+function formatInline(text: string, membersList: WorkspaceMember[] = []): string {
   let res = escapeHtml(text);
+
+  // Match team member names first for accurate mentions
+  for (const m of membersList) {
+    if (m.user?.name) {
+      const name = m.user.name;
+      const escapedName = escapeHtml(name);
+      const mentionRegex = new RegExp(
+        `@${escapedName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`,
+        'gi',
+      );
+      res = res.replace(
+        mentionRegex,
+        `<span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 select-none" contenteditable="false" data-mention="${escapedName}">@${escapedName}</span>`,
+      );
+    }
+  }
+
+  // Generic @mentions (e.g. @SarahConnor or @Sarah Connor)
+  res = res.replace(
+    /@([A-Za-z0-9_\-\.]+(?:\s+[A-Za-z0-9_\-\.]+)?)/g,
+    (match, name) => {
+      if (match.includes('data-mention') || match.includes('<span')) return match;
+      return `<span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 select-none" contenteditable="false" data-mention="${name}">@${name}</span>`;
+    },
+  );
 
   // Bold & Italic: ***text***
   res = res.replace(/\*\*\*(.*?)\*\*\*/g, '<strong><em>$1</em></strong>');
@@ -183,6 +241,8 @@ function formatInline(text: string): string {
     /~~(.*?)~~/g,
     '<del class="line-through text-zinc-500">$1</del>',
   );
+  // Underline: <u>text</u>
+  res = res.replace(/<u>(.*?)<\/u>/g, '<u class="underline">$1</u>');
   // Inline Code: `code`
   res = res.replace(
     /`([^`]+)`/g,
@@ -193,11 +253,6 @@ function formatInline(text: string): string {
     /\[(.*?)\]\((.*?)\)/g,
     '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-indigo-400 underline hover:text-indigo-300">$1</a>',
   );
-  // Mentions: @name
-  res = res.replace(/(@[a-zA-Z0-9_\-\.\s]{1,30})/g, (match) => {
-    const cleanName = match.trim().replace(/^@/, '');
-    return `<span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 select-none" contenteditable="false" data-mention="${cleanName}">${match}</span>`;
-  });
 
   return res;
 }
@@ -217,7 +272,6 @@ function htmlToMarkdown(node: Node): string {
   const el = node as HTMLElement;
   const tag = el.tagName.toLowerCase();
 
-  // Child markdown
   const childrenMd = Array.from(el.childNodes).map(htmlToMarkdown).join('');
 
   switch (tag) {
@@ -237,6 +291,8 @@ function htmlToMarkdown(node: Node): string {
     case 'del':
     case 'strike':
       return `~~${childrenMd}~~`;
+    case 'u':
+      return `<u>${childrenMd}</u>`;
     case 'code':
       if (el.parentElement?.tagName.toLowerCase() === 'pre') {
         return childrenMd;
@@ -244,6 +300,8 @@ function htmlToMarkdown(node: Node): string {
       return `\`${childrenMd}\``;
     case 'pre':
       return `\n\`\`\`\n${childrenMd.trim()}\n\`\`\`\n\n`;
+    case 'blockquote':
+      return `\n> ${childrenMd.trim()}\n\n`;
     case 'a':
       return `[${childrenMd}](${el.getAttribute('href') || ''})`;
     case 'img': {
@@ -327,19 +385,25 @@ export function LinearRichEditor({
   const [mentionQuery, setMentionQuery] = useState<string | null>(null);
   const [mentionIndex, setMentionIndex] = useState<number>(0);
 
-  // Prevents cursor jumping: tracks internal updates vs external prop updates
+  // Floating bubble toolbar coordinates when text is selected (Linear style)
+  const [bubbleMenu, setBubbleMenu] = useState<{
+    visible: boolean;
+    top: number;
+    left: number;
+  }>({ visible: false, top: 0, left: 0 });
+
   const isInternalChangeRef = useRef(false);
   const lastMarkdownRef = useRef(value || '');
 
-  // Initialize contentEditable DOM on initial mount
+  // Initialize contentEditable DOM on mount
   useEffect(() => {
     if (editorRef.current) {
-      editorRef.current.innerHTML = markdownToHtml(value || '');
+      editorRef.current.innerHTML = markdownToHtml(value || '', members);
       lastMarkdownRef.current = value || '';
     }
   }, []);
 
-  // Sync external value updates (e.g., when switching issues)
+  // Sync external value updates (e.g. switching issues)
   useEffect(() => {
     if (isInternalChangeRef.current) {
       isInternalChangeRef.current = false;
@@ -348,9 +412,9 @@ export function LinearRichEditor({
 
     if (value !== lastMarkdownRef.current && editorRef.current) {
       lastMarkdownRef.current = value || '';
-      editorRef.current.innerHTML = markdownToHtml(value || '');
+      editorRef.current.innerHTML = markdownToHtml(value || '', members);
     }
-  }, [value]);
+  }, [value, members]);
 
   // Synchronize HTML DOM to Markdown and trigger parent onChange
   const syncMarkdown = useCallback(() => {
@@ -361,6 +425,47 @@ export function LinearRichEditor({
     isInternalChangeRef.current = true;
     onChange(cleaned);
   }, [onChange]);
+
+  // Floating selection bubble menu handler (matches Linear Image 3)
+  const updateBubbleMenuPosition = useCallback(() => {
+    const sel = window.getSelection();
+    if (!sel || sel.isCollapsed || !editorRef.current) {
+      setBubbleMenu((prev) => (prev.visible ? { ...prev, visible: false } : prev));
+      return;
+    }
+
+    // Ensure selection is inside editor
+    if (!editorRef.current.contains(sel.anchorNode)) {
+      setBubbleMenu((prev) => (prev.visible ? { ...prev, visible: false } : prev));
+      return;
+    }
+
+    const selectedText = sel.toString().trim();
+    if (!selectedText) {
+      setBubbleMenu((prev) => (prev.visible ? { ...prev, visible: false } : prev));
+      return;
+    }
+
+    const range = sel.getRangeAt(0);
+    const rect = range.getBoundingClientRect();
+
+    setBubbleMenu({
+      visible: true,
+      top: rect.top - 46,
+      left: rect.left + rect.width / 2,
+    });
+  }, []);
+
+  useEffect(() => {
+    const handleSelectionChange = () => {
+      updateBubbleMenuPosition();
+    };
+
+    document.addEventListener('selectionchange', handleSelectionChange);
+    return () => {
+      document.removeEventListener('selectionchange', handleSelectionChange);
+    };
+  }, [updateBubbleMenuPosition]);
 
   // Matching team members for @mention
   const matchingMembers = useMemo(() => {
@@ -401,6 +506,7 @@ export function LinearRichEditor({
   const handleInput = () => {
     checkMentionTrigger();
     syncMarkdown();
+    updateBubbleMenuPosition();
   };
 
   // Insert selected mention tag into contentEditable
@@ -443,7 +549,6 @@ export function LinearRichEditor({
 
   // Keyboard navigation
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    // Mention autocomplete navigation
     if (mentionQuery !== null && matchingMembers.length > 0) {
       if (e.key === 'ArrowDown') {
         e.preventDefault();
@@ -524,7 +629,7 @@ export function LinearRichEditor({
       img.src = finalUrl;
       img.alt = file.name || 'image';
       img.className =
-        'max-h-72 rounded-lg border border-border/60 my-2 object-contain block';
+        'max-h-96 rounded-lg border border-border/40 my-3 object-contain block shadow-md cursor-pointer hover:opacity-95 transition-opacity';
 
       const sel = window.getSelection();
       if (sel && sel.rangeCount > 0) {
@@ -541,7 +646,7 @@ export function LinearRichEditor({
     }
   };
 
-  // Handle image paste
+  // Handle image paste (⌘V)
   const handlePaste = (e: React.ClipboardEvent<HTMLDivElement>) => {
     const items = e.clipboardData?.items;
     if (!items) return;
@@ -558,73 +663,55 @@ export function LinearRichEditor({
     }
   };
 
-  // Toolbar Formatting Actions (Never steals focus via e.preventDefault on onMouseDown)
-  const formatHeading = () => {
-    if (!editorRef.current) return;
-    editorRef.current.focus();
-    document.execCommand('formatBlock', false, '<h3>');
-    syncMarkdown();
+  // Handle Drag & Drop of images
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    const files = e.dataTransfer?.files;
+    if (!files || files.length === 0) return;
+
+    const imgFile = Array.from(files).find((f) => f.type.startsWith('image/'));
+    if (imgFile) {
+      e.preventDefault();
+      uploadAndInsertImage(imgFile);
+    }
   };
 
+  // Floating Selection Toolbar Actions (Matches Image 3)
   const formatBold = () => {
-    if (!editorRef.current) return;
-    editorRef.current.focus();
     document.execCommand('bold', false);
     syncMarkdown();
   };
 
   const formatItalic = () => {
-    if (!editorRef.current) return;
-    editorRef.current.focus();
     document.execCommand('italic', false);
     syncMarkdown();
   };
 
+  const formatStrikethrough = () => {
+    document.execCommand('strikeThrough', false);
+    syncMarkdown();
+  };
+
+  const formatUnderline = () => {
+    document.execCommand('underline', false);
+    syncMarkdown();
+  };
+
+  const formatHeading = () => {
+    document.execCommand('formatBlock', false, '<h3>');
+    syncMarkdown();
+  };
+
+  const formatQuote = () => {
+    document.execCommand('formatBlock', false, '<blockquote>');
+    syncMarkdown();
+  };
+
   const formatBulletList = () => {
-    if (!editorRef.current) return;
-    editorRef.current.focus();
     document.execCommand('insertUnorderedList', false);
     syncMarkdown();
   };
 
-  const insertChecklist = () => {
-    if (!editorRef.current) return;
-    editorRef.current.focus();
-
-    const selection = window.getSelection();
-    if (!selection || !selection.rangeCount) return;
-    const range = selection.getRangeAt(0);
-
-    const div = document.createElement('div');
-    div.className = 'task-checkbox-item flex items-center gap-2 my-1';
-    div.setAttribute('data-checked', 'false');
-
-    const checkbox = document.createElement('input');
-    checkbox.type = 'checkbox';
-    checkbox.className = 'w-3.5 h-3.5 rounded accent-indigo-500 cursor-pointer';
-
-    const span = document.createElement('span');
-    span.className = 'task-label text-zinc-200';
-    span.innerHTML = '&nbsp;';
-
-    div.appendChild(checkbox);
-    div.appendChild(span);
-
-    range.deleteContents();
-    range.insertNode(div);
-
-    const newRange = document.createRange();
-    newRange.selectNodeContents(span);
-    newRange.collapse(false);
-    selection.removeAllRanges();
-    selection.addRange(newRange);
-
-    syncMarkdown();
-  };
-
   const formatCode = () => {
-    if (!editorRef.current) return;
-    editorRef.current.focus();
     const sel = window.getSelection();
     if (!sel || !sel.rangeCount) return;
     const range = sel.getRangeAt(0);
@@ -651,18 +738,8 @@ export function LinearRichEditor({
     syncMarkdown();
   };
 
-  const handleMentionButtonClick = () => {
-    if (!editorRef.current) return;
-    editorRef.current.focus();
-    document.execCommand('insertText', false, '@');
-    setMentionQuery('');
-    setMentionIndex(0);
-  };
-
   const formatLink = () => {
-    if (!editorRef.current) return;
-    editorRef.current.focus();
-    const url = prompt('Enter link URL (e.g. https://example.com):');
+    const url = prompt('Enter URL (e.g. https://example.com):');
     if (url) {
       document.execCommand('createLink', false, url);
       syncMarkdown();
@@ -671,28 +748,34 @@ export function LinearRichEditor({
 
   return (
     <div
-      className={cn(
-        'relative w-full rounded-lg border border-border/40 bg-[#0d0e15] focus-within:border-border/80 transition-colors',
-        className,
-      )}
+      onDrop={handleDrop}
+      onDragOver={(e) => e.preventDefault()}
+      className={cn('relative w-full group/editor', className)}
     >
-      {/* Sleek WYSIWYG Toolbar (No Write/Preview toggle, clean live actions) */}
-      <div className="flex items-center justify-between px-2.5 py-1.5 border-b border-border/30 bg-[#11121b]/80 text-xs select-none rounded-t-lg">
-        <div className="flex items-center gap-0.5">
+      {/* Floating Selection Bubble Toolbar (Linear Style - Matches Image 3) */}
+      {bubbleMenu.visible && (
+        <div
+          className="fixed z-50 -translate-x-1/2 flex items-center gap-0.5 bg-[#181924] border border-border/80 shadow-2xl rounded-lg p-1 text-zinc-300 text-xs animate-in fade-in zoom-in-95 duration-100 select-none"
+          style={{
+            top: `${Math.max(10, bubbleMenu.top)}px`,
+            left: `${bubbleMenu.left}px`,
+          }}
+          onMouseDown={(e) => e.preventDefault()}
+        >
           <button
             type="button"
             onMouseDown={(e) => e.preventDefault()}
             onClick={formatHeading}
-            className="p-1 rounded hover:bg-zinc-800/70 text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer"
-            title="Heading (H3)"
+            className="px-1.5 py-1 rounded hover:bg-zinc-700/60 text-zinc-300 hover:text-white font-semibold text-xs cursor-pointer flex items-center gap-0.5"
+            title="Heading 3"
           >
-            <Heading3 className="w-3.5 h-3.5" />
+            <span>Aa</span>
           </button>
           <button
             type="button"
             onMouseDown={(e) => e.preventDefault()}
             onClick={formatBold}
-            className="p-1 rounded hover:bg-zinc-800/70 text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer"
+            className="p-1.5 rounded hover:bg-zinc-700/60 text-zinc-300 hover:text-white cursor-pointer"
             title="Bold (⌘B)"
           >
             <Bold className="w-3.5 h-3.5" />
@@ -701,91 +784,74 @@ export function LinearRichEditor({
             type="button"
             onMouseDown={(e) => e.preventDefault()}
             onClick={formatItalic}
-            className="p-1 rounded hover:bg-zinc-800/70 text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer"
+            className="p-1.5 rounded hover:bg-zinc-700/60 text-zinc-300 hover:text-white cursor-pointer"
             title="Italic (⌘I)"
           >
             <Italic className="w-3.5 h-3.5" />
           </button>
-
-          <span className="w-px h-3 bg-border/40 mx-1" />
-
           <button
             type="button"
             onMouseDown={(e) => e.preventDefault()}
-            onClick={formatBulletList}
-            className="p-1 rounded hover:bg-zinc-800/70 text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer"
-            title="Bullet list"
+            onClick={formatStrikethrough}
+            className="p-1.5 rounded hover:bg-zinc-700/60 text-zinc-300 hover:text-white cursor-pointer"
+            title="Strikethrough"
           >
-            <List className="w-3.5 h-3.5" />
+            <Strikethrough className="w-3.5 h-3.5" />
           </button>
           <button
             type="button"
             onMouseDown={(e) => e.preventDefault()}
-            onClick={insertChecklist}
-            className="p-1 rounded hover:bg-zinc-800/70 text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer"
-            title="Task checklist"
+            onClick={formatUnderline}
+            className="p-1.5 rounded hover:bg-zinc-700/60 text-zinc-300 hover:text-white cursor-pointer"
+            title="Underline (⌘U)"
           >
-            <ListTodo className="w-3.5 h-3.5" />
-          </button>
-          <button
-            type="button"
-            onMouseDown={(e) => e.preventDefault()}
-            onClick={formatCode}
-            className="p-1 rounded hover:bg-zinc-800/70 text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer"
-            title="Inline code"
-          >
-            <Code className="w-3.5 h-3.5" />
+            <Underline className="w-3.5 h-3.5" />
           </button>
 
-          <span className="w-px h-3 bg-border/40 mx-1" />
+          <span className="w-px h-3.5 bg-border/60 mx-0.5" />
 
-          <button
-            type="button"
-            onMouseDown={(e) => e.preventDefault()}
-            onClick={handleMentionButtonClick}
-            className="p-1 rounded hover:bg-zinc-800/70 text-indigo-400 hover:text-indigo-300 transition-colors cursor-pointer"
-            title="Mention team member (@)"
-          >
-            <AtSign className="w-3.5 h-3.5" />
-          </button>
           <button
             type="button"
             onMouseDown={(e) => e.preventDefault()}
             onClick={formatLink}
-            className="p-1 rounded hover:bg-zinc-800/70 text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer"
-            title="Insert link"
+            className="p-1.5 rounded hover:bg-zinc-700/60 text-zinc-300 hover:text-white cursor-pointer"
+            title="Insert Link"
           >
             <LinkIcon className="w-3.5 h-3.5" />
           </button>
           <button
             type="button"
             onMouseDown={(e) => e.preventDefault()}
-            onClick={() => fileInputRef.current?.click()}
-            className="p-1 rounded hover:bg-zinc-800/70 text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer"
-            title="Attach image"
+            onClick={formatQuote}
+            className="p-1.5 rounded hover:bg-zinc-700/60 text-zinc-300 hover:text-white cursor-pointer"
+            title="Blockquote"
           >
-            <ImageIcon className="w-3.5 h-3.5" />
+            <Quote className="w-3.5 h-3.5" />
           </button>
-
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) {
-                uploadAndInsertImage(file);
-                e.target.value = '';
-              }
-            }}
-          />
+          <button
+            type="button"
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={formatCode}
+            className="p-1.5 rounded hover:bg-zinc-700/60 text-zinc-300 hover:text-white cursor-pointer"
+            title="Inline Code"
+          >
+            <Code className="w-3.5 h-3.5" />
+          </button>
+          <button
+            type="button"
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={formatBulletList}
+            className="p-1.5 rounded hover:bg-zinc-700/60 text-zinc-300 hover:text-white cursor-pointer"
+            title="Bullet list"
+          >
+            <List className="w-3.5 h-3.5" />
+          </button>
         </div>
-      </div>
+      )}
 
       {/* Floating Mentions Autocomplete Dropdown */}
       {mentionQuery !== null && matchingMembers.length > 0 && (
-        <div className="absolute left-3 top-9 z-50 w-64 max-h-56 overflow-y-auto rounded-lg border border-border/70 bg-[#12131d] shadow-2xl p-1 animate-in fade-in zoom-in-95 duration-100">
+        <div className="absolute left-0 top-8 z-50 w-64 max-h-56 overflow-y-auto rounded-lg border border-border/70 bg-[#12131d] shadow-2xl p-1 animate-in fade-in zoom-in-95 duration-100">
           <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-500 border-b border-border/40 mb-1">
             Mention team member
           </div>
@@ -829,7 +895,7 @@ export function LinearRichEditor({
         </div>
       )}
 
-      {/* Live WYSIWYG Rendered Document Body */}
+      {/* Seamless Live Rendered Document Body (Matches Image 2 - No Borders, No Fixed Toolbar) */}
       <div
         ref={editorRef}
         contentEditable
@@ -840,12 +906,42 @@ export function LinearRichEditor({
         onPaste={handlePaste}
         onBlur={onBlur}
         data-placeholder={placeholder}
-        className="outline-none min-h-[140px] p-3.5 text-sm text-zinc-100 leading-relaxed font-sans cursor-text space-y-1 empty:before:content-[attr(data-placeholder)] empty:before:text-zinc-600 empty:before:pointer-events-none focus:outline-none"
+        className="outline-none min-h-[120px] py-1 text-sm text-zinc-100 leading-relaxed font-sans cursor-text empty:before:content-[attr(data-placeholder)] empty:before:text-zinc-600 empty:before:pointer-events-none focus:outline-none"
+      />
+
+      {/* Subtle hover attach image button in corner */}
+      <div className="flex items-center justify-between pt-1 opacity-0 group-hover/editor:opacity-100 transition-opacity">
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-300 transition-colors p-1 rounded hover:bg-zinc-800/40 cursor-pointer"
+          title="Upload image (or paste directly with ⌘V)"
+        >
+          <ImageIcon className="w-3.5 h-3.5" />
+          <span className="text-[11px]">Attach image</span>
+        </button>
+        <span className="text-[10px] text-zinc-600 font-mono">
+          Highlight text to format
+        </span>
+      </div>
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) {
+            uploadAndInsertImage(file);
+            e.target.value = '';
+          }
+        }}
       />
 
       {/* Uploading Spinner Badge */}
       {isUploading && (
-        <div className="absolute bottom-2 right-3 flex items-center gap-1.5 text-xs text-indigo-400 bg-zinc-900/90 border border-border/40 px-2 py-1 rounded shadow-lg animate-pulse">
+        <div className="fixed bottom-4 right-4 z-50 flex items-center gap-1.5 text-xs text-indigo-400 bg-zinc-900/95 border border-border/60 px-3 py-1.5 rounded-lg shadow-2xl animate-pulse">
           <Loader2 className="w-3.5 h-3.5 animate-spin" />
           <span>Uploading image...</span>
         </div>
