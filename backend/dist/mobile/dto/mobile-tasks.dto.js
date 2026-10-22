@@ -278,4 +278,291 @@ __decorate([
     IsString(),
     __metadata("design:type", String)
 ], MobileAddCommentDto.prototype, "content", void 0);
+export class MobileUpdateCommentDto {
+    content;
+}
+__decorate([
+    ApiProperty({
+        description: 'Updated comment content',
+        example: 'Revised comment text from mobile app.',
+    }),
+    IsNotEmpty(),
+    IsString(),
+    __metadata("design:type", String)
+], MobileUpdateCommentDto.prototype, "content", void 0);
+export class MobileCommentReactionDto {
+    emoji;
+    userId;
+    userName;
+}
+__decorate([
+    ApiProperty({ example: '❤️' }),
+    __metadata("design:type", String)
+], MobileCommentReactionDto.prototype, "emoji", void 0);
+__decorate([
+    ApiProperty({ example: 'usr_123' }),
+    __metadata("design:type", String)
+], MobileCommentReactionDto.prototype, "userId", void 0);
+__decorate([
+    ApiProperty({ example: 'Alex Vance' }),
+    __metadata("design:type", String)
+], MobileCommentReactionDto.prototype, "userName", void 0);
+export class MobileCommentDto {
+    id;
+    content;
+    userId;
+    user;
+    reactions;
+    createdAt;
+    updatedAt;
+}
+__decorate([
+    ApiProperty({ example: 'comm_123' }),
+    __metadata("design:type", String)
+], MobileCommentDto.prototype, "id", void 0);
+__decorate([
+    ApiProperty({ example: 'Great progress on this issue!' }),
+    __metadata("design:type", String)
+], MobileCommentDto.prototype, "content", void 0);
+__decorate([
+    ApiProperty({ example: 'usr_123' }),
+    __metadata("design:type", String)
+], MobileCommentDto.prototype, "userId", void 0);
+__decorate([
+    ApiProperty({
+        example: {
+            id: 'usr_123',
+            name: 'Sarah Connor',
+            email: 'sarah@linear.app',
+            avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330',
+        },
+    }),
+    __metadata("design:type", Object)
+], MobileCommentDto.prototype, "user", void 0);
+__decorate([
+    ApiProperty({ type: () => [MobileCommentReactionDto] }),
+    __metadata("design:type", Array)
+], MobileCommentDto.prototype, "reactions", void 0);
+__decorate([
+    ApiProperty({ example: '2026-10-21T14:00:00.000Z' }),
+    __metadata("design:type", Date)
+], MobileCommentDto.prototype, "createdAt", void 0);
+__decorate([
+    ApiProperty({ example: '2026-10-21T14:30:00.000Z' }),
+    __metadata("design:type", Date)
+], MobileCommentDto.prototype, "updatedAt", void 0);
+export class MobileUpdateTaskDto {
+    title;
+    description;
+    status;
+    priority;
+    assigneeId;
+    projectId;
+    cycleId;
+    dueDate;
+    estimate;
+    labels;
+}
+__decorate([
+    ApiPropertyOptional({ example: 'Update authentication flow' }),
+    IsOptional(),
+    IsString(),
+    __metadata("design:type", String)
+], MobileUpdateTaskDto.prototype, "title", void 0);
+__decorate([
+    ApiPropertyOptional({ example: 'Detailed description supporting Markdown' }),
+    IsOptional(),
+    IsString(),
+    __metadata("design:type", String)
+], MobileUpdateTaskDto.prototype, "description", void 0);
+__decorate([
+    ApiPropertyOptional({ enum: TaskStatus, example: TaskStatus.IN_PROGRESS }),
+    IsOptional(),
+    IsEnum(TaskStatus),
+    __metadata("design:type", String)
+], MobileUpdateTaskDto.prototype, "status", void 0);
+__decorate([
+    ApiPropertyOptional({ enum: TaskPriority, example: TaskPriority.HIGH }),
+    IsOptional(),
+    IsEnum(TaskPriority),
+    __metadata("design:type", String)
+], MobileUpdateTaskDto.prototype, "priority", void 0);
+__decorate([
+    ApiPropertyOptional({ example: 'usr_123', description: 'Assignee User ID or null to unassign' }),
+    IsOptional(),
+    IsString(),
+    __metadata("design:type", Object)
+], MobileUpdateTaskDto.prototype, "assigneeId", void 0);
+__decorate([
+    ApiPropertyOptional({ example: 'proj_123', description: 'Project ID or null' }),
+    IsOptional(),
+    IsString(),
+    __metadata("design:type", Object)
+], MobileUpdateTaskDto.prototype, "projectId", void 0);
+__decorate([
+    ApiPropertyOptional({ example: 'cyc_123', description: 'Cycle/Sprint ID or null' }),
+    IsOptional(),
+    IsString(),
+    __metadata("design:type", Object)
+], MobileUpdateTaskDto.prototype, "cycleId", void 0);
+__decorate([
+    ApiPropertyOptional({ example: '2026-10-31T23:59:59.000Z' }),
+    IsOptional(),
+    IsString(),
+    __metadata("design:type", Object)
+], MobileUpdateTaskDto.prototype, "dueDate", void 0);
+__decorate([
+    ApiPropertyOptional({ example: 3, description: 'Estimate story points' }),
+    IsOptional(),
+    Type(() => Number),
+    IsNumber(),
+    __metadata("design:type", Object)
+], MobileUpdateTaskDto.prototype, "estimate", void 0);
+__decorate([
+    ApiPropertyOptional({ example: ['Frontend', 'Bug'] }),
+    IsOptional(),
+    IsArray(),
+    __metadata("design:type", Array)
+], MobileUpdateTaskDto.prototype, "labels", void 0);
+export class MobileUpdateAssigneeDto {
+    assigneeId;
+}
+__decorate([
+    ApiPropertyOptional({ example: 'usr_123', description: 'User ID to assign, or null to unassign' }),
+    IsOptional(),
+    IsString(),
+    __metadata("design:type", Object)
+], MobileUpdateAssigneeDto.prototype, "assigneeId", void 0);
+export class MobileAssignCycleDto {
+    cycleId;
+}
+__decorate([
+    ApiPropertyOptional({ example: 'cyc_123', description: 'Cycle ID or null to detach' }),
+    IsOptional(),
+    IsString(),
+    __metadata("design:type", Object)
+], MobileAssignCycleDto.prototype, "cycleId", void 0);
+export class MobileCreateSubtaskDto {
+    title;
+    priority = TaskPriority.MEDIUM;
+    status = TaskStatus.TODO;
+    assigneeId;
+}
+__decorate([
+    ApiProperty({ example: 'Implement biometric token storage' }),
+    IsNotEmpty(),
+    IsString(),
+    __metadata("design:type", String)
+], MobileCreateSubtaskDto.prototype, "title", void 0);
+__decorate([
+    ApiPropertyOptional({ enum: TaskPriority, default: TaskPriority.MEDIUM }),
+    IsOptional(),
+    IsEnum(TaskPriority),
+    __metadata("design:type", String)
+], MobileCreateSubtaskDto.prototype, "priority", void 0);
+__decorate([
+    ApiPropertyOptional({ enum: TaskStatus, default: TaskStatus.TODO }),
+    IsOptional(),
+    IsEnum(TaskStatus),
+    __metadata("design:type", String)
+], MobileCreateSubtaskDto.prototype, "status", void 0);
+__decorate([
+    ApiPropertyOptional({ example: 'usr_123' }),
+    IsOptional(),
+    IsString(),
+    __metadata("design:type", String)
+], MobileCreateSubtaskDto.prototype, "assigneeId", void 0);
+export class MobileCreateRelationDto {
+    targetTaskId;
+    type;
+}
+__decorate([
+    ApiProperty({ example: 'task_target_123', description: 'ID of target task to relate' }),
+    IsNotEmpty(),
+    IsString(),
+    __metadata("design:type", String)
+], MobileCreateRelationDto.prototype, "targetTaskId", void 0);
+__decorate([
+    ApiProperty({
+        example: 'BLOCKS',
+        enum: ['BLOCKS', 'BLOCKED_BY', 'RELATES_TO', 'DUPLICATE'],
+        description: 'Relationship type',
+    }),
+    IsNotEmpty(),
+    IsString(),
+    __metadata("design:type", String)
+], MobileCreateRelationDto.prototype, "type", void 0);
+export class MobileTaskRelationDto {
+    id;
+    type;
+    targetTaskId;
+    targetIdentifier;
+    targetTitle;
+    targetStatus;
+}
+__decorate([
+    ApiProperty({ example: 'rel_123' }),
+    __metadata("design:type", String)
+], MobileTaskRelationDto.prototype, "id", void 0);
+__decorate([
+    ApiProperty({ example: 'BLOCKS' }),
+    __metadata("design:type", String)
+], MobileTaskRelationDto.prototype, "type", void 0);
+__decorate([
+    ApiProperty({ example: 'task_target_123' }),
+    __metadata("design:type", String)
+], MobileTaskRelationDto.prototype, "targetTaskId", void 0);
+__decorate([
+    ApiProperty({ example: 'TJAR-9' }),
+    __metadata("design:type", String)
+], MobileTaskRelationDto.prototype, "targetIdentifier", void 0);
+__decorate([
+    ApiProperty({ example: 'Implement auth refresh token backend' }),
+    __metadata("design:type", String)
+], MobileTaskRelationDto.prototype, "targetTitle", void 0);
+__decorate([
+    ApiProperty({ example: 'DONE', enum: TaskStatus }),
+    __metadata("design:type", String)
+], MobileTaskRelationDto.prototype, "targetStatus", void 0);
+export class MobileToggleReactionDto {
+    emoji;
+}
+__decorate([
+    ApiProperty({ example: '👍', description: 'Emoji to toggle (e.g. 👍, ❤️, 🔥, 🎉, 👀, 🚀)' }),
+    IsNotEmpty(),
+    IsString(),
+    __metadata("design:type", String)
+], MobileToggleReactionDto.prototype, "emoji", void 0);
+export class MobileTaskActivityDto {
+    id;
+    type;
+    description;
+    actorName;
+    actorAvatarUrl;
+    createdAt;
+}
+__decorate([
+    ApiProperty({ example: 'act_123' }),
+    __metadata("design:type", String)
+], MobileTaskActivityDto.prototype, "id", void 0);
+__decorate([
+    ApiProperty({ example: 'STATUS_CHANGED' }),
+    __metadata("design:type", String)
+], MobileTaskActivityDto.prototype, "type", void 0);
+__decorate([
+    ApiProperty({ example: 'changed status from Todo to In Progress' }),
+    __metadata("design:type", String)
+], MobileTaskActivityDto.prototype, "description", void 0);
+__decorate([
+    ApiProperty({ example: 'Alex Vance' }),
+    __metadata("design:type", String)
+], MobileTaskActivityDto.prototype, "actorName", void 0);
+__decorate([
+    ApiPropertyOptional({ example: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb' }),
+    __metadata("design:type", Object)
+], MobileTaskActivityDto.prototype, "actorAvatarUrl", void 0);
+__decorate([
+    ApiProperty({ example: '2026-10-21T15:20:00.000Z' }),
+    __metadata("design:type", Date)
+], MobileTaskActivityDto.prototype, "createdAt", void 0);
 //# sourceMappingURL=mobile-tasks.dto.js.map

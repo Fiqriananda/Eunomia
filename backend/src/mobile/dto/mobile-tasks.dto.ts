@@ -224,3 +224,212 @@ export class MobileAddCommentDto {
   @IsString()
   content: string;
 }
+
+export class MobileUpdateCommentDto {
+  @ApiProperty({
+    description: 'Updated comment content',
+    example: 'Revised comment text from mobile app.',
+  })
+  @IsNotEmpty()
+  @IsString()
+  content: string;
+}
+
+export class MobileCommentReactionDto {
+  @ApiProperty({ example: '❤️' })
+  emoji: string;
+
+  @ApiProperty({ example: 'usr_123' })
+  userId: string;
+
+  @ApiProperty({ example: 'Alex Vance' })
+  userName: string;
+}
+
+export class MobileCommentDto {
+  @ApiProperty({ example: 'comm_123' })
+  id: string;
+
+  @ApiProperty({ example: 'Great progress on this issue!' })
+  content: string;
+
+  @ApiProperty({ example: 'usr_123' })
+  userId: string;
+
+  @ApiProperty({
+    example: {
+      id: 'usr_123',
+      name: 'Sarah Connor',
+      email: 'sarah@linear.app',
+      avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330',
+    },
+  })
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    avatarUrl?: string | null;
+  };
+
+  @ApiProperty({ type: () => [MobileCommentReactionDto] })
+  reactions: MobileCommentReactionDto[];
+
+  @ApiProperty({ example: '2026-10-21T14:00:00.000Z' })
+  createdAt: Date;
+
+  @ApiProperty({ example: '2026-10-21T14:30:00.000Z' })
+  updatedAt: Date;
+}
+
+export class MobileUpdateTaskDto {
+  @ApiPropertyOptional({ example: 'Update authentication flow' })
+  @IsOptional()
+  @IsString()
+  title?: string;
+
+  @ApiPropertyOptional({ example: 'Detailed description supporting Markdown' })
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @ApiPropertyOptional({ enum: TaskStatus, example: TaskStatus.IN_PROGRESS })
+  @IsOptional()
+  @IsEnum(TaskStatus)
+  status?: TaskStatus;
+
+  @ApiPropertyOptional({ enum: TaskPriority, example: TaskPriority.HIGH })
+  @IsOptional()
+  @IsEnum(TaskPriority)
+  priority?: TaskPriority;
+
+  @ApiPropertyOptional({ example: 'usr_123', description: 'Assignee User ID or null to unassign' })
+  @IsOptional()
+  @IsString()
+  assigneeId?: string | null;
+
+  @ApiPropertyOptional({ example: 'proj_123', description: 'Project ID or null' })
+  @IsOptional()
+  @IsString()
+  projectId?: string | null;
+
+  @ApiPropertyOptional({ example: 'cyc_123', description: 'Cycle/Sprint ID or null' })
+  @IsOptional()
+  @IsString()
+  cycleId?: string | null;
+
+  @ApiPropertyOptional({ example: '2026-10-31T23:59:59.000Z' })
+  @IsOptional()
+  @IsString()
+  dueDate?: string | null;
+
+  @ApiPropertyOptional({ example: 3, description: 'Estimate story points' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  estimate?: number | null;
+
+  @ApiPropertyOptional({ example: ['Frontend', 'Bug'] })
+  @IsOptional()
+  @IsArray()
+  labels?: string[];
+}
+
+export class MobileUpdateAssigneeDto {
+  @ApiPropertyOptional({ example: 'usr_123', description: 'User ID to assign, or null to unassign' })
+  @IsOptional()
+  @IsString()
+  assigneeId?: string | null;
+}
+
+export class MobileAssignCycleDto {
+  @ApiPropertyOptional({ example: 'cyc_123', description: 'Cycle ID or null to detach' })
+  @IsOptional()
+  @IsString()
+  cycleId?: string | null;
+}
+
+export class MobileCreateSubtaskDto {
+  @ApiProperty({ example: 'Implement biometric token storage' })
+  @IsNotEmpty()
+  @IsString()
+  title: string;
+
+  @ApiPropertyOptional({ enum: TaskPriority, default: TaskPriority.MEDIUM })
+  @IsOptional()
+  @IsEnum(TaskPriority)
+  priority?: TaskPriority = TaskPriority.MEDIUM;
+
+  @ApiPropertyOptional({ enum: TaskStatus, default: TaskStatus.TODO })
+  @IsOptional()
+  @IsEnum(TaskStatus)
+  status?: TaskStatus = TaskStatus.TODO;
+
+  @ApiPropertyOptional({ example: 'usr_123' })
+  @IsOptional()
+  @IsString()
+  assigneeId?: string;
+}
+
+export class MobileCreateRelationDto {
+  @ApiProperty({ example: 'task_target_123', description: 'ID of target task to relate' })
+  @IsNotEmpty()
+  @IsString()
+  targetTaskId: string;
+
+  @ApiProperty({
+    example: 'BLOCKS',
+    enum: ['BLOCKS', 'BLOCKED_BY', 'RELATES_TO', 'DUPLICATE'],
+    description: 'Relationship type',
+  })
+  @IsNotEmpty()
+  @IsString()
+  type: string;
+}
+
+export class MobileTaskRelationDto {
+  @ApiProperty({ example: 'rel_123' })
+  id: string;
+
+  @ApiProperty({ example: 'BLOCKS' })
+  type: string;
+
+  @ApiProperty({ example: 'task_target_123' })
+  targetTaskId: string;
+
+  @ApiProperty({ example: 'TJAR-9' })
+  targetIdentifier: string;
+
+  @ApiProperty({ example: 'Implement auth refresh token backend' })
+  targetTitle: string;
+
+  @ApiProperty({ example: 'DONE', enum: TaskStatus })
+  targetStatus: TaskStatus;
+}
+
+export class MobileToggleReactionDto {
+  @ApiProperty({ example: '👍', description: 'Emoji to toggle (e.g. 👍, ❤️, 🔥, 🎉, 👀, 🚀)' })
+  @IsNotEmpty()
+  @IsString()
+  emoji: string;
+}
+
+export class MobileTaskActivityDto {
+  @ApiProperty({ example: 'act_123' })
+  id: string;
+
+  @ApiProperty({ example: 'STATUS_CHANGED' })
+  type: string;
+
+  @ApiProperty({ example: 'changed status from Todo to In Progress' })
+  description: string;
+
+  @ApiProperty({ example: 'Alex Vance' })
+  actorName: string;
+
+  @ApiPropertyOptional({ example: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb' })
+  actorAvatarUrl?: string | null;
+
+  @ApiProperty({ example: '2026-10-21T15:20:00.000Z' })
+  createdAt: Date;
+}
+

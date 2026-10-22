@@ -2,21 +2,62 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { PrismaService } from '../prisma/prisma.service.js';
 import { TasksService } from '../tasks/tasks.service.js';
 import { InboxService } from '../inbox/inbox.service.js';
-import { TaskStatus, TaskPriority } from '@prisma/client';
+import { WorkspacesService } from '../workspaces/workspaces.service.js';
+import { ProjectsService } from '../projects/projects.service.js';
+import { CyclesService } from '../cycles/cycles.service.js';
+import { AuthService } from '../auth/auth.service.js';
+import { TaskStatus, TaskPriority, WorkspaceRole } from '@prisma/client';
 import {
   MobileHomeQueryDto,
   MobileHomeResponseDto,
   MobileCompactTaskDto,
+  MobileStatusCountDto,
+  MobileProjectSummaryDto,
 } from './dto/mobile-home.dto.js';
 import {
   MobileTasksQueryDto,
   MobileTaskFilter,
   MobilePaginatedTasksResponseDto,
   MobileCreateTaskDto,
+  MobileUpdateTaskDto,
+  MobileCreateSubtaskDto,
+  MobileCreateRelationDto,
+  MobileTaskRelationDto,
+  MobileCommentDto,
+  MobileTaskActivityDto,
 } from './dto/mobile-tasks.dto.js';
 import { MobileTaskDetailDto } from './dto/mobile-task-detail.dto.js';
 import { MobileNotificationsResponseDto } from './dto/mobile-notifications.dto.js';
 import { MobileConfigResponseDto } from './dto/mobile-config.dto.js';
+import {
+  MobileWorkspaceListResponseDto,
+  MobileWorkspaceMemberDto,
+  MobileCreateWorkspaceDto,
+  MobileInviteMemberDto,
+} from './dto/mobile-workspaces.dto.js';
+import {
+  MobileProjectDto,
+  MobileCreateProjectDto,
+  MobileUpdateProjectDto,
+  MobileProjectDetailDto,
+} from './dto/mobile-projects.dto.js';
+import {
+  MobileCycleDto,
+  MobileCreateCycleDto,
+  MobileUpdateCycleDto,
+  MobileCycleDetailDto,
+} from './dto/mobile-cycles.dto.js';
+import { MobileTrashListResponseDto } from './dto/mobile-trash.dto.js';
+import {
+  MobileSearchQueryDto,
+  MobileSearchResultDto,
+} from './dto/mobile-search.dto.js';
+import {
+  MobileProfileResponseDto,
+  MobileUpdateProfileDto,
+  MobileChangePasswordDto,
+  MobileUserHoverCardDto,
+} from './dto/mobile-profile.dto.js';
 
 @Injectable()
 export class MobileService {
@@ -24,7 +65,44 @@ export class MobileService {
     private readonly prisma: PrismaService,
     private readonly tasksService: TasksService,
     private readonly inboxService: InboxService,
+    private readonly workspacesService: WorkspacesService,
+    private readonly projectsService: ProjectsService,
+    private readonly cyclesService: CyclesService,
+    private readonly authService: AuthService,
   ) {}
+
+  private async getEffectiveWorkspaceId(userId: string, workspaceId?: string): Promise<string> {
+    if (workspaceId) return workspaceId;
+    const member = await this.prisma.workspaceMember.findFirst({
+      where: { userId },
+      select: { workspaceId: true },
+      orderBy: { createdAt: 'asc' },
+    });
+    if (!member) {
+      throw new NotFoundException('No active workspace found for user');
+    }
+    return member.workspaceId;
+  }
+
+  private getInitials(name?: string): string {
+    if (!name) return 'U';
+    const parts = name.trim().split(/\s+/);
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    return name.slice(0, 2).toUpperCase();
+  }
+
+  private getAvatarColor(name?: string): string {
+    if (!name) return '#00b4d8';
+    if (name.toLowerCase().includes('mohab')) return '#00b4d8';
+    const palette = ['#00b4d8', '#3b82f6', '#6366f1', '#8b5cf6', '#ec4899', '#10b981', '#f59e0b', '#f97316'];
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+      hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return palette[Math.abs(hash) % palette.length];
+  }
 
   private mapToCompactTask(task: any): MobileCompactTaskDto {
     const subtasks = task.subTasks || [];
@@ -66,6 +144,42 @@ export class MobileService {
     };
   }
 
+  // 1. Mobile Config
+  getConfig(): MobileConfigResponseDto {
+    return {
+      apiVersion: '1.0.0',
+      minSupportedAppVersion: '1.0.0',
+      serverTime: new Date().toISOString(),
+      statuses: [
+        { key: TaskStatus.BACKLOG, label: 'Backlog', color: '#94a3b8' },
+        { key: TaskStatus.TODO, label: 'Todo', color: '#e2e8f0' },
+        { key: TaskStatus.IN_PROGRESS, label: 'In Progress', color: '#f59e0b' },
+        { key: TaskStatus.DONE, label: 'Done', color: '#6366f1' },
+        { key: TaskStatus.CANCELED, label: 'Canceled', color: '#64748b' },
+      ],
+      priorities: [
+        { key: TaskPriority.NO_PRIORITY, label: 'No Priority', level: 0, color: '#94a3b8' },
+        { key: TaskPriority.LOW, label: 'Low', level: 1, color: '#0ea5e9' },
+        { key: TaskPriority.MEDIUM, label: 'Medium', level: 2, color: '#f59e0b' },
+        { key: TaskPriority.HIGH, label: 'High', level: 3, color: '#f97316' },
+        { key: TaskPriority.URGENT, label: 'Urgent', level: 4, color: '#f43f5e' },
+      ],
+      supportedRelations: ['BLOCKS', 'BLOCKED_BY', 'RELATES_TO', 'DUPLICATE'],
+      supportedEmojis: ['👍', '❤️', '🎉', '🚀', '👀', '🔥', '💡', '👎', '👏', '✨', '🙏', '💯'],
+      features: {
+        fileUploads: true,
+        subtasks: true,
+        relations: true,
+        cycles: true,
+        trash: true,
+        inbox: true,
+        hoverCard: true,
+        pushNotifications: false,
+      },
+    };
+  }
+
+  // 2. Mobile Home Dashboard
   async getHome(userId: string, query: MobileHomeQueryDto): Promise<MobileHomeResponseDto> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
@@ -102,14 +216,9 @@ export class MobileService {
     }
 
     if (!currentWorkspace) {
-      // Fallback if user has no workspace yet
       return {
         user,
-        currentWorkspace: {
-          id: '',
-          name: 'No Workspace',
-          slug: 'none',
-        },
+        currentWorkspace: null as any,
         availableWorkspaces: [],
         stats: {
           assignedCount: 0,
@@ -121,16 +230,20 @@ export class MobileService {
         },
         myAssignedTasks: [],
         projects: [],
-        statusBreakdown: [],
+        statusBreakdown: [
+          { status: TaskStatus.BACKLOG, label: 'Backlog', count: 0 },
+          { status: TaskStatus.TODO, label: 'Todo', count: 0 },
+          { status: TaskStatus.IN_PROGRESS, label: 'In Progress', count: 0 },
+          { status: TaskStatus.DONE, label: 'Done', count: 0 },
+          { status: TaskStatus.CANCELED, label: 'Canceled', count: 0 },
+        ],
       };
     }
 
-    const workspaceId = currentWorkspace.id;
+    const wsId = currentWorkspace.id;
     const now = new Date();
-    const in48Hours = new Date(now.getTime() + 48 * 60 * 60 * 1000);
-    const startOfWeek = new Date();
-    startOfWeek.setHours(0, 0, 0, 0);
-    startOfWeek.setDate(startOfWeek.getDate() - ((startOfWeek.getDay() + 6) % 7)); // Monday
+    const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
 
     const [
       assignedCount,
@@ -139,66 +252,63 @@ export class MobileService {
       urgentCount,
       completedThisWeekCount,
       unreadNotificationsCount,
-      rawAssignedTasks,
-      projectsList,
-      tasksForStatusCount,
+      assignedTasksRaw,
+      urgentTasksRaw,
+      projectsRaw,
+      statusGroupRaw,
     ] = await Promise.all([
-      // 1. Total assigned to me
+      this.prisma.task.count({
+        where: { workspaceId: wsId, assigneeId: userId, isArchived: false, status: { not: TaskStatus.DONE } },
+      }),
+      this.prisma.task.count({
+        where: { workspaceId: wsId, assigneeId: userId, isArchived: false, status: TaskStatus.IN_PROGRESS },
+      }),
       this.prisma.task.count({
         where: {
-          workspaceId,
+          workspaceId: wsId,
           assigneeId: userId,
-          status: { notIn: [TaskStatus.DONE, TaskStatus.CANCELED] },
+          isArchived: false,
+          status: { not: TaskStatus.DONE },
+          dueDate: { lte: endOfToday },
         },
       }),
-      // 2. In progress for me
       this.prisma.task.count({
         where: {
-          workspaceId,
+          workspaceId: wsId,
           assigneeId: userId,
-          status: TaskStatus.IN_PROGRESS,
-        },
-      }),
-      // 3. Due soon (next 48h or overdue)
-      this.prisma.task.count({
-        where: {
-          workspaceId,
-          assigneeId: userId,
-          dueDate: { lte: in48Hours },
-          status: { notIn: [TaskStatus.DONE, TaskStatus.CANCELED] },
-        },
-      }),
-      // 4. Urgent or High priority assigned to me
-      this.prisma.task.count({
-        where: {
-          workspaceId,
-          assigneeId: userId,
+          isArchived: false,
+          status: { not: TaskStatus.DONE },
           priority: { in: [TaskPriority.HIGH, TaskPriority.URGENT] },
-          status: { notIn: [TaskStatus.DONE, TaskStatus.CANCELED] },
         },
       }),
-      // 5. Completed this week
       this.prisma.task.count({
         where: {
-          workspaceId,
+          workspaceId: wsId,
           assigneeId: userId,
           status: TaskStatus.DONE,
-          updatedAt: { gte: startOfWeek },
+          updatedAt: { gte: oneWeekAgo },
         },
       }),
-      // 6. Unread inbox notifications
       this.prisma.inboxNotification.count({
-        where: {
-          userId,
-          isRead: false,
-        },
+        where: { userId, isRead: false },
       }),
-      // 7. Top assigned tasks (max 10)
+      this.prisma.task.findMany({
+        where: { workspaceId: wsId, assigneeId: userId, isArchived: false, status: { not: TaskStatus.DONE } },
+        include: {
+          project: { select: { id: true, name: true, key: true, color: true } },
+          assignee: { select: { id: true, name: true, avatarUrl: true } },
+          subTasks: { select: { id: true, status: true } },
+          _count: { select: { comments: true, attachments: true } },
+        },
+        orderBy: [{ priority: 'desc' }, { dueDate: 'asc' }],
+        take: 5,
+      }),
       this.prisma.task.findMany({
         where: {
-          workspaceId,
-          assigneeId: userId,
-          status: { notIn: [TaskStatus.DONE, TaskStatus.CANCELED] },
+          workspaceId: wsId,
+          isArchived: false,
+          status: { not: TaskStatus.DONE },
+          priority: { in: [TaskPriority.HIGH, TaskPriority.URGENT] },
         },
         include: {
           project: { select: { id: true, name: true, key: true, color: true } },
@@ -206,45 +316,46 @@ export class MobileService {
           subTasks: { select: { id: true, status: true } },
           _count: { select: { comments: true, attachments: true } },
         },
-        orderBy: [{ priority: 'desc' }, { dueDate: 'asc' }, { updatedAt: 'desc' }],
-        take: 10,
+        orderBy: [{ priority: 'desc' }, { createdAt: 'desc' }],
+        take: 5,
       }),
-      // 8. Projects with task count
       this.prisma.project.findMany({
-        where: { workspaceId },
-        select: {
-          id: true,
-          name: true,
-          key: true,
-          color: true,
-          _count: { select: { tasks: true } },
+        where: { workspaceId: wsId },
+        include: {
+          tasks: {
+            where: { isArchived: false },
+            select: { id: true, status: true },
+          },
         },
-        orderBy: { name: 'asc' },
+        orderBy: { createdAt: 'desc' },
       }),
-      // 9. Status breakdown
       this.prisma.task.groupBy({
         by: ['status'],
-        where: { workspaceId },
-        _count: { _all: true },
+        where: { workspaceId: wsId, isArchived: false },
+        _count: { status: true },
       }),
     ]);
 
-    const statusLabels: Record<TaskStatus, string> = {
-      BACKLOG: 'Backlog',
-      TODO: 'Todo',
-      IN_PROGRESS: 'In Progress',
-      DONE: 'Done',
-      CANCELED: 'Canceled',
-    };
+    const statusBreakdown: MobileStatusCountDto[] = [
+      { status: TaskStatus.BACKLOG, label: 'Backlog', count: 0 },
+      { status: TaskStatus.TODO, label: 'Todo', count: 0 },
+      { status: TaskStatus.IN_PROGRESS, label: 'In Progress', count: 0 },
+      { status: TaskStatus.DONE, label: 'Done', count: 0 },
+      { status: TaskStatus.CANCELED, label: 'Canceled', count: 0 },
+    ];
+    for (const group of statusGroupRaw) {
+      const match = statusBreakdown.find((s) => s.status === group.status);
+      if (match) {
+        match.count = group._count.status;
+      }
+    }
 
-    const statusCountMap = new Map<TaskStatus, number>(
-      tasksForStatusCount.map((item) => [item.status, item._count._all]),
-    );
-
-    const statusBreakdown = (Object.keys(statusLabels) as TaskStatus[]).map((status) => ({
-      status,
-      label: statusLabels[status],
-      count: statusCountMap.get(status) || 0,
+    const projects: MobileProjectSummaryDto[] = projectsRaw.map((p) => ({
+      id: p.id,
+      name: p.name,
+      key: p.key,
+      color: p.color,
+      taskCount: p.tasks.length,
     }));
 
     return {
@@ -259,18 +370,285 @@ export class MobileService {
         completedThisWeekCount,
         unreadNotificationsCount,
       },
-      myAssignedTasks: rawAssignedTasks.map((t) => this.mapToCompactTask(t)),
-      projects: projectsList.map((p) => ({
-        id: p.id,
-        name: p.name,
-        key: p.key,
-        color: p.color,
-        taskCount: p._count.tasks,
-      })),
+      myAssignedTasks: assignedTasksRaw.map((t) => this.mapToCompactTask(t)),
+      projects,
       statusBreakdown,
     };
   }
 
+  // 3. Workspaces & Members
+  async getWorkspaces(userId: string): Promise<MobileWorkspaceListResponseDto> {
+    const memberships = await this.prisma.workspaceMember.findMany({
+      where: { userId },
+      include: {
+        workspace: {
+          include: {
+            _count: {
+              select: { members: true, projects: true },
+            },
+          },
+        },
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    return {
+      items: memberships.map((m, idx) => ({
+        id: m.workspace.id,
+        name: m.workspace.name,
+        slug: m.workspace.slug,
+        role: m.role,
+        membersCount: m.workspace._count.members,
+        projectsCount: m.workspace._count.projects,
+        cyclesEnabled: m.workspace.cyclesEnabled ?? true,
+        isCurrent: idx === 0,
+        createdAt: m.workspace.createdAt,
+      })),
+      total: memberships.length,
+    };
+  }
+
+  async createWorkspace(userId: string, dto: MobileCreateWorkspaceDto) {
+    return this.workspacesService.createWorkspace(userId, { name: dto.name });
+  }
+
+  async getWorkspaceMembers(workspaceId: string, currentUserId: string): Promise<MobileWorkspaceMemberDto[]> {
+    const members = await this.prisma.workspaceMember.findMany({
+      where: { workspaceId },
+      include: {
+        user: { select: { id: true, name: true, email: true, avatarUrl: true } },
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    return members.map((m) => ({
+      id: m.id,
+      userId: m.userId,
+      role: m.role,
+      user: {
+        id: m.user.id,
+        name: m.user.name,
+        email: m.user.email,
+        avatarUrl: m.user.avatarUrl,
+      },
+      status: m.userId === currentUserId ? 'online' : 'offline',
+      createdAt: m.createdAt,
+    }));
+  }
+
+  async inviteWorkspaceMember(workspaceId: string, currentUserId: string, dto: MobileInviteMemberDto) {
+    return this.workspacesService.inviteMember(
+      workspaceId,
+      currentUserId,
+      {
+        email: dto.email,
+        role: dto.role || WorkspaceRole.MEMBER,
+      },
+    );
+  }
+
+  // 4. Projects
+  async getProjects(userId: string, workspaceIdParam?: string): Promise<MobileProjectDto[]> {
+    const workspaceId = await this.getEffectiveWorkspaceId(userId, workspaceIdParam);
+    const projects = await this.prisma.project.findMany({
+      where: { workspaceId },
+      include: {
+        tasks: {
+          where: { isArchived: false },
+          select: { id: true, status: true },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return projects.map((p) => {
+      const totalTasks = p.tasks.length;
+      const completedTasks = p.tasks.filter((t) => t.status === TaskStatus.DONE).length;
+      const progressPercentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
+      return {
+        id: p.id,
+        name: p.name,
+        key: p.key,
+        color: p.color,
+        description: p.description,
+        totalTasks,
+        completedTasks,
+        progressPercentage,
+        createdAt: p.createdAt,
+      };
+    });
+  }
+
+  async createProject(userId: string, dto: MobileCreateProjectDto) {
+    const workspaceId = await this.getEffectiveWorkspaceId(userId, dto.workspaceId);
+    return this.projectsService.createProject(workspaceId, {
+      name: dto.name,
+      key: dto.key,
+      description: dto.description,
+      color: dto.color,
+    });
+  }
+
+  async getProjectDetail(userId: string, projectId: string): Promise<MobileProjectDetailDto> {
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+      include: {
+        tasks: {
+          where: { isArchived: false },
+          include: {
+            project: { select: { id: true, name: true, key: true, color: true } },
+            assignee: { select: { id: true, name: true, avatarUrl: true } },
+            subTasks: { select: { id: true, status: true } },
+            _count: { select: { comments: true, attachments: true } },
+          },
+          orderBy: { createdAt: 'desc' },
+        },
+      },
+    });
+
+    if (!project) {
+      throw new NotFoundException(`Project with ID ${projectId} not found`);
+    }
+
+    const statusBreakdown = {
+      backlog: 0,
+      todo: 0,
+      inProgress: 0,
+      done: 0,
+      canceled: 0,
+    };
+
+    for (const t of project.tasks) {
+      if (t.status === TaskStatus.BACKLOG) statusBreakdown.backlog++;
+      if (t.status === TaskStatus.TODO) statusBreakdown.todo++;
+      if (t.status === TaskStatus.IN_PROGRESS) statusBreakdown.inProgress++;
+      if (t.status === TaskStatus.DONE) statusBreakdown.done++;
+      if (t.status === TaskStatus.CANCELED) statusBreakdown.canceled++;
+    }
+
+    const totalTasks = project.tasks.length;
+    const completedTasks = statusBreakdown.done;
+    const progressPercentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
+    return {
+      id: project.id,
+      name: project.name,
+      key: project.key,
+      color: project.color,
+      description: project.description,
+      totalTasks,
+      completedTasks,
+      progressPercentage,
+      createdAt: project.createdAt,
+      statusBreakdown,
+      recentTasks: project.tasks.slice(0, 15).map((t) => this.mapToCompactTask(t)),
+    };
+  }
+
+  async updateProject(projectId: string, dto: MobileUpdateProjectDto) {
+    return this.projectsService.updateProject(projectId, dto);
+  }
+
+  async deleteProject(projectId: string) {
+    const existing = await this.prisma.project.findUnique({ where: { id: projectId } });
+    if (!existing) {
+      throw new NotFoundException('Project not found');
+    }
+    return this.prisma.project.delete({ where: { id: projectId } });
+  }
+
+  // 5. Cycles (Sprints)
+  async getCycles(userId: string, workspaceIdParam?: string): Promise<MobileCycleDto[]> {
+    const workspaceId = await this.getEffectiveWorkspaceId(userId, workspaceIdParam);
+    const cycles = await this.prisma.cycle.findMany({
+      where: { workspaceId },
+      include: {
+        tasks: {
+          where: { isArchived: false },
+          select: { id: true, status: true },
+        },
+      },
+      orderBy: { number: 'desc' },
+    });
+
+    return cycles.map((c) => {
+      const totalTasks = c.tasks.length;
+      const completedTasks = c.tasks.filter((t) => t.status === TaskStatus.DONE).length;
+      const progressPercentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
+      return {
+        id: c.id,
+        number: c.number,
+        name: c.name,
+        status: c.status,
+        startDate: c.startDate,
+        endDate: c.endDate,
+        totalTasks,
+        completedTasks,
+        progressPercentage,
+      };
+    });
+  }
+
+  async getCurrentCycle(userId: string, workspaceIdParam?: string): Promise<MobileCycleDetailDto | null> {
+    const workspaceId = await this.getEffectiveWorkspaceId(userId, workspaceIdParam);
+    const cycle = await this.prisma.cycle.findFirst({
+      where: { workspaceId, status: 'ACTIVE' },
+      include: {
+        tasks: {
+          where: { isArchived: false },
+          include: {
+            project: { select: { id: true, name: true, key: true, color: true } },
+            assignee: { select: { id: true, name: true, avatarUrl: true } },
+            subTasks: { select: { id: true, status: true } },
+            _count: { select: { comments: true, attachments: true } },
+          },
+          orderBy: { createdAt: 'desc' },
+        },
+      },
+    });
+
+    if (!cycle) return null;
+
+    const totalTasks = cycle.tasks.length;
+    const completedTasks = cycle.tasks.filter((t) => t.status === TaskStatus.DONE).length;
+    const progressPercentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
+    return {
+      id: cycle.id,
+      number: cycle.number,
+      name: cycle.name,
+      status: cycle.status,
+      startDate: cycle.startDate,
+      endDate: cycle.endDate,
+      totalTasks,
+      completedTasks,
+      progressPercentage,
+      tasks: cycle.tasks.map((t) => this.mapToCompactTask(t)),
+    };
+  }
+
+  async createCycle(userId: string, dto: MobileCreateCycleDto) {
+    const workspaceId = await this.getEffectiveWorkspaceId(userId, dto.workspaceId);
+    return this.cyclesService.createCycle({
+      workspaceId,
+      name: dto.name,
+      startDate: dto.startDate,
+      endDate: dto.endDate,
+    });
+  }
+
+  async updateCycle(cycleId: string, dto: MobileUpdateCycleDto) {
+    return this.cyclesService.updateCycle(cycleId, {
+      name: dto.name,
+      startDate: dto.startDate,
+      endDate: dto.endDate,
+      status: dto.status as any,
+    });
+  }
+
+  // 6. Tasks
   async getTasks(userId: string, query: MobileTasksQueryDto): Promise<MobilePaginatedTasksResponseDto> {
     let workspaceId = query.workspaceId;
     if (!workspaceId) {
@@ -292,7 +670,7 @@ export class MobileService {
       };
     }
 
-    const where: any = { workspaceId };
+    const where: any = { workspaceId, isArchived: false };
 
     if (query.projectId) {
       where.projectId = query.projectId;
@@ -445,6 +823,25 @@ export class MobileService {
     });
   }
 
+  async updateTask(userId: string, taskId: string, dto: MobileUpdateTaskDto) {
+    return this.tasksService.updateTask(
+      taskId,
+      {
+        title: dto.title,
+        description: dto.description,
+        status: dto.status,
+        priority: dto.priority,
+        assigneeId: dto.assigneeId,
+        projectId: dto.projectId || undefined,
+        cycleId: dto.cycleId,
+        dueDate: dto.dueDate !== undefined ? dto.dueDate : undefined,
+        estimate: dto.estimate !== undefined && dto.estimate !== null ? dto.estimate : undefined,
+        labels: dto.labels,
+      },
+      userId,
+    );
+  }
+
   async updateTaskStatus(userId: string, taskId: string, status: TaskStatus, customStatus?: string) {
     return this.tasksService.updateTask(
       taskId,
@@ -460,10 +857,174 @@ export class MobileService {
     return this.tasksService.updateTask(taskId, { priority }, userId);
   }
 
+  async updateTaskAssignee(userId: string, taskId: string, assigneeId?: string | null) {
+    return this.tasksService.updateTask(taskId, { assigneeId: assigneeId || null }, userId);
+  }
+
+  async assignTaskCycle(userId: string, taskId: string, cycleId?: string | null) {
+    return this.tasksService.updateTask(taskId, { cycleId: cycleId || null }, userId);
+  }
+
+  async deleteTask(userId: string, taskId: string) {
+    return this.tasksService.deleteTask(taskId, userId);
+  }
+
+  // 7. Subtasks
+  async getSubtasks(taskId: string) {
+    return this.prisma.task.findMany({
+      where: { parentId: taskId, isArchived: false },
+      include: {
+        assignee: { select: { id: true, name: true, avatarUrl: true } },
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+  }
+
+  async createSubtask(userId: string, parentTaskId: string, dto: MobileCreateSubtaskDto) {
+    return this.tasksService.createSubTask(parentTaskId, userId, {
+      title: dto.title,
+      priority: dto.priority || TaskPriority.MEDIUM,
+      status: dto.status || TaskStatus.TODO,
+      assigneeId: dto.assigneeId,
+    });
+  }
+
+  // 8. Relations
+  async getTaskRelations(taskId: string): Promise<MobileTaskRelationDto[]> {
+    const task = await this.prisma.task.findUnique({
+      where: { id: taskId },
+      include: {
+        sourceRelations: {
+          include: {
+            targetTask: {
+              select: { id: true, identifier: true, title: true, status: true },
+            },
+          },
+        },
+        targetRelations: {
+          include: {
+            sourceTask: {
+              select: { id: true, identifier: true, title: true, status: true },
+            },
+          },
+        },
+      },
+    });
+
+    if (!task) {
+      throw new NotFoundException(`Task with ID ${taskId} not found`);
+    }
+
+    const relations: MobileTaskRelationDto[] = [];
+    for (const r of task.sourceRelations) {
+      relations.push({
+        id: r.id,
+        type: r.type,
+        targetTaskId: r.targetTask.id,
+        targetIdentifier: r.targetTask.identifier,
+        targetTitle: r.targetTask.title,
+        targetStatus: r.targetTask.status,
+      });
+    }
+    for (const r of task.targetRelations) {
+      const invertedType = r.type === 'BLOCKS' ? 'BLOCKED_BY' : (r.type === 'BLOCKED_BY' ? 'BLOCKS' : r.type);
+      relations.push({
+        id: r.id,
+        type: invertedType,
+        targetTaskId: r.sourceTask.id,
+        targetIdentifier: r.sourceTask.identifier,
+        targetTitle: r.sourceTask.title,
+        targetStatus: r.sourceTask.status,
+      });
+    }
+    return relations;
+  }
+
+  async createTaskRelation(userId: string, taskId: string, dto: MobileCreateRelationDto) {
+    return this.tasksService.addRelation(taskId, userId, {
+      targetTaskId: dto.targetTaskId,
+      type: dto.type,
+    });
+  }
+
+  async deleteTaskRelation(userId: string, taskId: string, relationId: string) {
+    return this.tasksService.deleteRelation(taskId, relationId, userId);
+  }
+
+  // 9. Comments & Reactions
+  async getTaskComments(taskId: string): Promise<MobileCommentDto[]> {
+    const comments = await this.prisma.comment.findMany({
+      where: { taskId },
+      include: {
+        user: { select: { id: true, name: true, email: true, avatarUrl: true } },
+        reactions: {
+          include: { user: { select: { id: true, name: true } } },
+        },
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    return comments.map((c) => ({
+      id: c.id,
+      content: c.content,
+      userId: c.userId,
+      user: {
+        id: c.user.id,
+        name: c.user.name,
+        email: c.user.email,
+        avatarUrl: c.user.avatarUrl,
+      },
+      reactions: (c.reactions || []).map((r) => ({
+        emoji: r.emoji,
+        userId: r.userId,
+        userName: r.user.name,
+      })),
+      createdAt: c.createdAt,
+      updatedAt: c.updatedAt,
+    }));
+  }
+
   async addComment(userId: string, taskId: string, content: string) {
     return this.tasksService.addComment(taskId, userId, content);
   }
 
+  async updateComment(userId: string, commentId: string, content: string) {
+    return this.tasksService.updateComment(commentId, userId, content);
+  }
+
+  async deleteComment(userId: string, commentId: string) {
+    return this.tasksService.deleteComment(commentId, userId);
+  }
+
+  async toggleTaskReaction(userId: string, taskId: string, emoji: string) {
+    return this.tasksService.toggleTaskReaction(taskId, userId, emoji);
+  }
+
+  async toggleCommentReaction(userId: string, taskId: string, commentId: string, emoji: string) {
+    return this.tasksService.toggleCommentReaction(taskId, commentId, userId, emoji);
+  }
+
+  async getTaskActivities(taskId: string): Promise<MobileTaskActivityDto[]> {
+    const activities = await this.prisma.taskActivity.findMany({
+      where: { taskId },
+      include: {
+        user: { select: { id: true, name: true, avatarUrl: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+    });
+
+    return activities.map((a) => ({
+      id: a.id,
+      type: a.type,
+      description: a.details || a.type,
+      actorName: a.user?.name || 'System',
+      actorAvatarUrl: a.user?.avatarUrl || null,
+      createdAt: a.createdAt,
+    }));
+  }
+
+  // 10. Notifications
   async getNotifications(userId: string, unreadOnly?: boolean): Promise<MobileNotificationsResponseDto> {
     const notifications = await this.inboxService.getNotifications(userId, unreadOnly);
     const unreadCount = await this.prisma.inboxNotification.count({
@@ -484,32 +1045,232 @@ export class MobileService {
     return this.inboxService.markAllAsRead(userId);
   }
 
-  getConfig(): MobileConfigResponseDto {
-    return {
-      apiVersion: '1.0.0',
-      minSupportedAppVersion: '1.0.0',
-      serverTime: new Date().toISOString(),
-      statuses: [
-        { key: TaskStatus.BACKLOG, label: 'Backlog', color: '#94a3b8' },
-        { key: TaskStatus.TODO, label: 'Todo', color: '#e2e8f0' },
-        { key: TaskStatus.IN_PROGRESS, label: 'In Progress', color: '#f59e0b' },
-        { key: TaskStatus.DONE, label: 'Done', color: '#6366f1' },
-        { key: TaskStatus.CANCELED, label: 'Canceled', color: '#64748b' },
-      ],
-      priorities: [
-        { key: TaskPriority.NO_PRIORITY, label: 'No Priority', level: 0, color: '#94a3b8' },
-        { key: TaskPriority.LOW, label: 'Low', level: 1, color: '#0ea5e9' },
-        { key: TaskPriority.MEDIUM, label: 'Medium', level: 2, color: '#f59e0b' },
-        { key: TaskPriority.HIGH, label: 'High', level: 3, color: '#f97316' },
-        { key: TaskPriority.URGENT, label: 'Urgent', level: 4, color: '#f43f5e' },
-      ],
-      features: {
-        fileUploads: true,
-        subtasks: true,
-        relations: true,
-        inbox: true,
-        pushNotifications: false,
+  // 11. Trash
+  async getTrash(userId: string, workspaceIdParam?: string): Promise<MobileTrashListResponseDto> {
+    const workspaceId = await this.getEffectiveWorkspaceId(userId, workspaceIdParam);
+    const tasks = await this.prisma.task.findMany({
+      where: { workspaceId, isArchived: true },
+      include: {
+        project: { select: { name: true } },
+        assignee: { select: { name: true } },
       },
+      orderBy: { deletedAt: 'desc' },
+    });
+
+    return {
+      items: tasks.map((t) => ({
+        id: t.id,
+        identifier: t.identifier,
+        title: t.title,
+        status: t.status,
+        priority: t.priority,
+        projectName: t.project?.name || null,
+        assigneeName: t.assignee?.name || null,
+        deletedAt: t.deletedAt || t.updatedAt,
+      })),
+      total: tasks.length,
+    };
+  }
+
+  async restoreTaskFromTrash(userId: string, taskId: string) {
+    return this.tasksService.restoreTask(taskId, userId);
+  }
+
+  async permanentDeleteTask(userId: string, taskId: string) {
+    return this.tasksService.permanentDeleteTask(taskId, userId);
+  }
+
+  // 12. Search
+  async search(userId: string, query: MobileSearchQueryDto): Promise<MobileSearchResultDto> {
+    const workspaceId = await this.getEffectiveWorkspaceId(userId, query.workspaceId);
+    const term = query.q.trim();
+
+    const [rawTasks, rawProjects, rawMembers] = await Promise.all([
+      this.prisma.task.findMany({
+        where: {
+          workspaceId,
+          isArchived: false,
+          OR: [
+            { title: { contains: term, mode: 'insensitive' } },
+            { identifier: { contains: term, mode: 'insensitive' } },
+            { description: { contains: term, mode: 'insensitive' } },
+          ],
+        },
+        include: {
+          project: { select: { id: true, name: true, key: true, color: true } },
+          assignee: { select: { id: true, name: true, avatarUrl: true } },
+          subTasks: { select: { id: true, status: true } },
+          _count: { select: { comments: true, attachments: true } },
+        },
+        take: 10,
+        orderBy: { updatedAt: 'desc' },
+      }),
+      this.prisma.project.findMany({
+        where: {
+          workspaceId,
+          OR: [
+            { name: { contains: term, mode: 'insensitive' } },
+            { key: { contains: term, mode: 'insensitive' } },
+            { description: { contains: term, mode: 'insensitive' } },
+          ],
+        },
+        include: {
+          tasks: { select: { id: true, status: true } },
+        },
+        take: 5,
+      }),
+      this.prisma.workspaceMember.findMany({
+        where: {
+          workspaceId,
+          user: {
+            OR: [
+              { name: { contains: term, mode: 'insensitive' } },
+              { email: { contains: term, mode: 'insensitive' } },
+            ],
+          },
+        },
+        include: {
+          user: { select: { id: true, name: true, email: true, avatarUrl: true } },
+        },
+        take: 5,
+      }),
+    ]);
+
+    return {
+      tasks: rawTasks.map((t) => this.mapToCompactTask(t)),
+      projects: rawProjects.map((p) => {
+        const total = p.tasks.length;
+        const done = p.tasks.filter((t) => t.status === TaskStatus.DONE).length;
+        return {
+          id: p.id,
+          name: p.name,
+          key: p.key,
+          color: p.color,
+          description: p.description,
+          totalTasks: total,
+          completedTasks: done,
+          progressPercentage: total > 0 ? Math.round((done / total) * 100) : 0,
+          createdAt: p.createdAt,
+        };
+      }),
+      members: rawMembers.map((m) => ({
+        id: m.id,
+        userId: m.userId,
+        role: m.role,
+        user: {
+          id: m.user.id,
+          name: m.user.name,
+          email: m.user.email,
+          avatarUrl: m.user.avatarUrl,
+        },
+        status: m.userId === userId ? 'online' : 'offline',
+        createdAt: m.createdAt,
+      })),
+    };
+  }
+
+  // 13. Profile & Hover Card
+  async getProfile(userId: string): Promise<MobileProfileResponseDto> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, name: true, email: true, avatarUrl: true, createdAt: true },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const [workspacesCount, assignedTasksCount, completedTasksCount] = await Promise.all([
+      this.prisma.workspaceMember.count({ where: { userId } }),
+      this.prisma.task.count({ where: { assigneeId: userId, isArchived: false } }),
+      this.prisma.task.count({ where: { assigneeId: userId, status: TaskStatus.DONE } }),
+    ]);
+
+    return {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      avatarUrl: user.avatarUrl,
+      stats: {
+        workspacesCount,
+        assignedTasksCount,
+        completedTasksCount,
+      },
+      createdAt: user.createdAt,
+    };
+  }
+
+  async updateProfile(userId: string, dto: MobileUpdateProfileDto) {
+    return this.authService.updateProfile(userId, dto);
+  }
+
+  async changePassword(userId: string, dto: MobileChangePasswordDto) {
+    return this.authService.updateProfile(userId, {
+      currentPassword: dto.currentPassword,
+      newPassword: dto.newPassword,
+    });
+  }
+
+  async getUserHoverCard(
+    currentUserId: string,
+    targetUserId: string,
+    workspaceIdParam?: string,
+  ): Promise<MobileUserHoverCardDto> {
+    const targetUser = await this.prisma.user.findUnique({
+      where: { id: targetUserId },
+      select: { id: true, name: true, email: true, avatarUrl: true },
+    });
+
+    if (!targetUser) {
+      throw new NotFoundException(`User with ID ${targetUserId} not found`);
+    }
+
+    let workspaceName = 'Tjar';
+    let roleOrTitle = 'Tjar';
+
+    const workspaceId = workspaceIdParam || (await this.getEffectiveWorkspaceId(currentUserId).catch(() => undefined));
+    if (workspaceId) {
+      const ws = await this.prisma.workspace.findUnique({
+        where: { id: workspaceId },
+        select: { name: true },
+      });
+      if (ws) {
+        workspaceName = ws.name;
+        roleOrTitle = ws.name;
+      }
+
+      const membership = await this.prisma.workspaceMember.findUnique({
+        where: { workspaceId_userId: { workspaceId, userId: targetUserId } },
+        select: { role: true },
+      });
+      if (membership) {
+        roleOrTitle = membership.role === 'OWNER' ? 'Owner' : (membership.role === 'ADMIN' ? 'Admin' : workspaceName);
+      }
+    }
+
+    const initials = this.getInitials(targetUser.name);
+    const avatarColor = this.getAvatarColor(targetUser.name);
+    const handle = targetUser.email
+      ? targetUser.email.split('@')[0].toLowerCase()
+      : targetUser.name.toLowerCase().replace(/\s+/g, '');
+    const isSelf = currentUserId === targetUserId;
+
+    const now = new Date();
+    const localTime =
+      now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }) +
+      ' local time';
+
+    return {
+      id: targetUser.id,
+      name: targetUser.name,
+      handle: `${handle} • ...`,
+      avatarUrl: targetUser.avatarUrl,
+      initials,
+      avatarColor,
+      status: isSelf ? 'online' : 'offline',
+      localTime,
+      roleOrTitle,
+      workspaceName,
     };
   }
 }

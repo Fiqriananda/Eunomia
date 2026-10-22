@@ -13,7 +13,10 @@ export declare class MobileFeaturesDto {
     fileUploads: boolean;
     subtasks: boolean;
     relations: boolean;
+    cycles: boolean;
+    trash: boolean;
     inbox: boolean;
+    hoverCard: boolean;
     pushNotifications: boolean;
 }
 export declare class MobileConfigResponseDto {
@@ -22,5 +25,7 @@ export declare class MobileConfigResponseDto {
     serverTime: string;
     statuses: MobileStatusMetaDto[];
     priorities: MobilePriorityMetaDto[];
+    supportedRelations: string[];
+    supportedEmojis: string[];
     features: MobileFeaturesDto;
 }

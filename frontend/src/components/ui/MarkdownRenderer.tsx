@@ -16,6 +16,7 @@ import {
   Flame,
   AlertCircle,
 } from 'lucide-react';
+import { ProfileHoverCard } from './ProfileHoverCard';
 
 interface MarkdownRendererProps {
   content: string;
@@ -400,23 +401,42 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
       // 8. Mention: @username
       else if (fullMatch.startsWith('@')) {
         const mentionName = fullMatch.slice(1).trim();
-        const isKnownMember = memberNames.some(
-          (n) =>
-            n.toLowerCase() === mentionName.toLowerCase() ||
-            n.toLowerCase().split(' ')[0] === mentionName.toLowerCase(),
-        );
-        nodes.push(
+        const matchedMember = effectiveMembers.find((m) => {
+          const mName = m.user?.name?.toLowerCase() || '';
+          const mEmail = m.user?.email?.split('@')[0]?.toLowerCase() || '';
+          const q = mentionName.toLowerCase();
+          return mName === q || mEmail === q || mName.startsWith(q) || q.startsWith(mName);
+        });
+        const isKnownMember =
+          !!matchedMember ||
+          memberNames.some(
+            (n) =>
+              n.toLowerCase() === mentionName.toLowerCase() ||
+              n.toLowerCase().split(' ')[0] === mentionName.toLowerCase(),
+          );
+
+        const mentionBadge = (
           <span
-            key={`${keyPrefix}-mention-${match.index}`}
             className={cn(
-              'inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[11px] font-medium transition-colors mx-0.5 align-baseline',
+              'inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[11px] font-medium transition-colors mx-0.5 align-baseline cursor-pointer',
               isKnownMember
-                ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-semibold'
-                : 'bg-zinc-800/60 text-zinc-400 border border-border/40',
+                ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-semibold hover:bg-indigo-500/30'
+                : 'bg-zinc-800/60 text-zinc-400 border border-border/40 hover:bg-zinc-800',
             )}
           >
             @{mentionName}
-          </span>,
+          </span>
+        );
+
+        nodes.push(
+          <ProfileHoverCard
+            key={`${keyPrefix}-mention-${match.index}`}
+            user={matchedMember?.user || { name: mentionName }}
+            member={matchedMember}
+            workspaceName={workspace?.name}
+          >
+            {mentionBadge}
+          </ProfileHoverCard>,
         );
       }
       // 9. Autolink: https://...

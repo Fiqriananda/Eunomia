@@ -56,6 +56,8 @@ import { cn } from '../../../lib/utils';
 import { MarkdownRenderer, resolveMediaUrl } from '../../../components/ui/MarkdownRenderer';
 import { LinearRichEditor } from '../../../components/linear/LinearRichEditor';
 import { ReactionsBar } from '../../../components/linear/ReactionsBar';
+import { ProfileHoverCard } from '../../../components/ui/ProfileHoverCard';
+import { UserAvatar } from '../../../components/ui/UserAvatar';
 
 const PRIORITIES: TaskPriority[] = ['URGENT', 'HIGH', 'MEDIUM', 'LOW', 'NO_PRIORITY'];
 const STATUSES: TaskStatus[] = ['BACKLOG', 'TODO', 'IN_PROGRESS', 'DONE', 'CANCELED'];
@@ -1878,32 +1880,45 @@ function IssueDetailContent() {
                   No activity or comments yet.
                 </div>
               ) : (
-                comments.map((c) => (
-                  <div
-                    key={c.id}
-                    id={`comment-${c.id}`}
-                    className={`flex items-start gap-3 p-3.5 rounded-lg border transition-all duration-300 group relative ${
-                      highlightedCommentId === c.id
-                        ? 'bg-indigo-500/15 border-indigo-500/60 ring-2 ring-indigo-500/50 shadow-lg shadow-indigo-500/20'
-                        : 'bg-[#11121c]/70 border-border/40 hover:border-border'
-                    }`}
-                  >
-                    <img
-                      src={
-                        c.user?.avatarUrl ||
-                        `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
-                          c.user?.name || 'User',
-                        )}`
-                      }
-                      alt={c.user?.name || 'User'}
-                      className="w-7 h-7 rounded-full object-cover shrink-0 ring-1 ring-border mt-0.5"
-                    />
+                comments.map((c) => {
+                  const commentMember = members.find(
+                    (m) => m.userId === c.userId || m.user?.id === c.userId,
+                  );
+                  const isCommentAuthorOnline = user?.id === c.user?.id;
 
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-semibold text-foreground">
-                          {c.user?.name || 'Team Member'}
-                        </span>
+                  return (
+                    <div
+                      key={c.id}
+                      id={`comment-${c.id}`}
+                      className={`flex items-start gap-3 p-3.5 rounded-lg border transition-all duration-300 group relative ${
+                        highlightedCommentId === c.id
+                          ? 'bg-indigo-500/15 border-indigo-500/60 ring-2 ring-indigo-500/50 shadow-lg shadow-indigo-500/20'
+                          : 'bg-[#11121c]/70 border-border/40 hover:border-border'
+                      }`}
+                    >
+                      <UserAvatar
+                        user={c.user}
+                        member={commentMember}
+                        size="sm"
+                        showStatus={true}
+                        status={isCommentAuthorOnline ? 'online' : 'offline'}
+                        withHoverCard={true}
+                        workspaceName={workspace?.name}
+                        className="mt-0.5 cursor-pointer"
+                      />
+
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <ProfileHoverCard
+                            user={c.user}
+                            member={commentMember}
+                            workspaceName={workspace?.name}
+                            status={isCommentAuthorOnline ? 'online' : 'offline'}
+                          >
+                            <span className="text-xs font-semibold text-foreground hover:underline cursor-pointer">
+                              {c.user?.name || 'Team Member'}
+                            </span>
+                          </ProfileHoverCard>
                         <span className="text-[10px] text-zinc-500">
                           {new Date(c.createdAt).toLocaleDateString(undefined, {
                             month: 'short',
@@ -2108,8 +2123,9 @@ function IssueDetailContent() {
                       )}
                     </div>
                   </div>
-                ))
-              )}
+                );
+              })
+            )}
             </div>
 
             {/* Comment Composer with Mentions */}
@@ -2980,20 +2996,27 @@ function IssueDetailContent() {
 
           {/* Creator Info */}
           <div className="pt-4 border-t border-border/40 text-xs space-y-1">
-            <span className="text-[11px] text-zinc-500 font-medium">Created by</span>
-            <div className="flex items-center gap-2 pt-1">
-              <img
-                src={
-                  task.creator?.avatarUrl ||
-                  `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
-                    task.creator?.name || 'Alex',
-                  )}`
-                }
-                alt=""
-                className="w-5 h-5 rounded-full object-cover ring-1 ring-border"
-              />
-              <span className="text-zinc-300 font-medium">{task.creator?.name || 'Alex Vance'}</span>
-            </div>
+            <span className="text-[11px] text-zinc-500 font-medium block">Created by</span>
+            <ProfileHoverCard
+              user={task.creator}
+              member={members.find(
+                (m) => m.userId === task.creatorId || m.user?.id === task.creator?.id,
+              )}
+              workspaceName={workspace?.name}
+              status={user?.id === task.creator?.id ? 'online' : 'offline'}
+              className="block"
+            >
+              <div className="flex items-center gap-2 pt-0.5 cursor-pointer group/creator">
+                <UserAvatar
+                  user={task.creator}
+                  size="xs"
+                  showStatus={false}
+                />
+                <span className="text-zinc-300 font-medium group-hover/creator:text-white transition-colors">
+                  {task.creator?.name || 'Alex Vance'}
+                </span>
+              </div>
+            </ProfileHoverCard>
             <span className="text-[10px] text-zinc-500 block pt-0.5">
               {new Date(task.createdAt).toLocaleDateString(undefined, {
                 month: 'short',

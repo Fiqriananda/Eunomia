@@ -36,7 +36,16 @@ export class MobileFeaturesDto {
   relations: boolean;
 
   @ApiProperty({ example: true })
+  cycles: boolean;
+
+  @ApiProperty({ example: true })
+  trash: boolean;
+
+  @ApiProperty({ example: true })
   inbox: boolean;
+
+  @ApiProperty({ example: true })
+  hoverCard: boolean;
 
   @ApiProperty({ example: false })
   pushNotifications: boolean;
@@ -49,7 +58,7 @@ export class MobileConfigResponseDto {
   @ApiProperty({ example: '1.0.0' })
   minSupportedAppVersion: string;
 
-  @ApiProperty({ example: '2026-10-19T12:00:00.000Z' })
+  @ApiProperty({ example: '2026-10-22T00:00:00.000Z' })
   serverTime: string;
 
   @ApiProperty({ type: () => [MobileStatusMetaDto] })
@@ -57,6 +66,12 @@ export class MobileConfigResponseDto {
 
   @ApiProperty({ type: () => [MobilePriorityMetaDto] })
   priorities: MobilePriorityMetaDto[];
+
+  @ApiProperty({ example: ['BLOCKS', 'BLOCKED_BY', 'RELATES_TO', 'DUPLICATE'] })
+  supportedRelations: string[];
+
+  @ApiProperty({ example: ['👍', '❤️', '🎉', '🚀', '👀', '🔥', '💡', '👎', '👏', '✨', '🙏', '💯'] })
+  supportedEmojis: string[];
 
   @ApiProperty({ type: () => MobileFeaturesDto })
   features: MobileFeaturesDto;

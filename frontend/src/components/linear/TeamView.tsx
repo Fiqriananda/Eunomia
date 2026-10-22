@@ -28,6 +28,8 @@ import {
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { InviteMemberModal } from './InviteMemberModal';
+import { ProfileHoverCard } from '../ui/ProfileHoverCard';
+import { UserAvatar } from '../ui/UserAvatar';
 import Link from 'next/link';
 
 interface TeamViewProps {
@@ -462,33 +464,37 @@ export function TeamView({
                       >
                         {/* Member Identity */}
                         <td className="py-3.5 px-4">
-                          <div className="flex items-center gap-3">
-                            <img
-                              src={
-                                member.user?.avatarUrl ||
-                                `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
-                                  member.user?.name || member.user?.email || 'User',
-                                )}`
-                              }
-                              alt=""
-                              className="w-8 h-8 rounded-full object-cover ring-1 ring-border shrink-0"
-                            />
-                            <div className="min-w-0">
-                              <div className="flex items-center gap-1.5">
-                                <span className="font-semibold text-white truncate max-w-[180px] sm:max-w-xs">
-                                  {member.user?.name || 'Unnamed Teammate'}
-                                </span>
-                                {isSelf && (
-                                  <span className="text-[9px] font-mono font-medium px-1.5 py-0.2 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-                                    You
+                          <ProfileHoverCard
+                            user={member.user}
+                            member={member}
+                            workspaceName={workspace?.name}
+                            status={isSelf ? 'online' : 'offline'}
+                          >
+                            <div className="flex items-center gap-3 cursor-pointer group/member">
+                              <UserAvatar
+                                user={member.user}
+                                member={member}
+                                size="md"
+                                showStatus={true}
+                                status={isSelf ? 'online' : 'offline'}
+                              />
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-1.5">
+                                  <span className="font-semibold text-white truncate max-w-[180px] sm:max-w-xs group-hover/member:underline">
+                                    {member.user?.name || 'Unnamed Teammate'}
                                   </span>
-                                )}
-                              </div>
-                              <div className="text-[11px] text-zinc-500 truncate max-w-[200px] sm:max-w-xs">
-                                {member.user?.email}
+                                  {isSelf && (
+                                    <span className="text-[9px] font-mono font-medium px-1.5 py-0.2 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                                      You
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="text-[11px] text-zinc-500 truncate max-w-[200px] sm:max-w-xs">
+                                  {member.user?.email}
+                                </div>
                               </div>
                             </div>
-                          </div>
+                          </ProfileHoverCard>
                         </td>
 
                         {/* Role Badge / Switcher */}

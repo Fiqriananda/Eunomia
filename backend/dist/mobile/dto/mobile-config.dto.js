@@ -51,7 +51,10 @@ export class MobileFeaturesDto {
     fileUploads;
     subtasks;
     relations;
+    cycles;
+    trash;
     inbox;
+    hoverCard;
     pushNotifications;
 }
 __decorate([
@@ -69,7 +72,19 @@ __decorate([
 __decorate([
     ApiProperty({ example: true }),
     __metadata("design:type", Boolean)
+], MobileFeaturesDto.prototype, "cycles", void 0);
+__decorate([
+    ApiProperty({ example: true }),
+    __metadata("design:type", Boolean)
+], MobileFeaturesDto.prototype, "trash", void 0);
+__decorate([
+    ApiProperty({ example: true }),
+    __metadata("design:type", Boolean)
 ], MobileFeaturesDto.prototype, "inbox", void 0);
+__decorate([
+    ApiProperty({ example: true }),
+    __metadata("design:type", Boolean)
+], MobileFeaturesDto.prototype, "hoverCard", void 0);
 __decorate([
     ApiProperty({ example: false }),
     __metadata("design:type", Boolean)
@@ -80,6 +95,8 @@ export class MobileConfigResponseDto {
     serverTime;
     statuses;
     priorities;
+    supportedRelations;
+    supportedEmojis;
     features;
 }
 __decorate([
@@ -91,7 +108,7 @@ __decorate([
     __metadata("design:type", String)
 ], MobileConfigResponseDto.prototype, "minSupportedAppVersion", void 0);
 __decorate([
-    ApiProperty({ example: '2026-10-19T12:00:00.000Z' }),
+    ApiProperty({ example: '2026-10-22T00:00:00.000Z' }),
     __metadata("design:type", String)
 ], MobileConfigResponseDto.prototype, "serverTime", void 0);
 __decorate([
@@ -102,6 +119,14 @@ __decorate([
     ApiProperty({ type: () => [MobilePriorityMetaDto] }),
     __metadata("design:type", Array)
 ], MobileConfigResponseDto.prototype, "priorities", void 0);
+__decorate([
+    ApiProperty({ example: ['BLOCKS', 'BLOCKED_BY', 'RELATES_TO', 'DUPLICATE'] }),
+    __metadata("design:type", Array)
+], MobileConfigResponseDto.prototype, "supportedRelations", void 0);
+__decorate([
+    ApiProperty({ example: ['👍', '❤️', '🎉', '🚀', '👀', '🔥', '💡', '👎', '👏', '✨', '🙏', '💯'] }),
+    __metadata("design:type", Array)
+], MobileConfigResponseDto.prototype, "supportedEmojis", void 0);
 __decorate([
     ApiProperty({ type: () => MobileFeaturesDto }),
     __metadata("design:type", MobileFeaturesDto)
