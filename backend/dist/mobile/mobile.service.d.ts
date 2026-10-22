@@ -17,6 +17,7 @@ import { MobileCycleDto, MobileCreateCycleDto, MobileUpdateCycleDto, MobileCycle
 import { MobileTrashListResponseDto } from './dto/mobile-trash.dto.js';
 import { MobileSearchQueryDto, MobileSearchResultDto } from './dto/mobile-search.dto.js';
 import { MobileProfileResponseDto, MobileUpdateProfileDto, MobileChangePasswordDto, MobileUserHoverCardDto } from './dto/mobile-profile.dto.js';
+import { MobileAdminPerformanceResponseDto } from './dto/mobile-performance.dto.js';
 export declare class MobileService {
     private readonly prisma;
     private readonly tasksService;
@@ -2633,4 +2634,5 @@ export declare class MobileService {
         avatarUrl: string | null;
     }>;
     getUserHoverCard(currentUserId: string, targetUserId: string, workspaceIdParam?: string): Promise<MobileUserHoverCardDto>;
+    getAdminPerformance(userId: string, workspaceIdParam?: string, period?: string): Promise<MobileAdminPerformanceResponseDto>;
 }

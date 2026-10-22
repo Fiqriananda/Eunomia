@@ -26,6 +26,7 @@ import { MobileCycleDto, MobileCreateCycleDto, MobileUpdateCycleDto, MobileCycle
 import { MobileTrashListResponseDto } from './dto/mobile-trash.dto.js';
 import { MobileSearchQueryDto, MobileSearchResultDto, } from './dto/mobile-search.dto.js';
 import { MobileProfileResponseDto, MobileUpdateProfileDto, MobileChangePasswordDto, MobileUserHoverCardDto, } from './dto/mobile-profile.dto.js';
+import { MobileAdminPerformanceResponseDto } from './dto/mobile-performance.dto.js';
 let MobileController = class MobileController {
     mobileService;
     constructor(mobileService) {
@@ -171,6 +172,9 @@ let MobileController = class MobileController {
     }
     async getUserHoverCard(currentUserId, targetUserId, workspaceId) {
         return this.mobileService.getUserHoverCard(currentUserId, targetUserId, workspaceId);
+    }
+    async getAdminPerformance(userId, workspaceId, period) {
+        return this.mobileService.getAdminPerformance(userId, workspaceId, period);
     }
 };
 __decorate([
@@ -1002,6 +1006,37 @@ __decorate([
     __metadata("design:paramtypes", [String, String, String]),
     __metadata("design:returntype", Promise)
 ], MobileController.prototype, "getUserHoverCard", null);
+__decorate([
+    Get('admin/performance'),
+    UseGuards(JwtAuthGuard),
+    ApiBearerAuth('JWT-auth'),
+    ApiOperation({
+        summary: 'Admin Only: Performance Indicators based on finished/completed tasks',
+        description: 'Provides deep team productivity metrics, member completion leaderboard, project breakdown, and velocity based on finished tasks. Restricted exclusively to workspace ADMIN and OWNER roles.',
+    }),
+    ApiQuery({ name: 'workspaceId', required: false, description: 'Workspace ID (defaults to active)' }),
+    ApiQuery({
+        name: 'period',
+        required: false,
+        enum: ['all', 'this_week', 'this_month'],
+        description: 'Time window filter (all, this_week, this_month)',
+    }),
+    ApiResponse({
+        status: HttpStatus.OK,
+        description: 'Admin team performance indicators',
+        type: MobileAdminPerformanceResponseDto,
+    }),
+    ApiResponse({
+        status: HttpStatus.FORBIDDEN,
+        description: 'Forbidden - only workspace admins and owners can access this endpoint',
+    }),
+    __param(0, CurrentUser('id')),
+    __param(1, Query('workspaceId')),
+    __param(2, Query('period')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, String]),
+    __metadata("design:returntype", Promise)
+], MobileController.prototype, "getAdminPerformance", null);
 MobileController = __decorate([
     ApiTags('Mobile'),
     Controller('mobile'),

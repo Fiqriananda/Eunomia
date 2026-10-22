@@ -7,7 +7,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { TasksService } from '../tasks/tasks.service.js';
 import { InboxService } from '../inbox/inbox.service.js';
@@ -149,7 +149,7 @@ let MobileService = class MobileService {
             where: { userId },
             include: {
                 workspace: {
-                    select: { id: true, name: true, slug: true },
+                    select: { id: true, name: true, slug: true, cyclesEnabled: true },
                 },
             },
             orderBy: { createdAt: 'asc' },
@@ -159,6 +159,7 @@ let MobileService = class MobileService {
             name: m.workspace.name,
             slug: m.workspace.slug,
             role: m.role,
+            cyclesEnabled: m.workspace.cyclesEnabled ?? false,
         }));
         let currentWorkspace = availableWorkspaces[0];
         if (query.workspaceId) {
@@ -881,13 +882,10 @@ let MobileService = class MobileService {
         }));
     }
     async getNotifications(userId, unreadOnly) {
-        const notifications = await this.inboxService.getNotifications(userId, unreadOnly);
-        const unreadCount = await this.prisma.inboxNotification.count({
-            where: { userId, isRead: false },
-        });
+        const result = await this.inboxService.getNotifications(userId, unreadOnly);
         return {
-            notifications: notifications,
-            unreadCount,
+            notifications: (result.notifications || []),
+            unreadCount: result.unreadCount ?? 0,
         };
     }
     async markNotificationRead(userId, notificationId) {
@@ -1094,6 +1092,186 @@ let MobileService = class MobileService {
             localTime,
             roleOrTitle,
             workspaceName,
+        };
+    }
+    async getAdminPerformance(userId, workspaceIdParam, period = 'all') {
+        const workspaceId = await this.getEffectiveWorkspaceId(userId, workspaceIdParam);
+        const membership = await this.prisma.workspaceMember.findUnique({
+            where: {
+                workspaceId_userId: { workspaceId, userId },
+            },
+            include: {
+                workspace: {
+                    select: { id: true, name: true, slug: true },
+                },
+            },
+        });
+        if (!membership) {
+            throw new NotFoundException('Workspace not found or user is not a member');
+        }
+        if (membership.role !== WorkspaceRole.OWNER && membership.role !== WorkspaceRole.ADMIN) {
+            throw new ForbiddenException('Admin access only. You must be an owner or administrator of this workspace to view performance indicators.');
+        }
+        const now = new Date();
+        const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        const [membersRaw, tasksRaw, projectsRaw, cyclesRaw] = await Promise.all([
+            this.prisma.workspaceMember.findMany({
+                where: { workspaceId },
+                include: {
+                    user: {
+                        select: { id: true, name: true, email: true, avatarUrl: true },
+                    },
+                },
+                orderBy: { createdAt: 'asc' },
+            }),
+            this.prisma.task.findMany({
+                where: { workspaceId, isArchived: false },
+                select: {
+                    id: true,
+                    identifier: true,
+                    title: true,
+                    status: true,
+                    priority: true,
+                    assigneeId: true,
+                    projectId: true,
+                    cycleId: true,
+                    createdAt: true,
+                    updatedAt: true,
+                    project: { select: { id: true, name: true, key: true, color: true } },
+                    assignee: { select: { id: true, name: true, avatarUrl: true } },
+                },
+                orderBy: { updatedAt: 'desc' },
+            }),
+            this.prisma.project.findMany({
+                where: { workspaceId },
+                select: { id: true, name: true, key: true, color: true },
+                orderBy: { createdAt: 'desc' },
+            }),
+            this.prisma.cycle.findMany({
+                where: { workspaceId },
+                select: { id: true, number: true, name: true, status: true },
+                orderBy: { number: 'desc' },
+                take: 5,
+            }),
+        ]);
+        let filteredTasks = tasksRaw;
+        if (period === 'this_week') {
+            filteredTasks = tasksRaw.filter((t) => t.createdAt >= oneWeekAgo || (t.status === TaskStatus.DONE && t.updatedAt >= oneWeekAgo));
+        }
+        else if (period === 'this_month') {
+            filteredTasks = tasksRaw.filter((t) => t.createdAt >= oneMonthAgo || (t.status === TaskStatus.DONE && t.updatedAt >= oneMonthAgo));
+        }
+        const totalTasks = filteredTasks.length;
+        const completedTasks = filteredTasks.filter((t) => t.status === TaskStatus.DONE).length;
+        const inProgressTasks = filteredTasks.filter((t) => t.status === TaskStatus.IN_PROGRESS).length;
+        const pendingTasks = filteredTasks.filter((t) => t.status === TaskStatus.TODO || t.status === TaskStatus.BACKLOG).length;
+        const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 1000) / 10 : 0;
+        const completedThisWeek = tasksRaw.filter((t) => t.status === TaskStatus.DONE && t.updatedAt >= oneWeekAgo).length;
+        const completedThisMonth = tasksRaw.filter((t) => t.status === TaskStatus.DONE && t.updatedAt >= oneMonthAgo).length;
+        const memberStats = membersRaw.map((m) => {
+            const userTasks = filteredTasks.filter((t) => t.assigneeId === m.userId);
+            const mAssigned = userTasks.length;
+            const mDone = userTasks.filter((t) => t.status === TaskStatus.DONE).length;
+            const mInProgress = userTasks.filter((t) => t.status === TaskStatus.IN_PROGRESS).length;
+            const mRate = mAssigned > 0 ? Math.round((mDone / mAssigned) * 100) : 0;
+            const mWeekDone = tasksRaw.filter((t) => t.assigneeId === m.userId && t.status === TaskStatus.DONE && t.updatedAt >= oneWeekAgo).length;
+            const mMonthDone = tasksRaw.filter((t) => t.assigneeId === m.userId && t.status === TaskStatus.DONE && t.updatedAt >= oneMonthAgo).length;
+            let performanceGrade = 'NEEDS_FOCUS';
+            if (mRate >= 80 && mDone >= 3) {
+                performanceGrade = 'EXCELLENT';
+            }
+            else if (mRate >= 60 || mDone >= 2) {
+                performanceGrade = 'HIGH';
+            }
+            else if (mDone >= 1 || mInProgress >= 1) {
+                performanceGrade = 'ON_TRACK';
+            }
+            return {
+                userId: m.user.id,
+                name: m.user.name,
+                email: m.user.email,
+                avatarUrl: m.user.avatarUrl,
+                role: m.role,
+                assignedTasks: mAssigned,
+                completedTasks: mDone,
+                inProgressTasks: mInProgress,
+                completionRate: mRate,
+                completedThisWeek: mWeekDone,
+                completedThisMonth: mMonthDone,
+                performanceGrade,
+            };
+        });
+        memberStats.sort((a, b) => b.completedTasks - a.completedTasks || b.completionRate - a.completionRate);
+        const membersWithRank = memberStats.map((m, index) => ({
+            ...m,
+            rank: index + 1,
+        }));
+        const activeMembersCount = memberStats.filter((m) => m.assignedTasks > 0 || m.completedTasks > 0).length;
+        const avgTasksPerMember = membersRaw.length > 0 ? Math.round((completedTasks / membersRaw.length) * 10) / 10 : 0;
+        const projectStats = projectsRaw.map((p) => {
+            const pTasks = filteredTasks.filter((t) => t.projectId === p.id);
+            const pTotal = pTasks.length;
+            const pDone = pTasks.filter((t) => t.status === TaskStatus.DONE).length;
+            const pRate = pTotal > 0 ? Math.round((pDone / pTotal) * 100) : 0;
+            return {
+                projectId: p.id,
+                name: p.name,
+                key: p.key,
+                color: p.color,
+                totalTasks: pTotal,
+                completedTasks: pDone,
+                completionRate: pRate,
+            };
+        });
+        const cycleStats = cyclesRaw.map((c) => {
+            const cTasks = tasksRaw.filter((t) => t.cycleId === c.id);
+            const cTotal = cTasks.length;
+            const cDone = cTasks.filter((t) => t.status === TaskStatus.DONE).length;
+            const cRate = cTotal > 0 ? Math.round((cDone / cTotal) * 100) : 0;
+            return {
+                cycleId: c.id,
+                number: c.number,
+                name: c.name || `Cycle ${c.number}`,
+                status: c.status,
+                totalTasks: cTotal,
+                completedTasks: cDone,
+                completionRate: cRate,
+            };
+        });
+        const recentDoneTasks = tasksRaw
+            .filter((t) => t.status === TaskStatus.DONE)
+            .slice(0, 10)
+            .map((t) => ({
+            id: t.id,
+            identifier: t.identifier,
+            title: t.title,
+            projectName: t.project?.name || 'General',
+            assigneeName: t.assignee?.name || null,
+            assigneeAvatarUrl: t.assignee?.avatarUrl || null,
+            completedAt: t.updatedAt,
+        }));
+        return {
+            workspaceId: membership.workspace.id,
+            workspaceName: membership.workspace.name,
+            currentUserRole: membership.role,
+            period,
+            summary: {
+                totalTasks,
+                completedTasks,
+                completionRate,
+                inProgressTasks,
+                pendingTasks,
+                completedThisWeek,
+                completedThisMonth,
+                totalMembers: membersRaw.length,
+                activeMembers: activeMembersCount,
+                avgTasksPerMember,
+            },
+            members: membersWithRank,
+            projects: projectStats,
+            cycles: cycleStats,
+            recentDoneTasks,
         };
     }
 };

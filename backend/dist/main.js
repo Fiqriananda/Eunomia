@@ -5,7 +5,21 @@ import { AppModule } from './app.module.js';
 async function bootstrap() {
     const app = await NestFactory.create(AppModule);
     app.enableCors({
-        origin: true,
+        origin: (origin, callback) => {
+            if (!origin)
+                return callback(null, true);
+            const isLocalhost = /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
+            const isProduction = [
+                'https://eunomia.motionlaboratory.com',
+                'https://eunomiaapi.motionlaboratory.com',
+            ].includes(origin);
+            if (isLocalhost || isProduction) {
+                callback(null, true);
+            }
+            else {
+                callback(new Error('Not allowed by CORS'));
+            }
+        },
         credentials: true,
         methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
         allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],

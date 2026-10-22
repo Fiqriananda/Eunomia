@@ -472,6 +472,74 @@ class ApiClient {
         { method: 'POST' },
       ),
   };
+
+  // Admin Performance & Analytics
+  admin = {
+    getPerformance: (workspaceId?: string, period: string = 'all') => {
+      const q = new URLSearchParams({ period });
+      if (workspaceId) q.append('workspaceId', workspaceId);
+      return this.request<{
+        workspaceId: string;
+        workspaceName: string;
+        currentUserRole: string;
+        period: string;
+        summary: {
+          totalTasks: number;
+          completedTasks: number;
+          completionRate: number;
+          inProgressTasks: number;
+          pendingTasks: number;
+          completedThisWeek: number;
+          completedThisMonth: number;
+          totalMembers: number;
+          activeMembers: number;
+          avgTasksPerMember: number;
+        };
+        members: Array<{
+          userId: string;
+          name: string;
+          email: string;
+          avatarUrl?: string | null;
+          role: string;
+          assignedTasks: number;
+          completedTasks: number;
+          inProgressTasks: number;
+          completionRate: number;
+          completedThisWeek: number;
+          completedThisMonth: number;
+          rank: number;
+          performanceGrade: 'EXCELLENT' | 'HIGH' | 'ON_TRACK' | 'NEEDS_FOCUS';
+        }>;
+        projects: Array<{
+          projectId: string;
+          name: string;
+          key: string;
+          color?: string | null;
+          totalTasks: number;
+          completedTasks: number;
+          completionRate: number;
+        }>;
+        cycles: Array<{
+          cycleId: string;
+          name: string;
+          number: number;
+          status: string;
+          totalTasks: number;
+          completedTasks: number;
+          completionRate: number;
+        }>;
+        recentDoneTasks: Array<{
+          id: string;
+          identifier: string;
+          title: string;
+          projectName: string;
+          assigneeName?: string | null;
+          assigneeAvatarUrl?: string | null;
+          completedAt: string;
+        }>;
+      }>(`/mobile/admin/performance?${q.toString()}`);
+    },
+  };
 }
 
 export const api = new ApiClient();

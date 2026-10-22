@@ -78,6 +78,7 @@ import {
   MobileChangePasswordDto,
   MobileUserHoverCardDto,
 } from './dto/mobile-profile.dto.js';
+import { MobileAdminPerformanceResponseDto } from './dto/mobile-performance.dto.js';
 
 @ApiTags('Mobile')
 @Controller('mobile')
@@ -944,5 +945,40 @@ export class MobileController {
     @Query('workspaceId') workspaceId?: string,
   ): Promise<MobileUserHoverCardDto> {
     return this.mobileService.getUserHoverCard(currentUserId, targetUserId, workspaceId);
+  }
+
+  // ==========================================
+  // 14. ADMIN ONLY: TASK PERFORMANCE INDICATORS
+  // ==========================================
+  @Get('admin/performance')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: 'Admin Only: Performance Indicators based on finished/completed tasks',
+    description:
+      'Provides deep team productivity metrics, member completion leaderboard, project breakdown, and velocity based on finished tasks. Restricted exclusively to workspace ADMIN and OWNER roles.',
+  })
+  @ApiQuery({ name: 'workspaceId', required: false, description: 'Workspace ID (defaults to active)' })
+  @ApiQuery({
+    name: 'period',
+    required: false,
+    enum: ['all', 'this_week', 'this_month'],
+    description: 'Time window filter (all, this_week, this_month)',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Admin team performance indicators',
+    type: MobileAdminPerformanceResponseDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.FORBIDDEN,
+    description: 'Forbidden - only workspace admins and owners can access this endpoint',
+  })
+  async getAdminPerformance(
+    @CurrentUser('id') userId: string,
+    @Query('workspaceId') workspaceId?: string,
+    @Query('period') period?: string,
+  ): Promise<MobileAdminPerformanceResponseDto> {
+    return this.mobileService.getAdminPerformance(userId, workspaceId, period);
   }
 }

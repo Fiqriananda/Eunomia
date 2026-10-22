@@ -10,6 +10,7 @@ import { MobileCycleDto, MobileCreateCycleDto, MobileUpdateCycleDto, MobileCycle
 import { MobileTrashListResponseDto } from './dto/mobile-trash.dto.js';
 import { MobileSearchQueryDto, MobileSearchResultDto } from './dto/mobile-search.dto.js';
 import { MobileProfileResponseDto, MobileUpdateProfileDto, MobileChangePasswordDto, MobileUserHoverCardDto } from './dto/mobile-profile.dto.js';
+import { MobileAdminPerformanceResponseDto } from './dto/mobile-performance.dto.js';
 export declare class MobileController {
     private readonly mobileService;
     constructor(mobileService: MobileService);
@@ -2616,4 +2617,5 @@ export declare class MobileController {
         avatarUrl: string | null;
     }>;
     getUserHoverCard(currentUserId: string, targetUserId: string, workspaceId?: string): Promise<MobileUserHoverCardDto>;
+    getAdminPerformance(userId: string, workspaceId?: string, period?: string): Promise<MobileAdminPerformanceResponseDto>;
 }

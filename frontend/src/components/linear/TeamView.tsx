@@ -30,6 +30,7 @@ import { Input } from '../ui/input';
 import { InviteMemberModal } from './InviteMemberModal';
 import { ProfileHoverCard } from '../ui/ProfileHoverCard';
 import { UserAvatar } from '../ui/UserAvatar';
+import { AdminPerformanceView } from './AdminPerformanceView';
 import Link from 'next/link';
 
 interface TeamViewProps {
@@ -52,6 +53,7 @@ export function TeamView({
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState<'ALL' | 'OWNER' | 'ADMIN' | 'MEMBER'>('ALL');
   const [isInviteOpen, setIsInviteOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<'ROSTER' | 'PERFORMANCE'>('ROSTER');
 
   // Selected member for inspecting their assigned issues
   const [inspectingMember, setInspectingMember] = useState<WorkspaceMember | null>(null);
@@ -216,6 +218,35 @@ export function TeamView({
           </div>
 
           <div className="flex items-center gap-2.5">
+            {/* View Mode Toggle */}
+            <div className="flex items-center gap-1 p-1 bg-[#090a0f] rounded-lg border border-border/60">
+              <button
+                onClick={() => setViewMode('ROSTER')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                  viewMode === 'ROSTER'
+                    ? 'bg-zinc-800 text-white shadow-sm'
+                    : 'text-zinc-400 hover:text-zinc-200'
+                }`}
+              >
+                <Users className="w-3.5 h-3.5" />
+                <span>Roster</span>
+              </button>
+              <button
+                onClick={() => setViewMode('PERFORMANCE')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                  viewMode === 'PERFORMANCE'
+                    ? 'bg-indigo-600 text-white shadow-sm'
+                    : 'text-zinc-400 hover:text-zinc-200'
+                }`}
+              >
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Performance</span>
+                <span className="text-[9px] px-1 py-0.2 rounded bg-indigo-500/20 text-indigo-300 font-mono font-bold">
+                  ADMIN
+                </span>
+              </button>
+            </div>
+
             {canManage ? (
               <Button
                 onClick={() => setIsInviteOpen(true)}
@@ -235,7 +266,15 @@ export function TeamView({
       </div>
 
       <div className="max-w-6xl mx-auto w-full px-4 sm:px-6 py-4 sm:py-6 space-y-6">
-        {/* Metric Cards */}
+        {viewMode === 'PERFORMANCE' ? (
+          <AdminPerformanceView
+            workspace={workspace}
+            canManage={canManage}
+            currentUser={currentUser}
+          />
+        ) : (
+          <>
+            {/* Metric Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="bg-[#12131d]/60 border border-border/50 rounded-xl p-4 flex items-center gap-3.5">
             <div className="w-10 h-10 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shrink-0">
@@ -624,7 +663,9 @@ export function TeamView({
             </table>
           </div>
         </div>
-      </div>
+        </>
+      )}
+    </div>
 
       {/* Inspect Member's Issues Drawer / Modal */}
       {inspectingMember && (
