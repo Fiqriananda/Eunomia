@@ -36,6 +36,36 @@ export interface WorkspaceInvitationEmailData {
     role: string;
     token: string;
 }
+export interface CommentReplyEmailData {
+    recipientEmail: string;
+    recipientName: string;
+    actorName: string;
+    actorAvatar?: string | null;
+    taskIdentifier: string;
+    taskTitle: string;
+    taskId: string;
+    parentCommentContent: string;
+    replyContent: string;
+}
+export interface TaskUpdateEmailData {
+    recipientEmail: string;
+    recipientName: string;
+    actorName: string;
+    actorAvatar?: string | null;
+    taskIdentifier: string;
+    taskTitle: string;
+    taskId: string;
+    changeTitle: string;
+    changes?: Array<{
+        field: string;
+        from?: string;
+        to?: string;
+    }>;
+    taskStatus?: string | null;
+    taskPriority?: string | null;
+    projectName?: string | null;
+    projectKey?: string | null;
+}
 export declare class EmailService implements OnModuleInit {
     private configService;
     private readonly logger;
@@ -50,5 +80,7 @@ export declare class EmailService implements OnModuleInit {
     sendMentionNotification(data: MentionEmailData): Promise<boolean>;
     sendAssignmentNotification(data: AssignEmailData): Promise<boolean>;
     sendWorkspaceInvitationEmail(data: WorkspaceInvitationEmailData): Promise<boolean>;
+    sendCommentReplyNotification(data: CommentReplyEmailData): Promise<boolean>;
+    sendTaskUpdateNotification(data: TaskUpdateEmailData): Promise<boolean>;
     private dispatchEmail;
 }

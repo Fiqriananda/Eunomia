@@ -340,10 +340,25 @@ class ApiClient {
         method: 'DELETE',
       }),
 
-    addComment: (taskId: string, content: string) =>
+    addComment: (taskId: string, content: string, parentId?: string) =>
       this.request<TaskComment>(`/tasks/${taskId}/comments`, {
         method: 'POST',
-        body: JSON.stringify({ content }),
+        body: JSON.stringify({ content, parentId }),
+      }),
+
+    subscribe: (taskId: string) =>
+      this.request<{ success: boolean; subscription: any }>(`/tasks/${taskId}/subscribe`, {
+        method: 'POST',
+      }),
+
+    unsubscribe: (taskId: string) =>
+      this.request<{ success: boolean }>(`/tasks/${taskId}/subscribe`, {
+        method: 'DELETE',
+      }),
+
+    getSubscribers: (taskId: string) =>
+      this.request<any[]>(`/tasks/${taskId}/subscribers`, {
+        method: 'GET',
       }),
 
     updateComment: (taskId: string, commentId: string, content: string) =>

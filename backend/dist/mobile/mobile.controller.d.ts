@@ -144,6 +144,16 @@ export declare class MobileController {
                 name: string;
                 avatarUrl: string | null;
             };
+            parent: {
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                id: string;
+                content: string;
+            } | null;
             reactions: ({
                 user: {
                     id: string;
@@ -158,6 +168,36 @@ export declare class MobileController {
                 emoji: string;
                 commentId: string;
             })[];
+            replies: ({
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                reactions: ({
+                    user: {
+                        id: string;
+                        email: string;
+                        name: string;
+                        avatarUrl: string | null;
+                    };
+                } & {
+                    id: string;
+                    createdAt: Date;
+                    userId: string;
+                    emoji: string;
+                    commentId: string;
+                })[];
+            } & {
+                id: string;
+                createdAt: Date;
+                updatedAt: Date;
+                userId: string;
+                content: string;
+                taskId: string;
+                parentId: string | null;
+            })[];
         } & {
             id: string;
             createdAt: Date;
@@ -165,6 +205,7 @@ export declare class MobileController {
             userId: string;
             content: string;
             taskId: string;
+            parentId: string | null;
         })[];
         activities: ({
             user: {
@@ -309,6 +350,19 @@ export declare class MobileController {
             userId: string;
             taskId: string;
             emoji: string;
+        })[];
+        subscribers: ({
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            userId: string;
+            taskId: string;
         })[];
     } & {
         id: string;
@@ -353,6 +407,16 @@ export declare class MobileController {
                 name: string;
                 avatarUrl: string | null;
             };
+            parent: {
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                id: string;
+                content: string;
+            } | null;
             reactions: ({
                 user: {
                     id: string;
@@ -367,6 +431,36 @@ export declare class MobileController {
                 emoji: string;
                 commentId: string;
             })[];
+            replies: ({
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                reactions: ({
+                    user: {
+                        id: string;
+                        email: string;
+                        name: string;
+                        avatarUrl: string | null;
+                    };
+                } & {
+                    id: string;
+                    createdAt: Date;
+                    userId: string;
+                    emoji: string;
+                    commentId: string;
+                })[];
+            } & {
+                id: string;
+                createdAt: Date;
+                updatedAt: Date;
+                userId: string;
+                content: string;
+                taskId: string;
+                parentId: string | null;
+            })[];
         } & {
             id: string;
             createdAt: Date;
@@ -374,6 +468,7 @@ export declare class MobileController {
             userId: string;
             content: string;
             taskId: string;
+            parentId: string | null;
         })[];
         activities: ({
             user: {
@@ -518,6 +613,19 @@ export declare class MobileController {
             userId: string;
             taskId: string;
             emoji: string;
+        })[];
+        subscribers: ({
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            userId: string;
+            taskId: string;
         })[];
     } & {
         id: string;
@@ -562,6 +670,16 @@ export declare class MobileController {
                 name: string;
                 avatarUrl: string | null;
             };
+            parent: {
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                id: string;
+                content: string;
+            } | null;
             reactions: ({
                 user: {
                     id: string;
@@ -576,6 +694,36 @@ export declare class MobileController {
                 emoji: string;
                 commentId: string;
             })[];
+            replies: ({
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                reactions: ({
+                    user: {
+                        id: string;
+                        email: string;
+                        name: string;
+                        avatarUrl: string | null;
+                    };
+                } & {
+                    id: string;
+                    createdAt: Date;
+                    userId: string;
+                    emoji: string;
+                    commentId: string;
+                })[];
+            } & {
+                id: string;
+                createdAt: Date;
+                updatedAt: Date;
+                userId: string;
+                content: string;
+                taskId: string;
+                parentId: string | null;
+            })[];
         } & {
             id: string;
             createdAt: Date;
@@ -583,6 +731,7 @@ export declare class MobileController {
             userId: string;
             content: string;
             taskId: string;
+            parentId: string | null;
         })[];
         activities: ({
             user: {
@@ -727,6 +876,19 @@ export declare class MobileController {
             userId: string;
             taskId: string;
             emoji: string;
+        })[];
+        subscribers: ({
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            userId: string;
+            taskId: string;
         })[];
     } & {
         id: string;
@@ -771,6 +933,16 @@ export declare class MobileController {
                 name: string;
                 avatarUrl: string | null;
             };
+            parent: {
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                id: string;
+                content: string;
+            } | null;
             reactions: ({
                 user: {
                     id: string;
@@ -785,6 +957,36 @@ export declare class MobileController {
                 emoji: string;
                 commentId: string;
             })[];
+            replies: ({
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                reactions: ({
+                    user: {
+                        id: string;
+                        email: string;
+                        name: string;
+                        avatarUrl: string | null;
+                    };
+                } & {
+                    id: string;
+                    createdAt: Date;
+                    userId: string;
+                    emoji: string;
+                    commentId: string;
+                })[];
+            } & {
+                id: string;
+                createdAt: Date;
+                updatedAt: Date;
+                userId: string;
+                content: string;
+                taskId: string;
+                parentId: string | null;
+            })[];
         } & {
             id: string;
             createdAt: Date;
@@ -792,6 +994,7 @@ export declare class MobileController {
             userId: string;
             content: string;
             taskId: string;
+            parentId: string | null;
         })[];
         activities: ({
             user: {
@@ -936,6 +1139,19 @@ export declare class MobileController {
             userId: string;
             taskId: string;
             emoji: string;
+        })[];
+        subscribers: ({
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            userId: string;
+            taskId: string;
         })[];
     } & {
         id: string;
@@ -980,6 +1196,16 @@ export declare class MobileController {
                 name: string;
                 avatarUrl: string | null;
             };
+            parent: {
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                id: string;
+                content: string;
+            } | null;
             reactions: ({
                 user: {
                     id: string;
@@ -994,6 +1220,36 @@ export declare class MobileController {
                 emoji: string;
                 commentId: string;
             })[];
+            replies: ({
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                reactions: ({
+                    user: {
+                        id: string;
+                        email: string;
+                        name: string;
+                        avatarUrl: string | null;
+                    };
+                } & {
+                    id: string;
+                    createdAt: Date;
+                    userId: string;
+                    emoji: string;
+                    commentId: string;
+                })[];
+            } & {
+                id: string;
+                createdAt: Date;
+                updatedAt: Date;
+                userId: string;
+                content: string;
+                taskId: string;
+                parentId: string | null;
+            })[];
         } & {
             id: string;
             createdAt: Date;
@@ -1001,6 +1257,7 @@ export declare class MobileController {
             userId: string;
             content: string;
             taskId: string;
+            parentId: string | null;
         })[];
         activities: ({
             user: {
@@ -1145,6 +1402,19 @@ export declare class MobileController {
             userId: string;
             taskId: string;
             emoji: string;
+        })[];
+        subscribers: ({
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            userId: string;
+            taskId: string;
         })[];
     } & {
         id: string;
@@ -1189,6 +1459,16 @@ export declare class MobileController {
                 name: string;
                 avatarUrl: string | null;
             };
+            parent: {
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                id: string;
+                content: string;
+            } | null;
             reactions: ({
                 user: {
                     id: string;
@@ -1203,6 +1483,36 @@ export declare class MobileController {
                 emoji: string;
                 commentId: string;
             })[];
+            replies: ({
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                reactions: ({
+                    user: {
+                        id: string;
+                        email: string;
+                        name: string;
+                        avatarUrl: string | null;
+                    };
+                } & {
+                    id: string;
+                    createdAt: Date;
+                    userId: string;
+                    emoji: string;
+                    commentId: string;
+                })[];
+            } & {
+                id: string;
+                createdAt: Date;
+                updatedAt: Date;
+                userId: string;
+                content: string;
+                taskId: string;
+                parentId: string | null;
+            })[];
         } & {
             id: string;
             createdAt: Date;
@@ -1210,6 +1520,7 @@ export declare class MobileController {
             userId: string;
             content: string;
             taskId: string;
+            parentId: string | null;
         })[];
         activities: ({
             user: {
@@ -1354,6 +1665,19 @@ export declare class MobileController {
             userId: string;
             taskId: string;
             emoji: string;
+        })[];
+        subscribers: ({
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            userId: string;
+            taskId: string;
         })[];
     } & {
         id: string;
@@ -1398,6 +1722,16 @@ export declare class MobileController {
                 name: string;
                 avatarUrl: string | null;
             };
+            parent: {
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                id: string;
+                content: string;
+            } | null;
             reactions: ({
                 user: {
                     id: string;
@@ -1412,6 +1746,36 @@ export declare class MobileController {
                 emoji: string;
                 commentId: string;
             })[];
+            replies: ({
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                reactions: ({
+                    user: {
+                        id: string;
+                        email: string;
+                        name: string;
+                        avatarUrl: string | null;
+                    };
+                } & {
+                    id: string;
+                    createdAt: Date;
+                    userId: string;
+                    emoji: string;
+                    commentId: string;
+                })[];
+            } & {
+                id: string;
+                createdAt: Date;
+                updatedAt: Date;
+                userId: string;
+                content: string;
+                taskId: string;
+                parentId: string | null;
+            })[];
         } & {
             id: string;
             createdAt: Date;
@@ -1419,6 +1783,7 @@ export declare class MobileController {
             userId: string;
             content: string;
             taskId: string;
+            parentId: string | null;
         })[];
         activities: ({
             user: {
@@ -1563,6 +1928,19 @@ export declare class MobileController {
             userId: string;
             taskId: string;
             emoji: string;
+        })[];
+        subscribers: ({
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            userId: string;
+            taskId: string;
         })[];
     } & {
         id: string;
@@ -1636,6 +2014,16 @@ export declare class MobileController {
                 name: string;
                 avatarUrl: string | null;
             };
+            parent: {
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                id: string;
+                content: string;
+            } | null;
             reactions: ({
                 user: {
                     id: string;
@@ -1650,6 +2038,36 @@ export declare class MobileController {
                 emoji: string;
                 commentId: string;
             })[];
+            replies: ({
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                reactions: ({
+                    user: {
+                        id: string;
+                        email: string;
+                        name: string;
+                        avatarUrl: string | null;
+                    };
+                } & {
+                    id: string;
+                    createdAt: Date;
+                    userId: string;
+                    emoji: string;
+                    commentId: string;
+                })[];
+            } & {
+                id: string;
+                createdAt: Date;
+                updatedAt: Date;
+                userId: string;
+                content: string;
+                taskId: string;
+                parentId: string | null;
+            })[];
         } & {
             id: string;
             createdAt: Date;
@@ -1657,6 +2075,7 @@ export declare class MobileController {
             userId: string;
             content: string;
             taskId: string;
+            parentId: string | null;
         })[];
         activities: ({
             user: {
@@ -1801,6 +2220,19 @@ export declare class MobileController {
             userId: string;
             taskId: string;
             emoji: string;
+        })[];
+        subscribers: ({
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            userId: string;
+            taskId: string;
         })[];
     } & {
         id: string;
@@ -1846,6 +2278,16 @@ export declare class MobileController {
                 name: string;
                 avatarUrl: string | null;
             };
+            parent: {
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                id: string;
+                content: string;
+            } | null;
             reactions: ({
                 user: {
                     id: string;
@@ -1860,6 +2302,36 @@ export declare class MobileController {
                 emoji: string;
                 commentId: string;
             })[];
+            replies: ({
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                reactions: ({
+                    user: {
+                        id: string;
+                        email: string;
+                        name: string;
+                        avatarUrl: string | null;
+                    };
+                } & {
+                    id: string;
+                    createdAt: Date;
+                    userId: string;
+                    emoji: string;
+                    commentId: string;
+                })[];
+            } & {
+                id: string;
+                createdAt: Date;
+                updatedAt: Date;
+                userId: string;
+                content: string;
+                taskId: string;
+                parentId: string | null;
+            })[];
         } & {
             id: string;
             createdAt: Date;
@@ -1867,6 +2339,7 @@ export declare class MobileController {
             userId: string;
             content: string;
             taskId: string;
+            parentId: string | null;
         })[];
         activities: ({
             user: {
@@ -2011,6 +2484,19 @@ export declare class MobileController {
             userId: string;
             taskId: string;
             emoji: string;
+        })[];
+        subscribers: ({
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            userId: string;
+            taskId: string;
         })[];
     } & {
         id: string;
@@ -2055,6 +2541,16 @@ export declare class MobileController {
                 name: string;
                 avatarUrl: string | null;
             };
+            parent: {
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                id: string;
+                content: string;
+            } | null;
             reactions: ({
                 user: {
                     id: string;
@@ -2069,6 +2565,36 @@ export declare class MobileController {
                 emoji: string;
                 commentId: string;
             })[];
+            replies: ({
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                reactions: ({
+                    user: {
+                        id: string;
+                        email: string;
+                        name: string;
+                        avatarUrl: string | null;
+                    };
+                } & {
+                    id: string;
+                    createdAt: Date;
+                    userId: string;
+                    emoji: string;
+                    commentId: string;
+                })[];
+            } & {
+                id: string;
+                createdAt: Date;
+                updatedAt: Date;
+                userId: string;
+                content: string;
+                taskId: string;
+                parentId: string | null;
+            })[];
         } & {
             id: string;
             createdAt: Date;
@@ -2076,6 +2602,7 @@ export declare class MobileController {
             userId: string;
             content: string;
             taskId: string;
+            parentId: string | null;
         })[];
         activities: ({
             user: {
@@ -2221,6 +2748,19 @@ export declare class MobileController {
             taskId: string;
             emoji: string;
         })[];
+        subscribers: ({
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            userId: string;
+            taskId: string;
+        })[];
     } & {
         id: string;
         createdAt: Date;
@@ -2252,6 +2792,16 @@ export declare class MobileController {
             name: string;
             avatarUrl: string | null;
         };
+        parent: {
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+            id: string;
+            content: string;
+        } | null;
     } & {
         id: string;
         createdAt: Date;
@@ -2259,6 +2809,7 @@ export declare class MobileController {
         userId: string;
         content: string;
         taskId: string;
+        parentId: string | null;
     }>;
     updateComment(userId: string, commentId: string, body: MobileUpdateCommentDto): Promise<{
         user: {
@@ -2274,6 +2825,7 @@ export declare class MobileController {
         userId: string;
         content: string;
         taskId: string;
+        parentId: string | null;
     }>;
     deleteComment(userId: string, commentId: string): Promise<{
         id: string;
@@ -2282,6 +2834,7 @@ export declare class MobileController {
         userId: string;
         content: string;
         taskId: string;
+        parentId: string | null;
     }>;
     toggleTaskReaction(userId: string, taskId: string, body: MobileToggleReactionDto): Promise<{
         action: string;
@@ -2390,6 +2943,16 @@ export declare class MobileController {
                 name: string;
                 avatarUrl: string | null;
             };
+            parent: {
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                id: string;
+                content: string;
+            } | null;
             reactions: ({
                 user: {
                     id: string;
@@ -2404,6 +2967,36 @@ export declare class MobileController {
                 emoji: string;
                 commentId: string;
             })[];
+            replies: ({
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                reactions: ({
+                    user: {
+                        id: string;
+                        email: string;
+                        name: string;
+                        avatarUrl: string | null;
+                    };
+                } & {
+                    id: string;
+                    createdAt: Date;
+                    userId: string;
+                    emoji: string;
+                    commentId: string;
+                })[];
+            } & {
+                id: string;
+                createdAt: Date;
+                updatedAt: Date;
+                userId: string;
+                content: string;
+                taskId: string;
+                parentId: string | null;
+            })[];
         } & {
             id: string;
             createdAt: Date;
@@ -2411,6 +3004,7 @@ export declare class MobileController {
             userId: string;
             content: string;
             taskId: string;
+            parentId: string | null;
         })[];
         activities: ({
             user: {
@@ -2555,6 +3149,19 @@ export declare class MobileController {
             userId: string;
             taskId: string;
             emoji: string;
+        })[];
+        subscribers: ({
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            userId: string;
+            taskId: string;
         })[];
     } & {
         id: string;

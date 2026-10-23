@@ -8,6 +8,11 @@ export declare class TasksService {
     private eventsGateway;
     constructor(prisma: PrismaService, emailService: EmailService, eventsGateway: EventsGateway);
     private formatStatusName;
+    notifySubscribersOfTaskUpdate(taskId: string, actorId: string | undefined, changes: Array<{
+        field: string;
+        from?: string;
+        to?: string;
+    }>, summaryTitle: string, excludeUserIds?: string[]): Promise<void>;
     getTasks(params: {
         workspaceId: string;
         projectId?: string;
@@ -38,6 +43,16 @@ export declare class TasksService {
                 name: string;
                 avatarUrl: string | null;
             };
+            parent: {
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                id: string;
+                content: string;
+            } | null;
             reactions: ({
                 user: {
                     id: string;
@@ -52,6 +67,36 @@ export declare class TasksService {
                 emoji: string;
                 commentId: string;
             })[];
+            replies: ({
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                reactions: ({
+                    user: {
+                        id: string;
+                        email: string;
+                        name: string;
+                        avatarUrl: string | null;
+                    };
+                } & {
+                    id: string;
+                    createdAt: Date;
+                    userId: string;
+                    emoji: string;
+                    commentId: string;
+                })[];
+            } & {
+                id: string;
+                createdAt: Date;
+                updatedAt: Date;
+                userId: string;
+                content: string;
+                taskId: string;
+                parentId: string | null;
+            })[];
         } & {
             id: string;
             createdAt: Date;
@@ -59,6 +104,7 @@ export declare class TasksService {
             userId: string;
             content: string;
             taskId: string;
+            parentId: string | null;
         })[];
         activities: ({
             user: {
@@ -203,6 +249,19 @@ export declare class TasksService {
             userId: string;
             taskId: string;
             emoji: string;
+        })[];
+        subscribers: ({
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            userId: string;
+            taskId: string;
         })[];
     } & {
         id: string;
@@ -247,6 +306,16 @@ export declare class TasksService {
                 name: string;
                 avatarUrl: string | null;
             };
+            parent: {
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                id: string;
+                content: string;
+            } | null;
             reactions: ({
                 user: {
                     id: string;
@@ -261,6 +330,36 @@ export declare class TasksService {
                 emoji: string;
                 commentId: string;
             })[];
+            replies: ({
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                reactions: ({
+                    user: {
+                        id: string;
+                        email: string;
+                        name: string;
+                        avatarUrl: string | null;
+                    };
+                } & {
+                    id: string;
+                    createdAt: Date;
+                    userId: string;
+                    emoji: string;
+                    commentId: string;
+                })[];
+            } & {
+                id: string;
+                createdAt: Date;
+                updatedAt: Date;
+                userId: string;
+                content: string;
+                taskId: string;
+                parentId: string | null;
+            })[];
         } & {
             id: string;
             createdAt: Date;
@@ -268,6 +367,7 @@ export declare class TasksService {
             userId: string;
             content: string;
             taskId: string;
+            parentId: string | null;
         })[];
         activities: ({
             user: {
@@ -412,6 +512,19 @@ export declare class TasksService {
             userId: string;
             taskId: string;
             emoji: string;
+        })[];
+        subscribers: ({
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            userId: string;
+            taskId: string;
         })[];
     } & {
         id: string;
@@ -470,6 +583,16 @@ export declare class TasksService {
                 name: string;
                 avatarUrl: string | null;
             };
+            parent: {
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                id: string;
+                content: string;
+            } | null;
             reactions: ({
                 user: {
                     id: string;
@@ -484,6 +607,36 @@ export declare class TasksService {
                 emoji: string;
                 commentId: string;
             })[];
+            replies: ({
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                reactions: ({
+                    user: {
+                        id: string;
+                        email: string;
+                        name: string;
+                        avatarUrl: string | null;
+                    };
+                } & {
+                    id: string;
+                    createdAt: Date;
+                    userId: string;
+                    emoji: string;
+                    commentId: string;
+                })[];
+            } & {
+                id: string;
+                createdAt: Date;
+                updatedAt: Date;
+                userId: string;
+                content: string;
+                taskId: string;
+                parentId: string | null;
+            })[];
         } & {
             id: string;
             createdAt: Date;
@@ -491,6 +644,7 @@ export declare class TasksService {
             userId: string;
             content: string;
             taskId: string;
+            parentId: string | null;
         })[];
         activities: ({
             user: {
@@ -635,6 +789,19 @@ export declare class TasksService {
             userId: string;
             taskId: string;
             emoji: string;
+        })[];
+        subscribers: ({
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            userId: string;
+            taskId: string;
         })[];
     } & {
         id: string;
@@ -694,6 +861,16 @@ export declare class TasksService {
                 name: string;
                 avatarUrl: string | null;
             };
+            parent: {
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                id: string;
+                content: string;
+            } | null;
             reactions: ({
                 user: {
                     id: string;
@@ -708,6 +885,36 @@ export declare class TasksService {
                 emoji: string;
                 commentId: string;
             })[];
+            replies: ({
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                reactions: ({
+                    user: {
+                        id: string;
+                        email: string;
+                        name: string;
+                        avatarUrl: string | null;
+                    };
+                } & {
+                    id: string;
+                    createdAt: Date;
+                    userId: string;
+                    emoji: string;
+                    commentId: string;
+                })[];
+            } & {
+                id: string;
+                createdAt: Date;
+                updatedAt: Date;
+                userId: string;
+                content: string;
+                taskId: string;
+                parentId: string | null;
+            })[];
         } & {
             id: string;
             createdAt: Date;
@@ -715,6 +922,7 @@ export declare class TasksService {
             userId: string;
             content: string;
             taskId: string;
+            parentId: string | null;
         })[];
         activities: ({
             user: {
@@ -859,6 +1067,19 @@ export declare class TasksService {
             userId: string;
             taskId: string;
             emoji: string;
+        })[];
+        subscribers: ({
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            userId: string;
+            taskId: string;
         })[];
     } & {
         id: string;
@@ -908,6 +1129,16 @@ export declare class TasksService {
                 name: string;
                 avatarUrl: string | null;
             };
+            parent: {
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                id: string;
+                content: string;
+            } | null;
             reactions: ({
                 user: {
                     id: string;
@@ -922,6 +1153,36 @@ export declare class TasksService {
                 emoji: string;
                 commentId: string;
             })[];
+            replies: ({
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                reactions: ({
+                    user: {
+                        id: string;
+                        email: string;
+                        name: string;
+                        avatarUrl: string | null;
+                    };
+                } & {
+                    id: string;
+                    createdAt: Date;
+                    userId: string;
+                    emoji: string;
+                    commentId: string;
+                })[];
+            } & {
+                id: string;
+                createdAt: Date;
+                updatedAt: Date;
+                userId: string;
+                content: string;
+                taskId: string;
+                parentId: string | null;
+            })[];
         } & {
             id: string;
             createdAt: Date;
@@ -929,6 +1190,7 @@ export declare class TasksService {
             userId: string;
             content: string;
             taskId: string;
+            parentId: string | null;
         })[];
         activities: ({
             user: {
@@ -1073,6 +1335,19 @@ export declare class TasksService {
             userId: string;
             taskId: string;
             emoji: string;
+        })[];
+        subscribers: ({
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            userId: string;
+            taskId: string;
         })[];
     } & {
         id: string;
@@ -1139,6 +1414,16 @@ export declare class TasksService {
                 name: string;
                 avatarUrl: string | null;
             };
+            parent: {
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                id: string;
+                content: string;
+            } | null;
             reactions: ({
                 user: {
                     id: string;
@@ -1153,6 +1438,36 @@ export declare class TasksService {
                 emoji: string;
                 commentId: string;
             })[];
+            replies: ({
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                reactions: ({
+                    user: {
+                        id: string;
+                        email: string;
+                        name: string;
+                        avatarUrl: string | null;
+                    };
+                } & {
+                    id: string;
+                    createdAt: Date;
+                    userId: string;
+                    emoji: string;
+                    commentId: string;
+                })[];
+            } & {
+                id: string;
+                createdAt: Date;
+                updatedAt: Date;
+                userId: string;
+                content: string;
+                taskId: string;
+                parentId: string | null;
+            })[];
         } & {
             id: string;
             createdAt: Date;
@@ -1160,6 +1475,7 @@ export declare class TasksService {
             userId: string;
             content: string;
             taskId: string;
+            parentId: string | null;
         })[];
         activities: ({
             user: {
@@ -1304,6 +1620,19 @@ export declare class TasksService {
             userId: string;
             taskId: string;
             emoji: string;
+        })[];
+        subscribers: ({
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            userId: string;
+            taskId: string;
         })[];
     } & {
         id: string;
@@ -1348,6 +1677,16 @@ export declare class TasksService {
                 name: string;
                 avatarUrl: string | null;
             };
+            parent: {
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                id: string;
+                content: string;
+            } | null;
             reactions: ({
                 user: {
                     id: string;
@@ -1362,6 +1701,36 @@ export declare class TasksService {
                 emoji: string;
                 commentId: string;
             })[];
+            replies: ({
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                reactions: ({
+                    user: {
+                        id: string;
+                        email: string;
+                        name: string;
+                        avatarUrl: string | null;
+                    };
+                } & {
+                    id: string;
+                    createdAt: Date;
+                    userId: string;
+                    emoji: string;
+                    commentId: string;
+                })[];
+            } & {
+                id: string;
+                createdAt: Date;
+                updatedAt: Date;
+                userId: string;
+                content: string;
+                taskId: string;
+                parentId: string | null;
+            })[];
         } & {
             id: string;
             createdAt: Date;
@@ -1369,6 +1738,7 @@ export declare class TasksService {
             userId: string;
             content: string;
             taskId: string;
+            parentId: string | null;
         })[];
         activities: ({
             user: {
@@ -1513,6 +1883,19 @@ export declare class TasksService {
             userId: string;
             taskId: string;
             emoji: string;
+        })[];
+        subscribers: ({
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            userId: string;
+            taskId: string;
         })[];
     } & {
         id: string;
@@ -1560,13 +1943,23 @@ export declare class TasksService {
         assigneeId: string | null;
         parentId: string | null;
     }>;
-    addComment(taskId: string, userId: string, content: string): Promise<{
+    addComment(taskId: string, userId: string, content: string, parentId?: string): Promise<{
         user: {
             id: string;
             email: string;
             name: string;
             avatarUrl: string | null;
         };
+        parent: {
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+            id: string;
+            content: string;
+        } | null;
     } & {
         id: string;
         createdAt: Date;
@@ -1574,6 +1967,7 @@ export declare class TasksService {
         userId: string;
         content: string;
         taskId: string;
+        parentId: string | null;
     }>;
     updateComment(commentId: string, userId: string, content: string): Promise<{
         user: {
@@ -1589,6 +1983,7 @@ export declare class TasksService {
         userId: string;
         content: string;
         taskId: string;
+        parentId: string | null;
     }>;
     deleteComment(commentId: string, userId: string): Promise<{
         id: string;
@@ -1597,6 +1992,7 @@ export declare class TasksService {
         userId: string;
         content: string;
         taskId: string;
+        parentId: string | null;
     }>;
     createSubTask(parentId: string, userId: string, data: {
         title: string;
@@ -1628,6 +2024,16 @@ export declare class TasksService {
                 name: string;
                 avatarUrl: string | null;
             };
+            parent: {
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                id: string;
+                content: string;
+            } | null;
             reactions: ({
                 user: {
                     id: string;
@@ -1642,6 +2048,36 @@ export declare class TasksService {
                 emoji: string;
                 commentId: string;
             })[];
+            replies: ({
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                reactions: ({
+                    user: {
+                        id: string;
+                        email: string;
+                        name: string;
+                        avatarUrl: string | null;
+                    };
+                } & {
+                    id: string;
+                    createdAt: Date;
+                    userId: string;
+                    emoji: string;
+                    commentId: string;
+                })[];
+            } & {
+                id: string;
+                createdAt: Date;
+                updatedAt: Date;
+                userId: string;
+                content: string;
+                taskId: string;
+                parentId: string | null;
+            })[];
         } & {
             id: string;
             createdAt: Date;
@@ -1649,6 +2085,7 @@ export declare class TasksService {
             userId: string;
             content: string;
             taskId: string;
+            parentId: string | null;
         })[];
         activities: ({
             user: {
@@ -1793,6 +2230,19 @@ export declare class TasksService {
             userId: string;
             taskId: string;
             emoji: string;
+        })[];
+        subscribers: ({
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            userId: string;
+            taskId: string;
         })[];
     } & {
         id: string;
@@ -1837,6 +2287,16 @@ export declare class TasksService {
                 name: string;
                 avatarUrl: string | null;
             };
+            parent: {
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                id: string;
+                content: string;
+            } | null;
             reactions: ({
                 user: {
                     id: string;
@@ -1851,6 +2311,36 @@ export declare class TasksService {
                 emoji: string;
                 commentId: string;
             })[];
+            replies: ({
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                reactions: ({
+                    user: {
+                        id: string;
+                        email: string;
+                        name: string;
+                        avatarUrl: string | null;
+                    };
+                } & {
+                    id: string;
+                    createdAt: Date;
+                    userId: string;
+                    emoji: string;
+                    commentId: string;
+                })[];
+            } & {
+                id: string;
+                createdAt: Date;
+                updatedAt: Date;
+                userId: string;
+                content: string;
+                taskId: string;
+                parentId: string | null;
+            })[];
         } & {
             id: string;
             createdAt: Date;
@@ -1858,6 +2348,7 @@ export declare class TasksService {
             userId: string;
             content: string;
             taskId: string;
+            parentId: string | null;
         })[];
         activities: ({
             user: {
@@ -2002,6 +2493,19 @@ export declare class TasksService {
             userId: string;
             taskId: string;
             emoji: string;
+        })[];
+        subscribers: ({
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            userId: string;
+            taskId: string;
         })[];
     } & {
         id: string;
@@ -2046,6 +2550,16 @@ export declare class TasksService {
                 name: string;
                 avatarUrl: string | null;
             };
+            parent: {
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                id: string;
+                content: string;
+            } | null;
             reactions: ({
                 user: {
                     id: string;
@@ -2060,6 +2574,36 @@ export declare class TasksService {
                 emoji: string;
                 commentId: string;
             })[];
+            replies: ({
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                reactions: ({
+                    user: {
+                        id: string;
+                        email: string;
+                        name: string;
+                        avatarUrl: string | null;
+                    };
+                } & {
+                    id: string;
+                    createdAt: Date;
+                    userId: string;
+                    emoji: string;
+                    commentId: string;
+                })[];
+            } & {
+                id: string;
+                createdAt: Date;
+                updatedAt: Date;
+                userId: string;
+                content: string;
+                taskId: string;
+                parentId: string | null;
+            })[];
         } & {
             id: string;
             createdAt: Date;
@@ -2067,6 +2611,7 @@ export declare class TasksService {
             userId: string;
             content: string;
             taskId: string;
+            parentId: string | null;
         })[];
         activities: ({
             user: {
@@ -2211,6 +2756,19 @@ export declare class TasksService {
             userId: string;
             taskId: string;
             emoji: string;
+        })[];
+        subscribers: ({
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            userId: string;
+            taskId: string;
         })[];
     } & {
         id: string;
@@ -2258,6 +2816,16 @@ export declare class TasksService {
                 name: string;
                 avatarUrl: string | null;
             };
+            parent: {
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                id: string;
+                content: string;
+            } | null;
             reactions: ({
                 user: {
                     id: string;
@@ -2272,6 +2840,36 @@ export declare class TasksService {
                 emoji: string;
                 commentId: string;
             })[];
+            replies: ({
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                reactions: ({
+                    user: {
+                        id: string;
+                        email: string;
+                        name: string;
+                        avatarUrl: string | null;
+                    };
+                } & {
+                    id: string;
+                    createdAt: Date;
+                    userId: string;
+                    emoji: string;
+                    commentId: string;
+                })[];
+            } & {
+                id: string;
+                createdAt: Date;
+                updatedAt: Date;
+                userId: string;
+                content: string;
+                taskId: string;
+                parentId: string | null;
+            })[];
         } & {
             id: string;
             createdAt: Date;
@@ -2279,6 +2877,7 @@ export declare class TasksService {
             userId: string;
             content: string;
             taskId: string;
+            parentId: string | null;
         })[];
         activities: ({
             user: {
@@ -2423,6 +3022,19 @@ export declare class TasksService {
             userId: string;
             taskId: string;
             emoji: string;
+        })[];
+        subscribers: ({
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            userId: string;
+            taskId: string;
         })[];
     } & {
         id: string;
@@ -2467,6 +3079,16 @@ export declare class TasksService {
                 name: string;
                 avatarUrl: string | null;
             };
+            parent: {
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                id: string;
+                content: string;
+            } | null;
             reactions: ({
                 user: {
                     id: string;
@@ -2481,6 +3103,36 @@ export declare class TasksService {
                 emoji: string;
                 commentId: string;
             })[];
+            replies: ({
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                reactions: ({
+                    user: {
+                        id: string;
+                        email: string;
+                        name: string;
+                        avatarUrl: string | null;
+                    };
+                } & {
+                    id: string;
+                    createdAt: Date;
+                    userId: string;
+                    emoji: string;
+                    commentId: string;
+                })[];
+            } & {
+                id: string;
+                createdAt: Date;
+                updatedAt: Date;
+                userId: string;
+                content: string;
+                taskId: string;
+                parentId: string | null;
+            })[];
         } & {
             id: string;
             createdAt: Date;
@@ -2488,6 +3140,7 @@ export declare class TasksService {
             userId: string;
             content: string;
             taskId: string;
+            parentId: string | null;
         })[];
         activities: ({
             user: {
@@ -2632,6 +3285,19 @@ export declare class TasksService {
             userId: string;
             taskId: string;
             emoji: string;
+        })[];
+        subscribers: ({
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            userId: string;
+            taskId: string;
         })[];
     } & {
         id: string;
@@ -2710,4 +3376,36 @@ export declare class TasksService {
         userId: string;
         emoji?: undefined;
     }>;
+    subscribeToTask(taskId: string, userId: string): Promise<{
+        success: boolean;
+        subscription: {
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            userId: string;
+            taskId: string;
+        };
+    }>;
+    unsubscribeFromTask(taskId: string, userId: string): Promise<{
+        success: boolean;
+    }>;
+    getTaskSubscribers(taskId: string): Promise<({
+        user: {
+            id: string;
+            email: string;
+            name: string;
+            avatarUrl: string | null;
+        };
+    } & {
+        id: string;
+        createdAt: Date;
+        userId: string;
+        taskId: string;
+    })[]>;
 }

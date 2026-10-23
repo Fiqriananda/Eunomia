@@ -74,7 +74,16 @@ let TasksController = class TasksController {
         return this.tasksService.permanentDeleteTask(id, userId);
     }
     async addComment(taskId, userId, body) {
-        return this.tasksService.addComment(taskId, userId, body.content);
+        return this.tasksService.addComment(taskId, userId, body.content, body.parentId);
+    }
+    async subscribeToTask(taskId, userId) {
+        return this.tasksService.subscribeToTask(taskId, userId);
+    }
+    async unsubscribeFromTask(taskId, userId) {
+        return this.tasksService.unsubscribeFromTask(taskId, userId);
+    }
+    async getTaskSubscribers(taskId) {
+        return this.tasksService.getTaskSubscribers(taskId);
     }
     async updateComment(taskId, commentId, userId, body) {
         return this.tasksService.updateComment(commentId, userId, body.content);
@@ -254,7 +263,7 @@ __decorate([
 ], TasksController.prototype, "permanentDeleteTask", null);
 __decorate([
     Post(':id/comments'),
-    ApiOperation({ summary: 'Post comment on task' }),
+    ApiOperation({ summary: 'Post comment on task (supports threaded replies)' }),
     ApiParam({ name: 'id', description: 'Task ID' }),
     __param(0, Param('id')),
     __param(1, CurrentUser('id')),
@@ -263,6 +272,35 @@ __decorate([
     __metadata("design:paramtypes", [String, String, Object]),
     __metadata("design:returntype", Promise)
 ], TasksController.prototype, "addComment", null);
+__decorate([
+    Post(':id/subscribe'),
+    ApiOperation({ summary: 'Subscribe to task updates' }),
+    ApiParam({ name: 'id', description: 'Task ID' }),
+    __param(0, Param('id')),
+    __param(1, CurrentUser('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], TasksController.prototype, "subscribeToTask", null);
+__decorate([
+    Delete(':id/subscribe'),
+    ApiOperation({ summary: 'Unsubscribe from task updates' }),
+    ApiParam({ name: 'id', description: 'Task ID' }),
+    __param(0, Param('id')),
+    __param(1, CurrentUser('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], TasksController.prototype, "unsubscribeFromTask", null);
+__decorate([
+    Get(':id/subscribers'),
+    ApiOperation({ summary: 'Get subscribers of a task' }),
+    ApiParam({ name: 'id', description: 'Task ID' }),
+    __param(0, Param('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], TasksController.prototype, "getTaskSubscribers", null);
 __decorate([
     Patch(':id/comments/:commentId'),
     ApiOperation({ summary: 'Update comment on task' }),

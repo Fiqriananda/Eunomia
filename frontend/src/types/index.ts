@@ -71,6 +71,13 @@ export interface TaskComment {
   taskId: string;
   userId: string;
   user: User;
+  parentId?: string | null;
+  parent?: {
+    id: string;
+    content: string;
+    user: User;
+  } | null;
+  replies?: TaskComment[];
   reactions?: CommentReaction[];
   createdAt: string;
   updatedAt: string;
@@ -201,8 +208,17 @@ export interface Task {
   comments?: TaskComment[];
   reactions?: TaskReaction[];
   activities?: TaskActivity[];
+  subscribers?: TaskSubscription[];
   createdAt: string;
   updatedAt: string;
+}
+
+export interface TaskSubscription {
+  id: string;
+  taskId: string;
+  userId: string;
+  user: User;
+  createdAt: string;
 }
 
 export interface WorkspaceInvitation {
@@ -230,7 +246,7 @@ export interface WorkspaceInvitation {
 
 export interface InboxNotification {
   id: string;
-  type: 'ASSIGNED' | 'MENTIONED' | 'WORKSPACE_INVITATION';
+  type: 'ASSIGNED' | 'MENTIONED' | 'WORKSPACE_INVITATION' | 'COMMENT_REPLY' | 'TASK_UPDATE';
   title: string;
   body?: string | null;
   isRead: boolean;

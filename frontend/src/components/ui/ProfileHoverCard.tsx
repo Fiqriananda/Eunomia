@@ -27,6 +27,7 @@ export interface ProfileHoverCardProps {
   align?: 'start' | 'center' | 'end';
   className?: string;
   disabled?: boolean;
+  as?: 'span' | 'div';
 }
 
 export function getInitials(name?: string): string {
@@ -73,6 +74,7 @@ export function ProfileHoverCard({
   align = 'start',
   className = '',
   disabled = false,
+  as = 'span',
 }: ProfileHoverCardProps) {
   const { user: authUser, workspace } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
@@ -84,7 +86,7 @@ export function ProfileHoverCard({
     placement: side,
   });
 
-  const triggerRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const openTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -197,17 +199,18 @@ export function ProfileHoverCard({
 
   const initials = getInitials(displayName);
   const avatarColor = getAvatarColor(displayName);
+  const TriggerComponent = as;
 
   return (
     <>
-      <div
-        ref={triggerRef}
+      <TriggerComponent
+        ref={triggerRef as any}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
         className={cn('inline-block', className)}
       >
         {children}
-      </div>
+      </TriggerComponent>
 
       {mounted &&
         isOpen &&

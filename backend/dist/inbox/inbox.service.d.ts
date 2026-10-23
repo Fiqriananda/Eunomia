@@ -87,7 +87,7 @@ export declare class InboxService {
         userId: string;
         actorId: string;
         taskId: string;
-        type: 'ASSIGNED' | 'MENTIONED';
+        type: 'ASSIGNED' | 'MENTIONED' | 'COMMENT_REPLY' | 'TASK_UPDATE' | 'WORKSPACE_INVITATION';
         title: string;
         body?: string;
     }): Promise<{

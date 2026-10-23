@@ -23,6 +23,16 @@ export declare class TasksController {
                 name: string;
                 avatarUrl: string | null;
             };
+            parent: {
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                id: string;
+                content: string;
+            } | null;
             reactions: ({
                 user: {
                     id: string;
@@ -37,6 +47,36 @@ export declare class TasksController {
                 emoji: string;
                 commentId: string;
             })[];
+            replies: ({
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                reactions: ({
+                    user: {
+                        id: string;
+                        email: string;
+                        name: string;
+                        avatarUrl: string | null;
+                    };
+                } & {
+                    id: string;
+                    createdAt: Date;
+                    userId: string;
+                    emoji: string;
+                    commentId: string;
+                })[];
+            } & {
+                id: string;
+                createdAt: Date;
+                updatedAt: Date;
+                userId: string;
+                content: string;
+                taskId: string;
+                parentId: string | null;
+            })[];
         } & {
             id: string;
             createdAt: Date;
@@ -44,6 +84,7 @@ export declare class TasksController {
             userId: string;
             content: string;
             taskId: string;
+            parentId: string | null;
         })[];
         activities: ({
             user: {
@@ -188,6 +229,19 @@ export declare class TasksController {
             userId: string;
             taskId: string;
             emoji: string;
+        })[];
+        subscribers: ({
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            userId: string;
+            taskId: string;
         })[];
     } & {
         id: string;
@@ -232,6 +286,16 @@ export declare class TasksController {
                 name: string;
                 avatarUrl: string | null;
             };
+            parent: {
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                id: string;
+                content: string;
+            } | null;
             reactions: ({
                 user: {
                     id: string;
@@ -246,6 +310,36 @@ export declare class TasksController {
                 emoji: string;
                 commentId: string;
             })[];
+            replies: ({
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                reactions: ({
+                    user: {
+                        id: string;
+                        email: string;
+                        name: string;
+                        avatarUrl: string | null;
+                    };
+                } & {
+                    id: string;
+                    createdAt: Date;
+                    userId: string;
+                    emoji: string;
+                    commentId: string;
+                })[];
+            } & {
+                id: string;
+                createdAt: Date;
+                updatedAt: Date;
+                userId: string;
+                content: string;
+                taskId: string;
+                parentId: string | null;
+            })[];
         } & {
             id: string;
             createdAt: Date;
@@ -253,6 +347,7 @@ export declare class TasksController {
             userId: string;
             content: string;
             taskId: string;
+            parentId: string | null;
         })[];
         activities: ({
             user: {
@@ -397,6 +492,19 @@ export declare class TasksController {
             userId: string;
             taskId: string;
             emoji: string;
+        })[];
+        subscribers: ({
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            userId: string;
+            taskId: string;
         })[];
     } & {
         id: string;
@@ -455,6 +563,16 @@ export declare class TasksController {
                 name: string;
                 avatarUrl: string | null;
             };
+            parent: {
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                id: string;
+                content: string;
+            } | null;
             reactions: ({
                 user: {
                     id: string;
@@ -469,6 +587,36 @@ export declare class TasksController {
                 emoji: string;
                 commentId: string;
             })[];
+            replies: ({
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                reactions: ({
+                    user: {
+                        id: string;
+                        email: string;
+                        name: string;
+                        avatarUrl: string | null;
+                    };
+                } & {
+                    id: string;
+                    createdAt: Date;
+                    userId: string;
+                    emoji: string;
+                    commentId: string;
+                })[];
+            } & {
+                id: string;
+                createdAt: Date;
+                updatedAt: Date;
+                userId: string;
+                content: string;
+                taskId: string;
+                parentId: string | null;
+            })[];
         } & {
             id: string;
             createdAt: Date;
@@ -476,6 +624,7 @@ export declare class TasksController {
             userId: string;
             content: string;
             taskId: string;
+            parentId: string | null;
         })[];
         activities: ({
             user: {
@@ -620,6 +769,19 @@ export declare class TasksController {
             userId: string;
             taskId: string;
             emoji: string;
+        })[];
+        subscribers: ({
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            userId: string;
+            taskId: string;
         })[];
     } & {
         id: string;
@@ -679,6 +841,16 @@ export declare class TasksController {
                 name: string;
                 avatarUrl: string | null;
             };
+            parent: {
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                id: string;
+                content: string;
+            } | null;
             reactions: ({
                 user: {
                     id: string;
@@ -693,6 +865,36 @@ export declare class TasksController {
                 emoji: string;
                 commentId: string;
             })[];
+            replies: ({
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                reactions: ({
+                    user: {
+                        id: string;
+                        email: string;
+                        name: string;
+                        avatarUrl: string | null;
+                    };
+                } & {
+                    id: string;
+                    createdAt: Date;
+                    userId: string;
+                    emoji: string;
+                    commentId: string;
+                })[];
+            } & {
+                id: string;
+                createdAt: Date;
+                updatedAt: Date;
+                userId: string;
+                content: string;
+                taskId: string;
+                parentId: string | null;
+            })[];
         } & {
             id: string;
             createdAt: Date;
@@ -700,6 +902,7 @@ export declare class TasksController {
             userId: string;
             content: string;
             taskId: string;
+            parentId: string | null;
         })[];
         activities: ({
             user: {
@@ -844,6 +1047,19 @@ export declare class TasksController {
             userId: string;
             taskId: string;
             emoji: string;
+        })[];
+        subscribers: ({
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            userId: string;
+            taskId: string;
         })[];
     } & {
         id: string;
@@ -898,6 +1114,16 @@ export declare class TasksController {
                 name: string;
                 avatarUrl: string | null;
             };
+            parent: {
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                id: string;
+                content: string;
+            } | null;
             reactions: ({
                 user: {
                     id: string;
@@ -912,6 +1138,36 @@ export declare class TasksController {
                 emoji: string;
                 commentId: string;
             })[];
+            replies: ({
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                reactions: ({
+                    user: {
+                        id: string;
+                        email: string;
+                        name: string;
+                        avatarUrl: string | null;
+                    };
+                } & {
+                    id: string;
+                    createdAt: Date;
+                    userId: string;
+                    emoji: string;
+                    commentId: string;
+                })[];
+            } & {
+                id: string;
+                createdAt: Date;
+                updatedAt: Date;
+                userId: string;
+                content: string;
+                taskId: string;
+                parentId: string | null;
+            })[];
         } & {
             id: string;
             createdAt: Date;
@@ -919,6 +1175,7 @@ export declare class TasksController {
             userId: string;
             content: string;
             taskId: string;
+            parentId: string | null;
         })[];
         activities: ({
             user: {
@@ -1063,6 +1320,19 @@ export declare class TasksController {
             userId: string;
             taskId: string;
             emoji: string;
+        })[];
+        subscribers: ({
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            userId: string;
+            taskId: string;
         })[];
     } & {
         id: string;
@@ -1109,6 +1379,16 @@ export declare class TasksController {
                 name: string;
                 avatarUrl: string | null;
             };
+            parent: {
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                id: string;
+                content: string;
+            } | null;
             reactions: ({
                 user: {
                     id: string;
@@ -1123,6 +1403,36 @@ export declare class TasksController {
                 emoji: string;
                 commentId: string;
             })[];
+            replies: ({
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                reactions: ({
+                    user: {
+                        id: string;
+                        email: string;
+                        name: string;
+                        avatarUrl: string | null;
+                    };
+                } & {
+                    id: string;
+                    createdAt: Date;
+                    userId: string;
+                    emoji: string;
+                    commentId: string;
+                })[];
+            } & {
+                id: string;
+                createdAt: Date;
+                updatedAt: Date;
+                userId: string;
+                content: string;
+                taskId: string;
+                parentId: string | null;
+            })[];
         } & {
             id: string;
             createdAt: Date;
@@ -1130,6 +1440,7 @@ export declare class TasksController {
             userId: string;
             content: string;
             taskId: string;
+            parentId: string | null;
         })[];
         activities: ({
             user: {
@@ -1274,6 +1585,19 @@ export declare class TasksController {
             userId: string;
             taskId: string;
             emoji: string;
+        })[];
+        subscribers: ({
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            userId: string;
+            taskId: string;
         })[];
     } & {
         id: string;
@@ -1318,6 +1642,16 @@ export declare class TasksController {
                 name: string;
                 avatarUrl: string | null;
             };
+            parent: {
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                id: string;
+                content: string;
+            } | null;
             reactions: ({
                 user: {
                     id: string;
@@ -1332,6 +1666,36 @@ export declare class TasksController {
                 emoji: string;
                 commentId: string;
             })[];
+            replies: ({
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                reactions: ({
+                    user: {
+                        id: string;
+                        email: string;
+                        name: string;
+                        avatarUrl: string | null;
+                    };
+                } & {
+                    id: string;
+                    createdAt: Date;
+                    userId: string;
+                    emoji: string;
+                    commentId: string;
+                })[];
+            } & {
+                id: string;
+                createdAt: Date;
+                updatedAt: Date;
+                userId: string;
+                content: string;
+                taskId: string;
+                parentId: string | null;
+            })[];
         } & {
             id: string;
             createdAt: Date;
@@ -1339,6 +1703,7 @@ export declare class TasksController {
             userId: string;
             content: string;
             taskId: string;
+            parentId: string | null;
         })[];
         activities: ({
             user: {
@@ -1483,6 +1848,19 @@ export declare class TasksController {
             userId: string;
             taskId: string;
             emoji: string;
+        })[];
+        subscribers: ({
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            userId: string;
+            taskId: string;
         })[];
     } & {
         id: string;
@@ -1530,6 +1908,16 @@ export declare class TasksController {
                 name: string;
                 avatarUrl: string | null;
             };
+            parent: {
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                id: string;
+                content: string;
+            } | null;
             reactions: ({
                 user: {
                     id: string;
@@ -1544,6 +1932,36 @@ export declare class TasksController {
                 emoji: string;
                 commentId: string;
             })[];
+            replies: ({
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                reactions: ({
+                    user: {
+                        id: string;
+                        email: string;
+                        name: string;
+                        avatarUrl: string | null;
+                    };
+                } & {
+                    id: string;
+                    createdAt: Date;
+                    userId: string;
+                    emoji: string;
+                    commentId: string;
+                })[];
+            } & {
+                id: string;
+                createdAt: Date;
+                updatedAt: Date;
+                userId: string;
+                content: string;
+                taskId: string;
+                parentId: string | null;
+            })[];
         } & {
             id: string;
             createdAt: Date;
@@ -1551,6 +1969,7 @@ export declare class TasksController {
             userId: string;
             content: string;
             taskId: string;
+            parentId: string | null;
         })[];
         activities: ({
             user: {
@@ -1695,6 +2114,19 @@ export declare class TasksController {
             userId: string;
             taskId: string;
             emoji: string;
+        })[];
+        subscribers: ({
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            userId: string;
+            taskId: string;
         })[];
     } & {
         id: string;
@@ -1739,6 +2171,16 @@ export declare class TasksController {
                 name: string;
                 avatarUrl: string | null;
             };
+            parent: {
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                id: string;
+                content: string;
+            } | null;
             reactions: ({
                 user: {
                     id: string;
@@ -1753,6 +2195,36 @@ export declare class TasksController {
                 emoji: string;
                 commentId: string;
             })[];
+            replies: ({
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                reactions: ({
+                    user: {
+                        id: string;
+                        email: string;
+                        name: string;
+                        avatarUrl: string | null;
+                    };
+                } & {
+                    id: string;
+                    createdAt: Date;
+                    userId: string;
+                    emoji: string;
+                    commentId: string;
+                })[];
+            } & {
+                id: string;
+                createdAt: Date;
+                updatedAt: Date;
+                userId: string;
+                content: string;
+                taskId: string;
+                parentId: string | null;
+            })[];
         } & {
             id: string;
             createdAt: Date;
@@ -1760,6 +2232,7 @@ export declare class TasksController {
             userId: string;
             content: string;
             taskId: string;
+            parentId: string | null;
         })[];
         activities: ({
             user: {
@@ -1904,6 +2377,19 @@ export declare class TasksController {
             userId: string;
             taskId: string;
             emoji: string;
+        })[];
+        subscribers: ({
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            userId: string;
+            taskId: string;
         })[];
     } & {
         id: string;
@@ -1953,6 +2439,16 @@ export declare class TasksController {
                 name: string;
                 avatarUrl: string | null;
             };
+            parent: {
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                id: string;
+                content: string;
+            } | null;
             reactions: ({
                 user: {
                     id: string;
@@ -1967,6 +2463,36 @@ export declare class TasksController {
                 emoji: string;
                 commentId: string;
             })[];
+            replies: ({
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                reactions: ({
+                    user: {
+                        id: string;
+                        email: string;
+                        name: string;
+                        avatarUrl: string | null;
+                    };
+                } & {
+                    id: string;
+                    createdAt: Date;
+                    userId: string;
+                    emoji: string;
+                    commentId: string;
+                })[];
+            } & {
+                id: string;
+                createdAt: Date;
+                updatedAt: Date;
+                userId: string;
+                content: string;
+                taskId: string;
+                parentId: string | null;
+            })[];
         } & {
             id: string;
             createdAt: Date;
@@ -1974,6 +2500,7 @@ export declare class TasksController {
             userId: string;
             content: string;
             taskId: string;
+            parentId: string | null;
         })[];
         activities: ({
             user: {
@@ -2118,6 +2645,19 @@ export declare class TasksController {
             userId: string;
             taskId: string;
             emoji: string;
+        })[];
+        subscribers: ({
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            userId: string;
+            taskId: string;
         })[];
     } & {
         id: string;
@@ -2184,6 +2724,16 @@ export declare class TasksController {
                 name: string;
                 avatarUrl: string | null;
             };
+            parent: {
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                id: string;
+                content: string;
+            } | null;
             reactions: ({
                 user: {
                     id: string;
@@ -2198,6 +2748,36 @@ export declare class TasksController {
                 emoji: string;
                 commentId: string;
             })[];
+            replies: ({
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                reactions: ({
+                    user: {
+                        id: string;
+                        email: string;
+                        name: string;
+                        avatarUrl: string | null;
+                    };
+                } & {
+                    id: string;
+                    createdAt: Date;
+                    userId: string;
+                    emoji: string;
+                    commentId: string;
+                })[];
+            } & {
+                id: string;
+                createdAt: Date;
+                updatedAt: Date;
+                userId: string;
+                content: string;
+                taskId: string;
+                parentId: string | null;
+            })[];
         } & {
             id: string;
             createdAt: Date;
@@ -2205,6 +2785,7 @@ export declare class TasksController {
             userId: string;
             content: string;
             taskId: string;
+            parentId: string | null;
         })[];
         activities: ({
             user: {
@@ -2349,6 +2930,19 @@ export declare class TasksController {
             userId: string;
             taskId: string;
             emoji: string;
+        })[];
+        subscribers: ({
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            userId: string;
+            taskId: string;
         })[];
     } & {
         id: string;
@@ -2393,6 +2987,16 @@ export declare class TasksController {
                 name: string;
                 avatarUrl: string | null;
             };
+            parent: {
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                id: string;
+                content: string;
+            } | null;
             reactions: ({
                 user: {
                     id: string;
@@ -2407,6 +3011,36 @@ export declare class TasksController {
                 emoji: string;
                 commentId: string;
             })[];
+            replies: ({
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                reactions: ({
+                    user: {
+                        id: string;
+                        email: string;
+                        name: string;
+                        avatarUrl: string | null;
+                    };
+                } & {
+                    id: string;
+                    createdAt: Date;
+                    userId: string;
+                    emoji: string;
+                    commentId: string;
+                })[];
+            } & {
+                id: string;
+                createdAt: Date;
+                updatedAt: Date;
+                userId: string;
+                content: string;
+                taskId: string;
+                parentId: string | null;
+            })[];
         } & {
             id: string;
             createdAt: Date;
@@ -2414,6 +3048,7 @@ export declare class TasksController {
             userId: string;
             content: string;
             taskId: string;
+            parentId: string | null;
         })[];
         activities: ({
             user: {
@@ -2558,6 +3193,19 @@ export declare class TasksController {
             userId: string;
             taskId: string;
             emoji: string;
+        })[];
+        subscribers: ({
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            userId: string;
+            taskId: string;
         })[];
     } & {
         id: string;
@@ -2607,7 +3255,53 @@ export declare class TasksController {
     }>;
     addComment(taskId: string, userId: string, body: {
         content: string;
+        parentId?: string;
     }): Promise<{
+        user: {
+            id: string;
+            email: string;
+            name: string;
+            avatarUrl: string | null;
+        };
+        parent: {
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+            id: string;
+            content: string;
+        } | null;
+    } & {
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        userId: string;
+        content: string;
+        taskId: string;
+        parentId: string | null;
+    }>;
+    subscribeToTask(taskId: string, userId: string): Promise<{
+        success: boolean;
+        subscription: {
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            userId: string;
+            taskId: string;
+        };
+    }>;
+    unsubscribeFromTask(taskId: string, userId: string): Promise<{
+        success: boolean;
+    }>;
+    getTaskSubscribers(taskId: string): Promise<({
         user: {
             id: string;
             email: string;
@@ -2617,11 +3311,9 @@ export declare class TasksController {
     } & {
         id: string;
         createdAt: Date;
-        updatedAt: Date;
         userId: string;
-        content: string;
         taskId: string;
-    }>;
+    })[]>;
     updateComment(taskId: string, commentId: string, userId: string, body: {
         content: string;
     }): Promise<{
@@ -2638,6 +3330,7 @@ export declare class TasksController {
         userId: string;
         content: string;
         taskId: string;
+        parentId: string | null;
     }>;
     deleteComment(commentId: string, userId: string): Promise<{
         id: string;
@@ -2646,6 +3339,7 @@ export declare class TasksController {
         userId: string;
         content: string;
         taskId: string;
+        parentId: string | null;
     }>;
     toggleTaskReaction(taskId: string, userId: string, body: {
         emoji: string;

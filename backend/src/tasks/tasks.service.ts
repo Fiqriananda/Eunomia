@@ -77,6 +77,29 @@ const taskIncludeConfig = {
       user: {
         select: { id: true, name: true, email: true, avatarUrl: true },
       },
+      parent: {
+        select: {
+          id: true,
+          content: true,
+          user: { select: { id: true, name: true, email: true, avatarUrl: true } },
+        },
+      },
+      replies: {
+        include: {
+          user: {
+            select: { id: true, name: true, email: true, avatarUrl: true },
+          },
+          reactions: {
+            include: {
+              user: {
+                select: { id: true, name: true, email: true, avatarUrl: true },
+              },
+            },
+            orderBy: { createdAt: 'asc' as const },
+          },
+        },
+        orderBy: { createdAt: 'asc' as const },
+      },
       reactions: {
         include: {
           user: {
@@ -84,6 +107,14 @@ const taskIncludeConfig = {
           },
         },
         orderBy: { createdAt: 'asc' as const },
+      },
+    },
+    orderBy: { createdAt: 'asc' as const },
+  },
+  subscribers: {
+    include: {
+      user: {
+        select: { id: true, name: true, email: true, avatarUrl: true },
       },
     },
     orderBy: { createdAt: 'asc' as const },
@@ -126,6 +157,90 @@ export class TasksService {
         return 'Canceled';
       default:
         return status || 'Todo';
+    }
+  }
+
+  async notifySubscribersOfTaskUpdate(
+    taskId: string,
+    actorId: string | undefined,
+    changes: Array<{ field: string; from?: string; to?: string }>,
+    summaryTitle: string,
+    excludeUserIds: string[] = [],
+  ) {
+    if (changes.length === 0) return;
+
+    try {
+      const task = await this.prisma.task.findUnique({
+        where: { id: taskId },
+        include: {
+          project: true,
+          subscribers: {
+            include: {
+              user: { select: { id: true, name: true, email: true, avatarUrl: true } },
+            },
+          },
+        },
+      });
+
+      if (!task || !task.subscribers || task.subscribers.length === 0) return;
+
+      let actorName = 'A team member';
+      let actorAvatar: string | null = null;
+      if (actorId) {
+        const actor = await this.prisma.user.findUnique({
+          where: { id: actorId },
+          select: { name: true, avatarUrl: true },
+        });
+        if (actor) {
+          actorName = actor.name;
+          actorAvatar = actor.avatarUrl;
+        }
+      }
+
+      const excluded = new Set([actorId, ...excludeUserIds].filter(Boolean));
+      const targetSubscribers = task.subscribers.filter((s) => !excluded.has(s.userId));
+
+      const changesText = changes
+        .map((c) => `${c.field}: ${c.from ? `${c.from} → ` : ''}${c.to}`)
+        .join(', ');
+
+      for (const sub of targetSubscribers) {
+        // 1. Create Inbox Notification
+        const notif = await this.prisma.inboxNotification.create({
+          data: {
+            userId: sub.userId,
+            actorId: actorId || task.creatorId,
+            taskId: task.id,
+            type: 'TASK_UPDATE',
+            title: `${actorName} updated ${task.identifier}: ${summaryTitle}`,
+            body: changesText,
+          },
+        });
+
+        // 2. Emit real-time notification
+        this.eventsGateway.emitNotification(sub.userId, notif);
+
+        // 3. Send Email Notification
+        this.emailService
+          .sendTaskUpdateNotification({
+            recipientEmail: sub.user.email,
+            recipientName: sub.user.name,
+            actorName,
+            actorAvatar,
+            taskIdentifier: task.identifier,
+            taskTitle: task.title,
+            taskId: task.id,
+            changeTitle: summaryTitle,
+            changes,
+            taskStatus: task.customStatus || task.status,
+            taskPriority: task.priority,
+            projectName: task.project?.name,
+            projectKey: task.project?.key,
+          })
+          .catch((err) => console.error('Failed to send task update email:', err));
+      }
+    } catch (err) {
+      console.error('Failed to notify task subscribers:', err);
     }
   }
 
@@ -323,6 +438,22 @@ export class TasksService {
       }
     }
 
+    // Auto-subscribe creator
+    await this.prisma.taskSubscription.upsert({
+      where: { taskId_userId: { taskId: newTask.id, userId } },
+      create: { taskId: newTask.id, userId },
+      update: {},
+    });
+
+    // Auto-subscribe assignee if assigned
+    if (data.assigneeId) {
+      await this.prisma.taskSubscription.upsert({
+        where: { taskId_userId: { taskId: newTask.id, userId: data.assigneeId } },
+        create: { taskId: newTask.id, userId: data.assigneeId },
+        update: {},
+      });
+    }
+
     // Real-time broadcast
     this.eventsGateway.emitTaskCreated(newTask.workspaceId, newTask);
 
@@ -413,6 +544,13 @@ export class TasksService {
       // Check if assignee changed
       if (data.assigneeId !== undefined && data.assigneeId !== currentTask.assigneeId) {
         if (data.assigneeId) {
+          // Auto-subscribe newly assigned user
+          await this.prisma.taskSubscription.upsert({
+            where: { taskId_userId: { taskId: id, userId: data.assigneeId } },
+            create: { taskId: id, userId: data.assigneeId },
+            update: {},
+          });
+
           const newAssignee = await this.prisma.user.findUnique({
             where: { id: data.assigneeId },
             select: { name: true },
@@ -500,6 +638,71 @@ export class TasksService {
       }
     }
 
+    // Collect changes and notify task subscribers by email
+    const changes: Array<{ field: string; from?: string; to?: string }> = [];
+
+    if (
+      (data.status !== undefined && data.status !== currentTask.status) ||
+      (data.customStatus !== undefined && data.customStatus !== currentTask.customStatus)
+    ) {
+      const fromStatus = this.formatStatusName(currentTask.status, currentTask.customStatus);
+      const toStatus = this.formatStatusName(
+        data.status !== undefined ? data.status : currentTask.status,
+        data.customStatus !== undefined ? data.customStatus : currentTask.customStatus,
+      );
+      changes.push({ field: 'Status', from: fromStatus, to: toStatus });
+    }
+
+    if (data.priority !== undefined && data.priority !== currentTask.priority) {
+      changes.push({ field: 'Priority', from: currentTask.priority, to: data.priority });
+    }
+
+    if (data.assigneeId !== undefined && data.assigneeId !== currentTask.assigneeId) {
+      const newAssigneeUser = data.assigneeId
+        ? await this.prisma.user.findUnique({ where: { id: data.assigneeId }, select: { name: true } })
+        : null;
+      changes.push({
+        field: 'Assignee',
+        from: currentTask.assignee?.name || 'Unassigned',
+        to: newAssigneeUser?.name || 'Unassigned',
+      });
+    }
+
+    if (data.title !== undefined && data.title !== currentTask.title) {
+      changes.push({ field: 'Title', from: currentTask.title, to: data.title });
+    }
+
+    if (data.description !== undefined && data.description !== currentTask.description) {
+      changes.push({ field: 'Description', to: 'Updated task description' });
+    }
+
+    if (data.dueDate !== undefined) {
+      const oldDue = currentTask.dueDate ? new Date(currentTask.dueDate).toLocaleDateString() : 'None';
+      const newDue = data.dueDate ? new Date(data.dueDate).toLocaleDateString() : 'None';
+      if (oldDue !== newDue) {
+        changes.push({ field: 'Due Date', from: oldDue, to: newDue });
+      }
+    }
+
+    if (data.estimate !== undefined && data.estimate !== currentTask.estimate) {
+      changes.push({
+        field: 'Estimate',
+        from: currentTask.estimate ? `${currentTask.estimate} pts` : 'None',
+        to: `${data.estimate} pts`,
+      });
+    }
+
+    if (changes.length > 0) {
+      const summaryTitle = changes.map((c) => `${c.field} updated`).join(', ');
+      const excludeIds: string[] = [];
+      if (data.assigneeId && data.assigneeId !== userId) {
+        excludeIds.push(data.assigneeId);
+      }
+      this.notifySubscribersOfTaskUpdate(id, userId, changes, summaryTitle, excludeIds).catch((err) =>
+        console.error('Failed to notify subscribers of task update:', err),
+      );
+    }
+
     const updatedTask = await this.prisma.task.findUnique({
       where: { id },
       include: taskIncludeConfig,
@@ -560,6 +763,13 @@ export class TasksService {
             userId,
           },
         });
+
+        this.notifySubscribersOfTaskUpdate(
+          id,
+          userId,
+          [{ field: 'Status', from: fromStatus, to: toStatus }],
+          `Moved to ${toStatus}`,
+        ).catch((err) => console.error(err));
       }
     }
 
@@ -682,7 +892,7 @@ export class TasksService {
     return deleted;
   }
 
-  async addComment(taskId: string, userId: string, content: string) {
+  async addComment(taskId: string, userId: string, content: string, parentId?: string) {
     const task = await this.prisma.task.findUnique({
       where: { id: taskId },
       include: {
@@ -699,27 +909,82 @@ export class TasksService {
       throw new NotFoundException('Task not found');
     }
 
+    const parentComment = parentId
+      ? await this.prisma.comment.findUnique({
+          where: { id: parentId },
+          include: { user: true },
+        })
+      : null;
+
     const comment = await this.prisma.comment.create({
       data: {
         content,
         taskId,
         userId,
+        parentId: parentId || null,
       },
       include: {
         user: {
           select: { id: true, name: true, email: true, avatarUrl: true },
         },
+        parent: {
+          select: {
+            id: true,
+            content: true,
+            user: { select: { id: true, name: true, email: true, avatarUrl: true } },
+          },
+        },
       },
+    });
+
+    // Auto-subscribe the commenter to this task
+    await this.prisma.taskSubscription.upsert({
+      where: { taskId_userId: { taskId, userId } },
+      create: { taskId, userId },
+      update: {},
     });
 
     // Broadcast comment created to workspace room
     this.eventsGateway.emitCommentCreated(task.workspaceId, { taskId, comment });
 
-    // Detect @mentions for team members
+    // 1. If replying to a comment, notify the replied user by inbox and email
+    if (parentComment && parentComment.userId !== userId) {
+      const replyNotif = await this.prisma.inboxNotification.create({
+        data: {
+          userId: parentComment.userId,
+          actorId: userId,
+          taskId: task.id,
+          type: 'COMMENT_REPLY',
+          title: `${comment.user.name} replied to your comment on ${task.identifier}`,
+          body: content.length > 150 ? content.slice(0, 150) + '...' : content,
+        },
+      });
+
+      this.eventsGateway.emitNotification(parentComment.userId, replyNotif);
+
+      this.emailService
+        .sendCommentReplyNotification({
+          recipientEmail: parentComment.user.email,
+          recipientName: parentComment.user.name,
+          actorName: comment.user.name,
+          actorAvatar: comment.user.avatarUrl,
+          taskIdentifier: task.identifier,
+          taskTitle: task.title,
+          taskId: task.id,
+          parentCommentContent: parentComment.content,
+          replyContent: content,
+        })
+        .catch((err) => console.error('Failed to send comment reply email:', err));
+    }
+
+    // 2. Detect @mentions for team members
     const lowerContent = content.toLowerCase();
     const members = task.workspace?.members || [];
+    const mentionedUserIds = new Set<string>();
+
     for (const m of members) {
-      if (m.userId !== userId) {
+      // Don't mention the author themselves, or the replied user if they already received a reply notification
+      if (m.userId !== userId && m.userId !== parentComment?.userId) {
         const userName = m.user.name.toLowerCase();
         const userEmailName = m.user.email.split('@')[0].toLowerCase();
         const firstName = userName.split(' ')[0];
@@ -729,6 +994,8 @@ export class TasksService {
           lowerContent.includes(`@${userEmailName}`) ||
           (firstName.length > 2 && lowerContent.includes(`@${firstName}`))
         ) {
+          mentionedUserIds.add(m.userId);
+
           const notif = await this.prisma.inboxNotification.create({
             data: {
               userId: m.userId,
@@ -758,6 +1025,25 @@ export class TasksService {
         }
       }
     }
+
+    // 3. Notify all other subscribers to this task by email about the comment/reply
+    const excludeIds = [
+      parentComment?.userId,
+      ...Array.from(mentionedUserIds),
+    ].filter(Boolean) as string[];
+
+    this.notifySubscribersOfTaskUpdate(
+      taskId,
+      userId,
+      [
+        {
+          field: parentId ? 'New Reply' : 'New Comment',
+          to: content.length > 120 ? content.slice(0, 120) + '...' : content,
+        },
+      ],
+      parentId ? 'New reply posted' : 'New comment posted',
+      excludeIds,
+    ).catch((err) => console.error('Failed to notify task subscribers of new comment:', err));
 
     return comment;
   }
@@ -1145,5 +1431,47 @@ export class TasksService {
 
       return { action: 'added', reaction: created, commentId, taskId: comment.taskId, userId };
     }
+  }
+
+  async subscribeToTask(taskId: string, userId: string) {
+    const task = await this.prisma.task.findUnique({
+      where: { id: taskId },
+      select: { id: true, workspaceId: true },
+    });
+    if (!task) {
+      throw new NotFoundException('Task not found');
+    }
+
+    const subscription = await this.prisma.taskSubscription.upsert({
+      where: { taskId_userId: { taskId, userId } },
+      create: { taskId, userId },
+      update: {},
+      include: {
+        user: {
+          select: { id: true, name: true, email: true, avatarUrl: true },
+        },
+      },
+    });
+
+    return { success: true, subscription };
+  }
+
+  async unsubscribeFromTask(taskId: string, userId: string) {
+    await this.prisma.taskSubscription.deleteMany({
+      where: { taskId, userId },
+    });
+    return { success: true };
+  }
+
+  async getTaskSubscribers(taskId: string) {
+    return this.prisma.taskSubscription.findMany({
+      where: { taskId },
+      include: {
+        user: {
+          select: { id: true, name: true, email: true, avatarUrl: true },
+        },
+      },
+      orderBy: { createdAt: 'asc' },
+    });
   }
 }

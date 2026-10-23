@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Task, TaskPriority, TaskStatus, WorkspaceMember, TaskComment, Project, TaskReaction } from '../../types';
+import { Task, TaskPriority, TaskStatus, WorkspaceMember, TaskComment, Project, TaskReaction, TaskSubscription } from '../../types';
 import { PriorityIcon, PRIORITY_CONFIG } from './PriorityIcon';
 import { StatusIcon, STATUS_CONFIG } from './StatusIcon';
 import { FileUploader } from './FileUploader';
@@ -39,6 +39,10 @@ import {
   Pencil,
   Link2,
   Smile,
+  Bell,
+  BellRing,
+  CornerDownRight,
+  ArrowUp,
 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { api } from '../../lib/api';
@@ -79,6 +83,24 @@ const getLabelColor = (name: string) => {
 const renderCommentContentWithMentions = (content: string, membersList: WorkspaceMember[]) => {
   return <MarkdownRenderer content={content} membersList={membersList} />;
 };
+
+function formatTimeAgo(dateString: string): string {
+  const diff = Date.now() - new Date(dateString).getTime();
+  const seconds = Math.max(0, Math.floor(diff / 1000));
+  if (seconds < 60) return 'just now';
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d ago`;
+  const weeks = Math.floor(days / 7);
+  if (weeks < 4) return `${weeks}w ago`;
+  const months = Math.floor(days / 30);
+  if (months < 12) return `${months}mo ago`;
+  const years = Math.floor(days / 365);
+  return `${years}y ago`;
+}
 
 interface TaskDetailModalProps {
   task: Task | null;
@@ -124,6 +146,24 @@ export function TaskDetailModal({
   const [copiedLink, setCopiedLink] = useState(false);
   const [copiedBranch, setCopiedBranch] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  // Task subscription state
+  const [subscribers, setSubscribers] = useState<TaskSubscription[]>(task?.subscribers || []);
+  const [isSubscribing, setIsSubscribing] = useState(false);
+
+  // Comment Reply state
+  const [replyingTo, setReplyingTo] = useState<{ id: string; authorName: string; contentPreview: string } | null>(null);
+  const [replyTextMap, setReplyTextMap] = useState<Record<string, string>>({});
+  const [submittingReplyMap, setSubmittingReplyMap] = useState<Record<string, boolean>>({});
+  const [replyUploadingMap, setReplyUploadingMap] = useState<Record<string, boolean>>({});
+  const replyInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  const replyFileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+
+  // Reply Mention Tagging State
+  const [replyMentionParentId, setReplyMentionParentId] = useState<string | null>(null);
+  const [replyMentionQuery, setReplyMentionQuery] = useState<string | null>(null);
+  const [replyMentionIndex, setReplyMentionIndex] = useState(0);
+  const [replyMentionCursorPos, setReplyMentionCursorPos] = useState(-1);
 
   // Mention Tagging State
   const [mentionQuery, setMentionQuery] = useState<string | null>(null);
@@ -244,6 +284,8 @@ export function TaskDetailModal({
       setLabels(task.labels || []);
       setComments(task.comments || []);
       setTaskReactions(task.reactions || []);
+      setSubscribers(task.subscribers || []);
+      setReplyingTo(null);
       setShowDeleteConfirm(false);
       setShowLabelsDropdown(false);
     }
@@ -525,6 +567,272 @@ export function TaskDetailModal({
     }
   };
 
+  const isSubscribed = useMemo(() => {
+    if (!user) return false;
+    const hasSub = subscribers.some((s) => s.userId === user.id || s.user?.id === user.id);
+    const isAssignee = assigneeId === user.id;
+    return hasSub || isAssignee;
+  }, [subscribers, user, assigneeId]);
+
+  const handleToggleSubscribe = async () => {
+    if (!task || !user || isSubscribing) return;
+    setIsSubscribing(true);
+    const currentlySubscribed = isSubscribed;
+    try {
+      if (currentlySubscribed) {
+        await api.tasks.unsubscribe(task.id);
+        const updated = subscribers.filter((s) => s.userId !== user.id && s.user?.id !== user.id);
+        setSubscribers(updated);
+        onUpdate(task.id, { subscribers: updated });
+      } else {
+        const res = await api.tasks.subscribe(task.id);
+        const newSub = res.subscription || {
+          id: `sub-${Date.now()}`,
+          taskId: task.id,
+          userId: user.id,
+          user: user,
+          createdAt: new Date().toISOString(),
+        };
+        const updated = [...subscribers, newSub];
+        setSubscribers(updated);
+        onUpdate(task.id, { subscribers: updated });
+      }
+    } catch (err) {
+      console.error('Failed to toggle subscription:', err);
+    } finally {
+      setIsSubscribing(false);
+    }
+  };
+
+  const rootComments = useMemo(() => {
+    return comments.filter((c) => !c.parentId);
+  }, [comments]);
+
+  const handleStartReply = (comment: TaskComment) => {
+    const parentId = comment.parentId || comment.id;
+    const authorName = comment.user?.name;
+    if (authorName) {
+      setReplyTextMap((prev) => {
+        const curr = prev[parentId] || '';
+        const tag = `@${authorName} `;
+        return {
+          ...prev,
+          [parentId]: curr.includes(`@${authorName}`) ? curr : (curr ? `${curr} ${tag}` : tag),
+        };
+      });
+    }
+    setTimeout(() => {
+      const inputEl = replyInputRefs.current[parentId];
+      if (inputEl) {
+        inputEl.focus();
+        const len = inputEl.value.length;
+        inputEl.setSelectionRange(len, len);
+      }
+    }, 50);
+  };
+
+  // Reply Mention Autocomplete Matching
+  const matchingReplyMembers = useMemo(() => {
+    if (replyMentionQuery === null) return [];
+    const q = replyMentionQuery.toLowerCase().trim();
+    return members
+      .filter((m) => {
+        if (!q) return true;
+        const name = (m.user?.name || '').toLowerCase();
+        const email = (m.user?.email || '').toLowerCase();
+        return name.includes(q) || email.includes(q);
+      })
+      .slice(0, 5);
+  }, [members, replyMentionQuery]);
+
+  const handleReplyTextChange = (parentId: string, e: React.ChangeEvent<HTMLInputElement>) => {
+    const text = e.target.value;
+    const cursorPos = e.target.selectionStart ?? text.length;
+    setReplyTextMap((prev) => ({ ...prev, [parentId]: text }));
+
+    // Look backward from cursor to detect '@'
+    const textBeforeCursor = text.slice(0, cursorPos);
+    const lastAtPos = textBeforeCursor.lastIndexOf('@');
+
+    if (lastAtPos !== -1) {
+      const textAfterAt = textBeforeCursor.slice(lastAtPos + 1);
+      const charBeforeAt = lastAtPos > 0 ? textBeforeCursor[lastAtPos - 1] : ' ';
+      if ((charBeforeAt === ' ' || lastAtPos === 0) && textAfterAt.length <= 25) {
+        setReplyMentionParentId(parentId);
+        setReplyMentionQuery(textAfterAt);
+        setReplyMentionCursorPos(lastAtPos);
+        setReplyMentionIndex(0);
+        return;
+      }
+    }
+
+    if (replyMentionParentId === parentId) {
+      setReplyMentionParentId(null);
+      setReplyMentionQuery(null);
+    }
+  };
+
+  const handleSelectReplyMention = (parentId: string, userName: string) => {
+    if (replyMentionCursorPos === -1) return;
+    const currentText = replyTextMap[parentId] || '';
+    const textBeforeAt = currentText.slice(0, replyMentionCursorPos);
+    const inputEl = replyInputRefs.current[parentId];
+    const currentCursor =
+      inputEl?.selectionStart ?? (replyMentionCursorPos + (replyMentionQuery?.length || 0) + 1);
+    const textAfterCursor = currentText.slice(currentCursor);
+    const inserted = `${textBeforeAt}@${userName} ${textAfterCursor}`;
+    setReplyTextMap((prev) => ({ ...prev, [parentId]: inserted }));
+    setReplyMentionParentId(null);
+    setReplyMentionQuery(null);
+
+    setTimeout(() => {
+      if (inputEl) {
+        inputEl.focus();
+        const newPos = replyMentionCursorPos + userName.length + 2;
+        inputEl.setSelectionRange(newPos, newPos);
+      }
+    }, 10);
+  };
+
+  const handleTriggerReplyMention = (parentId: string) => {
+    const inputEl = replyInputRefs.current[parentId];
+    setReplyTextMap((prev) => {
+      const curr = prev[parentId] || '';
+      const spacer = curr && !curr.endsWith(' ') ? ' ' : '';
+      return { ...prev, [parentId]: `${curr}${spacer}@` };
+    });
+    setReplyMentionParentId(parentId);
+    setReplyMentionQuery('');
+    setReplyMentionIndex(0);
+    setTimeout(() => {
+      if (inputEl) {
+        inputEl.focus();
+        const pos = inputEl.value.length;
+        setReplyMentionCursorPos(pos - 1);
+        inputEl.setSelectionRange(pos, pos);
+      }
+    }, 10);
+  };
+
+  const handleReplyKeyDown = (parentId: string, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (
+      replyMentionParentId === parentId &&
+      replyMentionQuery !== null &&
+      matchingReplyMembers.length > 0
+    ) {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setReplyMentionIndex((prev) => (prev + 1) % matchingReplyMembers.length);
+        return;
+      }
+      if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setReplyMentionIndex((prev) => (prev - 1 + matchingReplyMembers.length) % matchingReplyMembers.length);
+        return;
+      }
+      if (e.key === 'Enter' || e.key === 'Tab') {
+        e.preventDefault();
+        const selected = matchingReplyMembers[replyMentionIndex];
+        if (selected?.user?.name) {
+          handleSelectReplyMention(parentId, selected.user.name);
+        }
+        return;
+      }
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        setReplyMentionParentId(null);
+        setReplyMentionQuery(null);
+        return;
+      }
+    }
+
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendNestedReply(parentId);
+    }
+  };
+
+  const handleSendNestedReply = async (parentCommentId: string) => {
+    const text = replyTextMap[parentCommentId]?.trim();
+    if (!text || submittingReplyMap[parentCommentId] || !task) return;
+
+    setSubmittingReplyMap((prev) => ({ ...prev, [parentCommentId]: true }));
+    const parentComment = comments.find((c) => c.id === parentCommentId);
+
+    const tempReply: TaskComment = {
+      id: `temp-${Date.now()}`,
+      content: text,
+      taskId: task.id,
+      userId: user?.id || 'me',
+      user: user || { id: 'me', name: 'You', email: '' },
+      parentId: parentCommentId,
+      parent: parentComment
+        ? {
+            id: parentComment.id,
+            content: parentComment.content,
+            user: parentComment.user,
+          }
+        : undefined,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    setComments((prev) => [...prev, tempReply]);
+    setReplyTextMap((prev) => ({ ...prev, [parentCommentId]: '' }));
+
+    try {
+      const serverComment = await api.tasks.addComment(task.id, text, parentCommentId);
+      if (user && !subscribers.some((s) => s.userId === user.id || s.user?.id === user.id)) {
+        const newSub: TaskSubscription = {
+          id: `sub-${Date.now()}`,
+          taskId: task.id,
+          userId: user.id,
+          user: user,
+          createdAt: new Date().toISOString(),
+        };
+        setSubscribers((prev) => [...prev, newSub]);
+      }
+      setComments((prev) => {
+        const alreadyHasServer = prev.some((c) => c.id === serverComment.id);
+        if (alreadyHasServer) {
+          return prev.filter((c) => c.id !== tempReply.id);
+        }
+        return prev.map((c) => (c.id === tempReply.id ? serverComment : c));
+      });
+      onUpdate(task.id, {
+        comments: [
+          ...(task.comments || []).filter((c) => c.id !== tempReply.id && c.id !== serverComment.id),
+          serverComment,
+        ],
+      });
+    } catch (err) {
+      console.error('Failed to post reply:', err);
+      setComments((prev) => prev.filter((c) => c.id !== tempReply.id));
+    } finally {
+      setSubmittingReplyMap((prev) => ({ ...prev, [parentCommentId]: false }));
+    }
+  };
+
+  const handleReplyImageUpload = async (parentCommentId: string, file: File) => {
+    if (!file.type.startsWith('image/') || !task) return;
+    setReplyUploadingMap((prev) => ({ ...prev, [parentCommentId]: true }));
+    const ext = file.type.split('/')[1] || 'png';
+    const cleanFileName = file.name || `image-${Date.now()}.${ext}`;
+    try {
+      const res = await api.uploads.upload(file, task.id);
+      const finalUrl = resolveMediaUrl(res.url);
+      const md = `![${cleanFileName}](${finalUrl})`;
+      setReplyTextMap((prev) => {
+        const curr = prev[parentCommentId] || '';
+        return { ...prev, [parentCommentId]: curr ? `${curr} ${md}` : md };
+      });
+    } catch (err) {
+      console.error('Failed to upload reply image:', err);
+    } finally {
+      setReplyUploadingMap((prev) => ({ ...prev, [parentCommentId]: false }));
+    }
+  };
+
   // Mention Autocomplete Matching
   const matchingMembers = useMemo(() => {
     if (mentionQuery === null) return [];
@@ -647,6 +955,14 @@ export function TaskDetailModal({
 
     setSubmittingComment(true);
     const content = newCommentText.trim();
+    const parentId = replyingTo?.id;
+    const parentSnippet = replyingTo
+      ? {
+          id: replyingTo.id,
+          content: replyingTo.contentPreview,
+          user: { id: '', name: replyingTo.authorName, email: '' },
+        }
+      : null;
 
     // Optimistic comment creation
     const tempComment: TaskComment = {
@@ -655,15 +971,29 @@ export function TaskDetailModal({
       taskId: task.id,
       userId: user?.id || 'me',
       user: user || { id: 'me', name: 'You', email: '' },
+      parentId: parentId || null,
+      parent: parentSnippet,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
 
     setComments((prev) => [...prev, tempComment]);
     setNewCommentText('');
+    setReplyingTo(null);
 
     try {
-      const serverComment = await api.tasks.addComment(task.id, content);
+      const serverComment = await api.tasks.addComment(task.id, content, parentId);
+      // Auto-subscribe user locally since commenting automatically subscribes
+      if (user && !subscribers.some((s) => s.userId === user.id || s.user?.id === user.id)) {
+        const newSub: TaskSubscription = {
+          id: `sub-${Date.now()}`,
+          taskId: task.id,
+          userId: user.id,
+          user: user,
+          createdAt: new Date().toISOString(),
+        };
+        setSubscribers((prev) => [...prev, newSub]);
+      }
       setComments((prev) => {
         const alreadyHasServerComment = prev.some((c) => c.id === serverComment.id);
         if (alreadyHasServerComment) {
@@ -1001,6 +1331,36 @@ export function TaskDetailModal({
 
             {/* Right: Actions, Navigation & Close */}
             <div className="flex items-center gap-2 shrink-0 text-xs text-muted-foreground">
+              {/* Subscribe / Watch Task Button */}
+              <button
+                type="button"
+                onClick={handleToggleSubscribe}
+                disabled={isSubscribing}
+                className={cn(
+                  'flex items-center gap-1.5 px-2.5 py-1 rounded text-xs transition-all group shrink-0 border',
+                  isSubscribed
+                    ? 'bg-indigo-500/15 text-indigo-300 border-indigo-500/40 hover:bg-indigo-500/25'
+                    : 'bg-[#161724] hover:bg-[#1f2030] text-zinc-300 hover:text-white border-[#2b2c3a]',
+                )}
+                title={isSubscribed ? 'Subscribed to task updates (Click to unsubscribe)' : 'Subscribe to task updates'}
+              >
+                {isSubscribing ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-indigo-400" />
+                ) : isSubscribed ? (
+                  <BellRing className="w-3.5 h-3.5 text-indigo-400" />
+                ) : (
+                  <Bell className="w-3.5 h-3.5 text-zinc-400 group-hover:text-white" />
+                )}
+                <span className="font-medium text-[11px]">
+                  {isSubscribed ? 'Subscribed' : 'Subscribe'}
+                </span>
+                {subscribers.length > 0 && (
+                  <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-indigo-500/20 text-indigo-300 font-mono">
+                    {subscribers.length}
+                  </span>
+                )}
+              </button>
+
               {/* Copy Git Branch Name Button */}
               <button
                 type="button"
@@ -1233,91 +1593,438 @@ export function TaskDetailModal({
 
                 {/* Comments List */}
                 <div className="space-y-3">
-                  {comments.length === 0 ? (
+                  {rootComments.length === 0 ? (
                     <div className="py-6 text-center text-xs text-zinc-600">
                       No comments yet. Leave the first comment below!
                     </div>
                   ) : (
-                    comments.map((c) => {
+                    rootComments.map((c) => {
                       const commentMember = members.find(
                         (m) => m.userId === c.userId || m.user?.id === c.userId,
                       );
                       const isCommentAuthorOnline = user?.id === c.user?.id;
+                      const replies = comments.filter((r) => r.parentId === c.id);
 
                       return (
                         <div
                           key={c.id}
                           id={`comment-${c.id}`}
-                          className={`flex items-start gap-3 p-3.5 rounded-lg border transition-all duration-300 group relative ${
+                          className={`p-3.5 rounded-lg border transition-all duration-300 group relative ${
                             highlightedCommentId === c.id
                               ? 'bg-indigo-500/15 border-indigo-500/60 ring-2 ring-indigo-500/50 shadow-lg shadow-indigo-500/20'
                               : 'bg-[#12131d]/80 border-border/50 hover:border-border'
                           }`}
                         >
-                          <UserAvatar
-                            user={c.user}
-                            member={commentMember}
-                            size="sm"
-                            showStatus={true}
-                            status={isCommentAuthorOnline ? 'online' : 'offline'}
-                            withHoverCard={true}
-                            workspaceName={workspace?.name}
-                            className="mt-0.5 cursor-pointer"
-                          />
+                          <div className="flex items-start gap-3">
+                            <UserAvatar
+                              user={c.user}
+                              member={commentMember}
+                              size="sm"
+                              showStatus={true}
+                              status={isCommentAuthorOnline ? 'online' : 'offline'}
+                              withHoverCard={true}
+                              workspaceName={workspace?.name}
+                              className="mt-0.5 cursor-pointer"
+                            />
 
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <ProfileHoverCard
-                                user={c.user}
-                                member={commentMember}
-                                workspaceName={workspace?.name}
-                                status={isCommentAuthorOnline ? 'online' : 'offline'}
-                              >
-                                <span className="text-xs font-semibold text-foreground hover:underline cursor-pointer">
-                                  {c.user?.name || 'Team Member'}
-                                </span>
-                              </ProfileHoverCard>
-                            <span className="text-[10px] text-zinc-500">
-                              {new Date(c.createdAt).toLocaleDateString(undefined, {
-                                month: 'short',
-                                day: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit',
-                              })}
-                            </span>
-                            {c.updatedAt &&
-                              new Date(c.updatedAt).getTime() - new Date(c.createdAt).getTime() > 2000 && (
-                                <span
-                                  className="text-[10px] text-zinc-500 italic"
-                                  title={`Edited at ${new Date(c.updatedAt).toLocaleTimeString()}`}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <ProfileHoverCard
+                                  user={c.user}
+                                  member={commentMember}
+                                  workspaceName={workspace?.name}
+                                  status={isCommentAuthorOnline ? 'online' : 'offline'}
                                 >
-                                  (edited)
+                                  <span className="text-xs font-semibold text-foreground hover:underline cursor-pointer">
+                                    {c.user?.name || 'Team Member'}
+                                  </span>
+                                </ProfileHoverCard>
+                                <span className="text-[10px] text-zinc-500">
+                                  {new Date(c.createdAt).toLocaleDateString(undefined, {
+                                    month: 'short',
+                                    day: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                  })}
                                 </span>
+                                {c.updatedAt &&
+                                  new Date(c.updatedAt).getTime() - new Date(c.createdAt).getTime() > 2000 && (
+                                    <span
+                                      className="text-[10px] text-zinc-500 italic"
+                                      title={`Edited at ${new Date(c.updatedAt).toLocaleTimeString()}`}
+                                    >
+                                      (edited)
+                                    </span>
+                                  )}
+                              </div>
+
+                              {editingCommentId === c.id ? (
+                                <div className="mt-2 space-y-2 relative">
+                                  {/* Mentions autocomplete popup while editing comment */}
+                                  {editingMentionQuery !== null && matchingEditMembers.length > 0 && (
+                                    <div className="absolute left-0 bottom-full mb-1 z-50 w-64 rounded-xl border border-border/80 bg-[#0e0f18]/95 backdrop-blur-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-100">
+                                      <div className="px-3 py-1.5 border-b border-border/50 text-[10px] font-semibold text-zinc-400 uppercase tracking-wider flex items-center justify-between">
+                                        <div className="flex items-center gap-1.5">
+                                          <AtSign className="w-3 h-3 text-indigo-400" />
+                                          <span>Mention team member</span>
+                                        </div>
+                                        <span className="text-[10px] text-zinc-500 font-normal">↑↓ navigate, ↵ select</span>
+                                      </div>
+                                      <div className="space-y-0.5 max-h-48 overflow-y-auto p-1 custom-scrollbar">
+                                        {matchingEditMembers.map((m, idx) => (
+                                          <button
+                                            key={m.userId}
+                                            type="button"
+                                            onClick={() => handleSelectEditMention(m.user?.name || 'User')}
+                                            className={cn(
+                                              'w-full flex items-center gap-2.5 px-2.5 py-1.5 text-xs rounded-lg transition-colors text-left',
+                                              idx === editingMentionIndex
+                                                ? 'bg-indigo-600/20 text-white font-medium'
+                                                : 'text-zinc-300 hover:bg-[#232432] hover:text-white',
+                                            )}
+                                          >
+                                            <img
+                                              src={
+                                                m.user?.avatarUrl ||
+                                                `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
+                                                  m.user?.name || 'User',
+                                                )}`
+                                              }
+                                              alt={m.user?.name || 'User'}
+                                              className="w-5 h-5 rounded-full object-cover shrink-0"
+                                            />
+                                            <div className="min-w-0 flex-1 truncate">
+                                              <div className="font-medium text-white truncate text-xs">
+                                                {m.user?.name}
+                                              </div>
+                                              <div className="text-[10px] text-zinc-500 truncate">
+                                                {m.user?.email}
+                                              </div>
+                                            </div>
+                                          </button>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  <textarea
+                                    ref={editCommentTextareaRef}
+                                    value={editingCommentText}
+                                    onChange={handleEditCommentTextChange}
+                                    onKeyDown={(e) => handleEditCommentKeyDown(e, c.id)}
+                                    rows={3}
+                                    className="w-full bg-[#161726] border border-border focus:border-indigo-500 rounded-lg p-2.5 text-xs text-foreground placeholder:text-zinc-500 focus:outline-none resize-none leading-relaxed"
+                                    autoFocus
+                                  />
+
+                                  {/* Comment image / mention live preview when editing */}
+                                  {editingCommentText && (editingCommentText.includes('@') || editingCommentText.includes('![')) && (
+                                    <div className="p-2 border border-border/40 bg-[#0a0b12]/60 rounded text-xs space-y-1">
+                                      <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-semibold block">
+                                        Live Preview
+                                      </span>
+                                      <MarkdownRenderer content={editingCommentText} membersList={members} />
+                                    </div>
+                                  )}
+
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-[10px] text-zinc-500">
+                                        Esc to cancel • Cmd+Enter to save
+                                      </span>
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          const text = editingCommentText ? `${editingCommentText} @` : '@';
+                                          setEditingCommentText(text);
+                                          setEditingMentionQuery('');
+                                          setEditingMentionCursorPos(text.length - 1);
+                                          setEditingMentionIndex(0);
+                                          setTimeout(() => {
+                                            if (editCommentTextareaRef.current) {
+                                              editCommentTextareaRef.current.focus();
+                                              editCommentTextareaRef.current.setSelectionRange(text.length, text.length);
+                                            }
+                                          }, 10);
+                                        }}
+                                        className="flex items-center gap-1 text-[11px] text-zinc-400 hover:text-white px-1.5 py-0.5 rounded hover:bg-zinc-800 transition-colors"
+                                        title="Mention a team member"
+                                      >
+                                        <AtSign className="w-3.5 h-3.5 text-indigo-400" />
+                                        <span>Mention</span>
+                                      </button>
+                                    </div>
+
+                                    <div className="flex items-center gap-1.5">
+                                      <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={handleCancelEditComment}
+                                        disabled={isUpdatingComment}
+                                        className="h-6 text-xs px-2 text-zinc-400 hover:text-white"
+                                      >
+                                        Cancel
+                                      </Button>
+                                      <Button
+                                        type="button"
+                                        variant="linear"
+                                        size="sm"
+                                        onClick={() => handleSaveEditComment(c.id)}
+                                        disabled={!editingCommentText.trim() || isUpdatingComment}
+                                        className="h-6 text-xs px-2.5"
+                                      >
+                                        {isUpdatingComment ? (
+                                          <Loader2 className="w-3 h-3 animate-spin mr-1" />
+                                        ) : (
+                                          <Check className="w-3 h-3 mr-1" />
+                                        )}
+                                        Save
+                                      </Button>
+                                    </div>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div>
+                                  <div className="mt-1.5 text-xs text-zinc-300 leading-relaxed whitespace-pre-wrap">
+                                    {renderCommentContentWithMentions(c.content, members)}
+                                  </div>
+
+                                  {/* Comment Reactions */}
+                                  <div className="mt-2">
+                                    <ReactionsBar
+                                      reactions={c.reactions || []}
+                                      currentUserId={user?.id}
+                                      onToggleReaction={(emoji) => handleToggleCommentReaction(c.id, emoji)}
+                                      size="sm"
+                                    />
+                                  </div>
+                                </div>
                               )}
+                            </div>
+
+                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              {/* Reply Button */}
+                              <button
+                                onClick={() => handleStartReply(c)}
+                                className="flex items-center gap-1 px-1.5 py-1 rounded hover:bg-zinc-800 text-zinc-400 hover:text-indigo-300 transition-colors text-[11px]"
+                                title="Reply to comment"
+                              >
+                                <CornerDownRight className="w-3.5 h-3.5 text-indigo-400" />
+                                <span className="hidden sm:inline">Reply</span>
+                              </button>
+
+                              {/* Copy Link to Comment */}
+                              <button
+                                onClick={() => handleCopyCommentLink(c.id)}
+                                className="p-1 rounded hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors relative"
+                                title={copiedCommentId === c.id ? 'Copied!' : 'Copy link to comment'}
+                              >
+                                {copiedCommentId === c.id ? (
+                                  <span className="flex items-center gap-1 text-[10px] text-emerald-400 font-medium px-1">
+                                    <Check className="w-3 h-3 text-emerald-400" />
+                                    <span>Copied</span>
+                                  </span>
+                                ) : (
+                                  <Link2 className="w-3 h-3" />
+                                )}
+                              </button>
+
+                              {/* Edit Comment */}
+                              {(c.userId === user?.id || workspace?.role === 'OWNER' || workspace?.role === 'ADMIN') && (
+                                <button
+                                  onClick={() => handleStartEditComment(c)}
+                                  className="p-1 rounded hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors"
+                                  title="Edit comment"
+                                >
+                                  <Pencil className="w-3 h-3" />
+                                </button>
+                              )}
+
+                              {/* Delete Comment */}
+                              {(c.userId === user?.id || workspace?.role === 'OWNER' || workspace?.role === 'ADMIN') && (
+                                <button
+                                  onClick={() => handleDeleteComment(c.id)}
+                                  className="p-1 rounded hover:bg-destructive/20 text-zinc-500 hover:text-destructive transition-all"
+                                  title="Delete comment"
+                                >
+                                  <Trash2 className="w-3 h-3" />
+                                </button>
+                              )}
+                            </div>
                           </div>
 
-                          {editingCommentId === c.id ? (
-                            <div className="mt-2 space-y-2 relative">
-                              {/* Mentions autocomplete popup while editing comment */}
-                              {editingMentionQuery !== null && matchingEditMembers.length > 0 && (
-                                <div className="absolute left-0 bottom-full mb-1 z-50 w-64 rounded-xl border border-border/80 bg-[#0e0f18]/95 backdrop-blur-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-100">
-                                  <div className="px-3 py-1.5 border-b border-border/50 text-[10px] font-semibold text-zinc-400 uppercase tracking-wider flex items-center justify-between">
+                          {/* Nested Thread Section (Matches Screenshot) */}
+                          <div className="mt-3 pt-2.5 border-t border-border/30 space-y-3">
+                            {/* Thread replies list */}
+                            {replies.length > 0 && (
+                              <div className="space-y-2.5 pl-3 border-l-2 border-indigo-500/20 ml-2">
+                                {replies.map((reply) => {
+                                  const replyMember = members.find(
+                                    (m) => m.userId === reply.userId || m.user?.id === reply.userId,
+                                  );
+                                  const isReplyAuthorOnline = user?.id === reply.user?.id;
+
+                                  return (
+                                    <div
+                                      key={reply.id}
+                                      id={`comment-${reply.id}`}
+                                      className={cn(
+                                        'p-2.5 rounded-lg border transition-all duration-200 group/reply relative',
+                                        highlightedCommentId === reply.id
+                                          ? 'bg-indigo-500/15 border-indigo-500/60 ring-2 ring-indigo-500/50'
+                                          : 'bg-[#0f101a]/70 border-border/40 hover:border-border/70',
+                                      )}
+                                    >
+                                      <div className="flex items-start gap-2.5">
+                                        <UserAvatar
+                                          user={reply.user}
+                                          member={replyMember}
+                                          size="xs"
+                                          showStatus={true}
+                                          status={isReplyAuthorOnline ? 'online' : 'offline'}
+                                          withHoverCard={true}
+                                          workspaceName={workspace?.name}
+                                          className="mt-0.5 cursor-pointer"
+                                        />
+
+                                        <div className="flex-1 min-w-0">
+                                          <div className="flex items-center gap-2">
+                                            <ProfileHoverCard
+                                              user={reply.user}
+                                              member={replyMember}
+                                              workspaceName={workspace?.name}
+                                              status={isReplyAuthorOnline ? 'online' : 'offline'}
+                                            >
+                                              <span className="text-xs font-semibold text-foreground hover:underline cursor-pointer">
+                                                {reply.user?.name || 'Team Member'}
+                                              </span>
+                                            </ProfileHoverCard>
+                                            <span className="text-[10px] text-zinc-500">
+                                              {formatTimeAgo(reply.createdAt)}
+                                            </span>
+                                            {reply.updatedAt &&
+                                              new Date(reply.updatedAt).getTime() - new Date(reply.createdAt).getTime() > 2000 && (
+                                                <span className="text-[10px] text-zinc-500 italic">
+                                                  (edited)
+                                                </span>
+                                              )}
+                                          </div>
+
+                                          {editingCommentId === reply.id ? (
+                                            <div className="mt-2 space-y-2">
+                                              <textarea
+                                                value={editingCommentText}
+                                                onChange={(e) => setEditingCommentText(e.target.value)}
+                                                rows={2}
+                                                className="w-full bg-[#161726] border border-border focus:border-indigo-500 rounded-lg p-2 text-xs text-foreground placeholder:text-zinc-500 focus:outline-none resize-none"
+                                              />
+                                              <div className="flex items-center justify-end gap-1.5">
+                                                <Button
+                                                  type="button"
+                                                  variant="ghost"
+                                                  size="sm"
+                                                  onClick={handleCancelEditComment}
+                                                  className="h-6 text-xs px-2"
+                                                >
+                                                  Cancel
+                                                </Button>
+                                                <Button
+                                                  type="button"
+                                                  variant="linear"
+                                                  size="sm"
+                                                  onClick={() => handleSaveEditComment(reply.id)}
+                                                  className="h-6 text-xs px-2.5"
+                                                >
+                                                  Save
+                                                </Button>
+                                              </div>
+                                            </div>
+                                          ) : (
+                                            <div>
+                                              <div className="mt-1 text-xs text-zinc-300 leading-relaxed whitespace-pre-wrap">
+                                                {renderCommentContentWithMentions(reply.content, members)}
+                                              </div>
+                                              <div className="mt-1.5">
+                                                <ReactionsBar
+                                                  reactions={reply.reactions || []}
+                                                  currentUserId={user?.id}
+                                                  onToggleReaction={(emoji) => handleToggleCommentReaction(reply.id, emoji)}
+                                                  size="sm"
+                                                />
+                                              </div>
+                                            </div>
+                                          )}
+                                        </div>
+
+                                        {/* Reply Actions */}
+                                        <div className="flex items-center gap-1 opacity-0 group-hover/reply:opacity-100 transition-opacity">
+                                          <button
+                                            onClick={() => handleStartReply(reply)}
+                                            className="flex items-center gap-1 px-1.5 py-0.5 rounded hover:bg-zinc-800 text-zinc-400 hover:text-indigo-300 transition-colors text-[10px]"
+                                            title="Reply to this"
+                                          >
+                                            <CornerDownRight className="w-3 h-3 text-indigo-400" />
+                                            <span>Reply</span>
+                                          </button>
+                                          <button
+                                            onClick={() => handleCopyCommentLink(reply.id)}
+                                            className="p-1 rounded hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors"
+                                            title="Copy link"
+                                          >
+                                            <Link2 className="w-3 h-3" />
+                                          </button>
+                                          {(reply.userId === user?.id || workspace?.role === 'OWNER' || workspace?.role === 'ADMIN') && (
+                                            <button
+                                              onClick={() => handleStartEditComment(reply)}
+                                              className="p-1 rounded hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors"
+                                              title="Edit reply"
+                                            >
+                                              <Pencil className="w-3 h-3" />
+                                            </button>
+                                          )}
+                                          {(reply.userId === user?.id || workspace?.role === 'OWNER' || workspace?.role === 'ADMIN') && (
+                                            <button
+                                              onClick={() => handleDeleteComment(reply.id)}
+                                              className="p-1 rounded hover:bg-destructive/20 text-zinc-500 hover:text-destructive transition-all"
+                                              title="Delete reply"
+                                            >
+                                              <Trash2 className="w-3 h-3" />
+                                            </button>
+                                          )}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+
+                            {/* Inline "Leave a reply..." Input (Matching user's screenshot with @mention support) */}
+                            <div className="relative pt-1">
+                              {/* Mentions Autocomplete Floating Dropdown for Replies */}
+                              {replyMentionParentId === c.id && replyMentionQuery !== null && matchingReplyMembers.length > 0 && (
+                                <div className="absolute bottom-full left-8 mb-2 z-50 w-72 rounded-xl bg-[#191a24] border border-[#2b2c3a] shadow-2xl p-1.5 animate-in fade-in-0 zoom-in-95 backdrop-blur-md">
+                                  <div className="flex items-center justify-between px-2.5 py-1 text-[11px] font-semibold text-zinc-400 border-b border-[#2b2c3a]/70 mb-1">
                                     <div className="flex items-center gap-1.5">
                                       <AtSign className="w-3 h-3 text-indigo-400" />
                                       <span>Mention team member</span>
                                     </div>
                                     <span className="text-[10px] text-zinc-500 font-normal">↑↓ navigate, ↵ select</span>
                                   </div>
-                                  <div className="space-y-0.5 max-h-48 overflow-y-auto p-1 custom-scrollbar">
-                                    {matchingEditMembers.map((m, idx) => (
+                                  <div className="space-y-0.5 max-h-48 overflow-y-auto">
+                                    {matchingReplyMembers.map((m, idx) => (
                                       <button
                                         key={m.userId}
                                         type="button"
-                                        onClick={() => handleSelectEditMention(m.user?.name || 'User')}
+                                        onMouseDown={(e) => {
+                                          e.preventDefault();
+                                          handleSelectReplyMention(c.id, m.user?.name || 'User');
+                                        }}
                                         className={cn(
                                           'w-full flex items-center gap-2.5 px-2.5 py-1.5 text-xs rounded-lg transition-colors text-left',
-                                          idx === editingMentionIndex
-                                            ? 'bg-indigo-600/20 text-white font-medium'
+                                          idx === replyMentionIndex
+                                            ? 'bg-[#282a38] text-white font-medium'
                                             : 'text-zinc-300 hover:bg-[#232432] hover:text-white',
                                         )}
                                       >
@@ -1331,13 +2038,9 @@ export function TaskDetailModal({
                                           alt={m.user?.name || 'User'}
                                           className="w-5 h-5 rounded-full object-cover shrink-0"
                                         />
-                                        <div className="min-w-0 flex-1 truncate">
-                                          <div className="font-medium text-white truncate text-xs">
-                                            {m.user?.name}
-                                          </div>
-                                          <div className="text-[10px] text-zinc-500 truncate">
-                                            {m.user?.email}
-                                          </div>
+                                        <div className="flex-1 min-w-0">
+                                          <div className="font-medium truncate">{m.user?.name || 'User'}</div>
+                                          <div className="text-[10px] text-zinc-500 truncate">{m.user?.email}</div>
                                         </div>
                                       </button>
                                     ))}
@@ -1345,145 +2048,91 @@ export function TaskDetailModal({
                                 </div>
                               )}
 
-                              <textarea
-                                ref={editCommentTextareaRef}
-                                value={editingCommentText}
-                                onChange={handleEditCommentTextChange}
-                                onKeyDown={(e) => handleEditCommentKeyDown(e, c.id)}
-                                rows={3}
-                                className="w-full bg-[#161726] border border-border focus:border-indigo-500 rounded-lg p-2.5 text-xs text-foreground placeholder:text-zinc-500 focus:outline-none resize-none leading-relaxed"
-                                autoFocus
-                              />
-
-                              {/* Comment image / mention live preview when editing */}
-                              {editingCommentText && (editingCommentText.includes('@') || editingCommentText.includes('![')) && (
-                                <div className="p-2 border border-border/40 bg-[#0a0b12]/60 rounded text-xs space-y-1">
-                                  <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-semibold block">
-                                    Live Preview
-                                  </span>
-                                  <MarkdownRenderer content={editingCommentText} membersList={members} />
-                                </div>
-                              )}
-
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                  <span className="text-[10px] text-zinc-500">
-                                    Esc to cancel • Cmd+Enter to save
-                                  </span>
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      const text = editingCommentText ? `${editingCommentText} @` : '@';
-                                      setEditingCommentText(text);
-                                      setEditingMentionQuery('');
-                                      setEditingMentionCursorPos(text.length - 1);
-                                      setEditingMentionIndex(0);
-                                      setTimeout(() => {
-                                        if (editCommentTextareaRef.current) {
-                                          editCommentTextareaRef.current.focus();
-                                          editCommentTextareaRef.current.setSelectionRange(text.length, text.length);
-                                        }
-                                      }, 10);
+                              <div className="flex items-center gap-2.5">
+                                <UserAvatar user={user} size="xs" showStatus={false} />
+                                <div className="flex-1 flex items-center bg-[#13141f] border border-[#232535] hover:border-zinc-700 focus-within:border-indigo-500/80 rounded-full px-3 py-1 transition-all group">
+                                  <input
+                                    type="text"
+                                    ref={(el) => {
+                                      replyInputRefs.current[c.id] = el;
                                     }}
-                                    className="flex items-center gap-1 text-[11px] text-zinc-400 hover:text-white px-1.5 py-0.5 rounded hover:bg-zinc-800 transition-colors"
-                                    title="Mention a team member"
-                                  >
-                                    <AtSign className="w-3.5 h-3.5 text-indigo-400" />
-                                    <span>Mention</span>
-                                  </button>
-                                </div>
-
-                                <div className="flex items-center gap-1.5">
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={handleCancelEditComment}
-                                    disabled={isUpdatingComment}
-                                    className="h-6 text-xs px-2 text-zinc-400 hover:text-white"
-                                  >
-                                    Cancel
-                                  </Button>
-                                  <Button
-                                    type="button"
-                                    variant="linear"
-                                    size="sm"
-                                    onClick={() => handleSaveEditComment(c.id)}
-                                    disabled={!editingCommentText.trim() || isUpdatingComment}
-                                    className="h-6 text-xs px-2.5"
-                                  >
-                                    {isUpdatingComment ? (
-                                      <Loader2 className="w-3 h-3 animate-spin mr-1" />
-                                    ) : (
-                                      <Check className="w-3 h-3 mr-1" />
-                                    )}
-                                    Save
-                                  </Button>
+                                    placeholder="Leave a reply..."
+                                    value={replyTextMap[c.id] || ''}
+                                    onChange={(e) => handleReplyTextChange(c.id, e)}
+                                    onKeyDown={(e) => handleReplyKeyDown(c.id, e)}
+                                    onBlur={() => {
+                                      setTimeout(() => {
+                                        if (replyMentionParentId === c.id) {
+                                          setReplyMentionParentId(null);
+                                          setReplyMentionQuery(null);
+                                        }
+                                      }, 150);
+                                    }}
+                                    disabled={submittingReplyMap[c.id]}
+                                    className="flex-1 bg-transparent border-0 text-xs text-foreground placeholder:text-zinc-500 focus:outline-none py-0.5"
+                                  />
+                                  <div className="flex items-center gap-1 shrink-0 ml-1">
+                                    <button
+                                      type="button"
+                                      onClick={() => handleTriggerReplyMention(c.id)}
+                                      className="p-1 rounded-full text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/60 transition-colors"
+                                      title="Mention someone (@)"
+                                    >
+                                      <AtSign className="w-3.5 h-3.5" />
+                                    </button>
+                                    <input
+                                      type="file"
+                                      accept="image/*"
+                                      className="hidden"
+                                      ref={(el) => {
+                                        replyFileInputRefs.current[c.id] = el;
+                                      }}
+                                      onChange={(e) => {
+                                        const file = e.target.files?.[0];
+                                        if (file) handleReplyImageUpload(c.id, file);
+                                        e.target.value = '';
+                                      }}
+                                    />
+                                    <button
+                                      type="button"
+                                      onClick={() => replyFileInputRefs.current[c.id]?.click()}
+                                      disabled={replyUploadingMap[c.id]}
+                                      className="p-1 rounded-full text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/60 transition-colors"
+                                      title="Attach file/image"
+                                    >
+                                      {replyUploadingMap[c.id] ? (
+                                        <Loader2 className="w-3.5 h-3.5 animate-spin text-indigo-400" />
+                                      ) : (
+                                        <Paperclip className="w-3.5 h-3.5" />
+                                      )}
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleSendNestedReply(c.id)}
+                                      disabled={!replyTextMap[c.id]?.trim() || submittingReplyMap[c.id]}
+                                      className={cn(
+                                        'w-6 h-6 rounded-full flex items-center justify-center transition-all shrink-0',
+                                        replyTextMap[c.id]?.trim()
+                                          ? 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-sm'
+                                          : 'bg-zinc-800/80 text-zinc-500 hover:text-zinc-300',
+                                      )}
+                                      title="Send reply"
+                                    >
+                                      {submittingReplyMap[c.id] ? (
+                                        <Loader2 className="w-3 h-3 animate-spin text-white" />
+                                      ) : (
+                                        <ArrowUp className="w-3.5 h-3.5 stroke-[2.5]" />
+                                      )}
+                                    </button>
+                                  </div>
                                 </div>
                               </div>
                             </div>
-                          ) : (
-                            <div>
-                              <div className="mt-1.5 text-xs text-zinc-300 leading-relaxed whitespace-pre-wrap">
-                                {renderCommentContentWithMentions(c.content, members)}
-                              </div>
-
-                              {/* Comment Reactions */}
-                              <div className="mt-2">
-                                <ReactionsBar
-                                  reactions={c.reactions || []}
-                                  currentUserId={user?.id}
-                                  onToggleReaction={(emoji) => handleToggleCommentReaction(c.id, emoji)}
-                                  size="sm"
-                                />
-                              </div>
-                            </div>
-                          )}
+                          </div>
                         </div>
-
-                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          {/* Copy Link to Comment */}
-                          <button
-                            onClick={() => handleCopyCommentLink(c.id)}
-                            className="p-1 rounded hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors relative"
-                            title={copiedCommentId === c.id ? 'Copied!' : 'Copy link to comment'}
-                          >
-                            {copiedCommentId === c.id ? (
-                              <span className="flex items-center gap-1 text-[10px] text-emerald-400 font-medium px-1">
-                                <Check className="w-3 h-3 text-emerald-400" />
-                                <span>Copied</span>
-                              </span>
-                            ) : (
-                              <Link2 className="w-3 h-3" />
-                            )}
-                          </button>
-
-                          {/* Edit Comment */}
-                          {(c.userId === user?.id || workspace?.role === 'OWNER' || workspace?.role === 'ADMIN') && (
-                            <button
-                              onClick={() => handleStartEditComment(c)}
-                              className="p-1 rounded hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors"
-                              title="Edit comment"
-                            >
-                              <Pencil className="w-3 h-3" />
-                            </button>
-                          )}
-
-                          {/* Delete Comment */}
-                          {(c.userId === user?.id || workspace?.role === 'OWNER' || workspace?.role === 'ADMIN') && (
-                            <button
-                              onClick={() => handleDeleteComment(c.id)}
-                              className="p-1 rounded hover:bg-destructive/20 text-zinc-500 hover:text-destructive transition-all"
-                              title="Delete comment"
-                            >
-                              <Trash2 className="w-3 h-3" />
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
+                      );
+                    })
+                  )}
                 </div>
 
                 {/* Comment Composer with Mentions */}
@@ -1551,6 +2200,25 @@ export function TaskDetailModal({
                     />
 
                     <div className="flex-1 min-w-0">
+                      {/* Replying banner */}
+                      {replyingTo && (
+                        <div className="flex items-center justify-between px-3 py-1.5 bg-indigo-500/10 border border-indigo-500/30 rounded-lg text-xs text-indigo-300 mb-2 animate-in fade-in slide-in-from-bottom-1">
+                          <div className="flex items-center gap-2 truncate">
+                            <CornerDownRight className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+                            <span className="font-semibold text-white truncate">Replying to @{replyingTo.authorName}:</span>
+                            <span className="text-zinc-400 truncate text-[11px]">&ldquo;{replyingTo.contentPreview.slice(0, 50)}...&rdquo;</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setReplyingTo(null)}
+                            className="p-1 hover:bg-indigo-500/20 rounded text-zinc-400 hover:text-white transition-colors ml-2 shrink-0"
+                            title="Cancel reply"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      )}
+
                       <textarea
                         ref={commentTextareaRef}
                         value={newCommentText}
@@ -1576,7 +2244,11 @@ export function TaskDetailModal({
                         }
                         onDragOver={(e) => e.preventDefault()}
                         rows={2}
-                        placeholder="Leave a comment... (Paste images directly here, type @ to mention, Cmd + Enter to send)"
+                        placeholder={
+                          replyingTo
+                            ? `Write a reply to @${replyingTo.authorName}... (Cmd + Enter to send)`
+                            : "Leave a comment... (Paste images directly here, type @ to mention, Cmd + Enter to send)"
+                        }
                         className="w-full bg-transparent border-0 text-xs text-foreground placeholder:text-zinc-500 focus:outline-none resize-none leading-relaxed"
                       />
 
@@ -1641,10 +2313,12 @@ export function TaskDetailModal({
                         >
                           {submittingComment ? (
                             <Loader2 className="w-3 h-3 animate-spin mr-1" />
+                          ) : replyingTo ? (
+                            <CornerDownRight className="w-3 h-3 mr-1" />
                           ) : (
                             <Send className="w-3 h-3 mr-1" />
                           )}
-                          Comment
+                          {replyingTo ? 'Reply' : 'Comment'}
                         </Button>
                       </div>
                     </div>
@@ -1924,6 +2598,42 @@ export function TaskDetailModal({
                     year: 'numeric',
                   })}
                 </span>
+              </div>
+
+              {/* Subscribers Section */}
+              <div className="pt-4 border-t border-border/50 text-xs space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 text-zinc-400 font-medium text-[11px]">
+                    <Bell className="w-3.5 h-3.5 text-indigo-400" />
+                    <span>Subscribers ({subscribers.length})</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleToggleSubscribe}
+                    disabled={isSubscribing}
+                    className="text-[11px] text-indigo-400 hover:text-indigo-300 font-medium transition-colors cursor-pointer"
+                  >
+                    {isSubscribed ? 'Unsubscribe' : 'Subscribe'}
+                  </button>
+                </div>
+                <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
+                  {subscribers.length === 0 ? (
+                    <span className="text-[11px] text-zinc-500">No subscribers yet</span>
+                  ) : (
+                    subscribers.map((sub) => (
+                      <ProfileHoverCard
+                        key={sub.id || sub.userId}
+                        user={sub.user}
+                        workspaceName={workspace?.name}
+                        status={user?.id === sub.user?.id ? 'online' : 'offline'}
+                      >
+                        <div className="cursor-pointer" title={sub.user?.name || sub.user?.email}>
+                          <UserAvatar user={sub.user} size="xs" showStatus={false} />
+                        </div>
+                      </ProfileHoverCard>
+                    ))
+                  )}
+                </div>
               </div>
             </div>
           </div>

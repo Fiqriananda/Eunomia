@@ -236,6 +236,7 @@ let MobileService = class MobileService {
                 where: { workspaceId: wsId, assigneeId: userId, isArchived: false, status: { not: TaskStatus.DONE } },
                 include: {
                     project: { select: { id: true, name: true, key: true, color: true } },
+                    cycle: { select: { id: true, number: true, name: true, status: true } },
                     assignee: { select: { id: true, name: true, avatarUrl: true } },
                     subTasks: { select: { id: true, status: true } },
                     _count: { select: { comments: true, attachments: true } },

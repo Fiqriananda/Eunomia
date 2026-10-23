@@ -239,14 +239,41 @@ export class TasksController {
   }
 
   @Post(':id/comments')
-  @ApiOperation({ summary: 'Post comment on task' })
+  @ApiOperation({ summary: 'Post comment on task (supports threaded replies)' })
   @ApiParam({ name: 'id', description: 'Task ID' })
   async addComment(
     @Param('id') taskId: string,
     @CurrentUser('id') userId: string,
-    @Body() body: { content: string },
+    @Body() body: { content: string; parentId?: string },
   ) {
-    return this.tasksService.addComment(taskId, userId, body.content);
+    return this.tasksService.addComment(taskId, userId, body.content, body.parentId);
+  }
+
+  @Post(':id/subscribe')
+  @ApiOperation({ summary: 'Subscribe to task updates' })
+  @ApiParam({ name: 'id', description: 'Task ID' })
+  async subscribeToTask(
+    @Param('id') taskId: string,
+    @CurrentUser('id') userId: string,
+  ) {
+    return this.tasksService.subscribeToTask(taskId, userId);
+  }
+
+  @Delete(':id/subscribe')
+  @ApiOperation({ summary: 'Unsubscribe from task updates' })
+  @ApiParam({ name: 'id', description: 'Task ID' })
+  async unsubscribeFromTask(
+    @Param('id') taskId: string,
+    @CurrentUser('id') userId: string,
+  ) {
+    return this.tasksService.unsubscribeFromTask(taskId, userId);
+  }
+
+  @Get(':id/subscribers')
+  @ApiOperation({ summary: 'Get subscribers of a task' })
+  @ApiParam({ name: 'id', description: 'Task ID' })
+  async getTaskSubscribers(@Param('id') taskId: string) {
+    return this.tasksService.getTaskSubscribers(taskId);
   }
 
   @Patch(':id/comments/:commentId')

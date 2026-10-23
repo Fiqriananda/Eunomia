@@ -161,6 +161,16 @@ export declare class MobileService {
                 name: string;
                 avatarUrl: string | null;
             };
+            parent: {
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                id: string;
+                content: string;
+            } | null;
             reactions: ({
                 user: {
                     id: string;
@@ -175,6 +185,36 @@ export declare class MobileService {
                 emoji: string;
                 commentId: string;
             })[];
+            replies: ({
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                reactions: ({
+                    user: {
+                        id: string;
+                        email: string;
+                        name: string;
+                        avatarUrl: string | null;
+                    };
+                } & {
+                    id: string;
+                    createdAt: Date;
+                    userId: string;
+                    emoji: string;
+                    commentId: string;
+                })[];
+            } & {
+                id: string;
+                createdAt: Date;
+                updatedAt: Date;
+                userId: string;
+                content: string;
+                taskId: string;
+                parentId: string | null;
+            })[];
         } & {
             id: string;
             createdAt: Date;
@@ -182,6 +222,7 @@ export declare class MobileService {
             userId: string;
             content: string;
             taskId: string;
+            parentId: string | null;
         })[];
         activities: ({
             user: {
@@ -326,6 +367,19 @@ export declare class MobileService {
             userId: string;
             taskId: string;
             emoji: string;
+        })[];
+        subscribers: ({
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            userId: string;
+            taskId: string;
         })[];
     } & {
         id: string;
@@ -370,6 +424,16 @@ export declare class MobileService {
                 name: string;
                 avatarUrl: string | null;
             };
+            parent: {
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                id: string;
+                content: string;
+            } | null;
             reactions: ({
                 user: {
                     id: string;
@@ -384,6 +448,36 @@ export declare class MobileService {
                 emoji: string;
                 commentId: string;
             })[];
+            replies: ({
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                reactions: ({
+                    user: {
+                        id: string;
+                        email: string;
+                        name: string;
+                        avatarUrl: string | null;
+                    };
+                } & {
+                    id: string;
+                    createdAt: Date;
+                    userId: string;
+                    emoji: string;
+                    commentId: string;
+                })[];
+            } & {
+                id: string;
+                createdAt: Date;
+                updatedAt: Date;
+                userId: string;
+                content: string;
+                taskId: string;
+                parentId: string | null;
+            })[];
         } & {
             id: string;
             createdAt: Date;
@@ -391,6 +485,7 @@ export declare class MobileService {
             userId: string;
             content: string;
             taskId: string;
+            parentId: string | null;
         })[];
         activities: ({
             user: {
@@ -535,6 +630,19 @@ export declare class MobileService {
             userId: string;
             taskId: string;
             emoji: string;
+        })[];
+        subscribers: ({
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            userId: string;
+            taskId: string;
         })[];
     } & {
         id: string;
@@ -579,6 +687,16 @@ export declare class MobileService {
                 name: string;
                 avatarUrl: string | null;
             };
+            parent: {
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                id: string;
+                content: string;
+            } | null;
             reactions: ({
                 user: {
                     id: string;
@@ -593,6 +711,36 @@ export declare class MobileService {
                 emoji: string;
                 commentId: string;
             })[];
+            replies: ({
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                reactions: ({
+                    user: {
+                        id: string;
+                        email: string;
+                        name: string;
+                        avatarUrl: string | null;
+                    };
+                } & {
+                    id: string;
+                    createdAt: Date;
+                    userId: string;
+                    emoji: string;
+                    commentId: string;
+                })[];
+            } & {
+                id: string;
+                createdAt: Date;
+                updatedAt: Date;
+                userId: string;
+                content: string;
+                taskId: string;
+                parentId: string | null;
+            })[];
         } & {
             id: string;
             createdAt: Date;
@@ -600,6 +748,7 @@ export declare class MobileService {
             userId: string;
             content: string;
             taskId: string;
+            parentId: string | null;
         })[];
         activities: ({
             user: {
@@ -744,6 +893,19 @@ export declare class MobileService {
             userId: string;
             taskId: string;
             emoji: string;
+        })[];
+        subscribers: ({
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            userId: string;
+            taskId: string;
         })[];
     } & {
         id: string;
@@ -788,6 +950,16 @@ export declare class MobileService {
                 name: string;
                 avatarUrl: string | null;
             };
+            parent: {
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                id: string;
+                content: string;
+            } | null;
             reactions: ({
                 user: {
                     id: string;
@@ -802,6 +974,36 @@ export declare class MobileService {
                 emoji: string;
                 commentId: string;
             })[];
+            replies: ({
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                reactions: ({
+                    user: {
+                        id: string;
+                        email: string;
+                        name: string;
+                        avatarUrl: string | null;
+                    };
+                } & {
+                    id: string;
+                    createdAt: Date;
+                    userId: string;
+                    emoji: string;
+                    commentId: string;
+                })[];
+            } & {
+                id: string;
+                createdAt: Date;
+                updatedAt: Date;
+                userId: string;
+                content: string;
+                taskId: string;
+                parentId: string | null;
+            })[];
         } & {
             id: string;
             createdAt: Date;
@@ -809,6 +1011,7 @@ export declare class MobileService {
             userId: string;
             content: string;
             taskId: string;
+            parentId: string | null;
         })[];
         activities: ({
             user: {
@@ -953,6 +1156,19 @@ export declare class MobileService {
             userId: string;
             taskId: string;
             emoji: string;
+        })[];
+        subscribers: ({
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            userId: string;
+            taskId: string;
         })[];
     } & {
         id: string;
@@ -997,6 +1213,16 @@ export declare class MobileService {
                 name: string;
                 avatarUrl: string | null;
             };
+            parent: {
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                id: string;
+                content: string;
+            } | null;
             reactions: ({
                 user: {
                     id: string;
@@ -1011,6 +1237,36 @@ export declare class MobileService {
                 emoji: string;
                 commentId: string;
             })[];
+            replies: ({
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                reactions: ({
+                    user: {
+                        id: string;
+                        email: string;
+                        name: string;
+                        avatarUrl: string | null;
+                    };
+                } & {
+                    id: string;
+                    createdAt: Date;
+                    userId: string;
+                    emoji: string;
+                    commentId: string;
+                })[];
+            } & {
+                id: string;
+                createdAt: Date;
+                updatedAt: Date;
+                userId: string;
+                content: string;
+                taskId: string;
+                parentId: string | null;
+            })[];
         } & {
             id: string;
             createdAt: Date;
@@ -1018,6 +1274,7 @@ export declare class MobileService {
             userId: string;
             content: string;
             taskId: string;
+            parentId: string | null;
         })[];
         activities: ({
             user: {
@@ -1162,6 +1419,19 @@ export declare class MobileService {
             userId: string;
             taskId: string;
             emoji: string;
+        })[];
+        subscribers: ({
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            userId: string;
+            taskId: string;
         })[];
     } & {
         id: string;
@@ -1206,6 +1476,16 @@ export declare class MobileService {
                 name: string;
                 avatarUrl: string | null;
             };
+            parent: {
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                id: string;
+                content: string;
+            } | null;
             reactions: ({
                 user: {
                     id: string;
@@ -1220,6 +1500,36 @@ export declare class MobileService {
                 emoji: string;
                 commentId: string;
             })[];
+            replies: ({
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                reactions: ({
+                    user: {
+                        id: string;
+                        email: string;
+                        name: string;
+                        avatarUrl: string | null;
+                    };
+                } & {
+                    id: string;
+                    createdAt: Date;
+                    userId: string;
+                    emoji: string;
+                    commentId: string;
+                })[];
+            } & {
+                id: string;
+                createdAt: Date;
+                updatedAt: Date;
+                userId: string;
+                content: string;
+                taskId: string;
+                parentId: string | null;
+            })[];
         } & {
             id: string;
             createdAt: Date;
@@ -1227,6 +1537,7 @@ export declare class MobileService {
             userId: string;
             content: string;
             taskId: string;
+            parentId: string | null;
         })[];
         activities: ({
             user: {
@@ -1371,6 +1682,19 @@ export declare class MobileService {
             userId: string;
             taskId: string;
             emoji: string;
+        })[];
+        subscribers: ({
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            userId: string;
+            taskId: string;
         })[];
     } & {
         id: string;
@@ -1415,6 +1739,16 @@ export declare class MobileService {
                 name: string;
                 avatarUrl: string | null;
             };
+            parent: {
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                id: string;
+                content: string;
+            } | null;
             reactions: ({
                 user: {
                     id: string;
@@ -1429,6 +1763,36 @@ export declare class MobileService {
                 emoji: string;
                 commentId: string;
             })[];
+            replies: ({
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                reactions: ({
+                    user: {
+                        id: string;
+                        email: string;
+                        name: string;
+                        avatarUrl: string | null;
+                    };
+                } & {
+                    id: string;
+                    createdAt: Date;
+                    userId: string;
+                    emoji: string;
+                    commentId: string;
+                })[];
+            } & {
+                id: string;
+                createdAt: Date;
+                updatedAt: Date;
+                userId: string;
+                content: string;
+                taskId: string;
+                parentId: string | null;
+            })[];
         } & {
             id: string;
             createdAt: Date;
@@ -1436,6 +1800,7 @@ export declare class MobileService {
             userId: string;
             content: string;
             taskId: string;
+            parentId: string | null;
         })[];
         activities: ({
             user: {
@@ -1580,6 +1945,19 @@ export declare class MobileService {
             userId: string;
             taskId: string;
             emoji: string;
+        })[];
+        subscribers: ({
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            userId: string;
+            taskId: string;
         })[];
     } & {
         id: string;
@@ -1653,6 +2031,16 @@ export declare class MobileService {
                 name: string;
                 avatarUrl: string | null;
             };
+            parent: {
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                id: string;
+                content: string;
+            } | null;
             reactions: ({
                 user: {
                     id: string;
@@ -1667,6 +2055,36 @@ export declare class MobileService {
                 emoji: string;
                 commentId: string;
             })[];
+            replies: ({
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                reactions: ({
+                    user: {
+                        id: string;
+                        email: string;
+                        name: string;
+                        avatarUrl: string | null;
+                    };
+                } & {
+                    id: string;
+                    createdAt: Date;
+                    userId: string;
+                    emoji: string;
+                    commentId: string;
+                })[];
+            } & {
+                id: string;
+                createdAt: Date;
+                updatedAt: Date;
+                userId: string;
+                content: string;
+                taskId: string;
+                parentId: string | null;
+            })[];
         } & {
             id: string;
             createdAt: Date;
@@ -1674,6 +2092,7 @@ export declare class MobileService {
             userId: string;
             content: string;
             taskId: string;
+            parentId: string | null;
         })[];
         activities: ({
             user: {
@@ -1818,6 +2237,19 @@ export declare class MobileService {
             userId: string;
             taskId: string;
             emoji: string;
+        })[];
+        subscribers: ({
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            userId: string;
+            taskId: string;
         })[];
     } & {
         id: string;
@@ -1863,6 +2295,16 @@ export declare class MobileService {
                 name: string;
                 avatarUrl: string | null;
             };
+            parent: {
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                id: string;
+                content: string;
+            } | null;
             reactions: ({
                 user: {
                     id: string;
@@ -1877,6 +2319,36 @@ export declare class MobileService {
                 emoji: string;
                 commentId: string;
             })[];
+            replies: ({
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                reactions: ({
+                    user: {
+                        id: string;
+                        email: string;
+                        name: string;
+                        avatarUrl: string | null;
+                    };
+                } & {
+                    id: string;
+                    createdAt: Date;
+                    userId: string;
+                    emoji: string;
+                    commentId: string;
+                })[];
+            } & {
+                id: string;
+                createdAt: Date;
+                updatedAt: Date;
+                userId: string;
+                content: string;
+                taskId: string;
+                parentId: string | null;
+            })[];
         } & {
             id: string;
             createdAt: Date;
@@ -1884,6 +2356,7 @@ export declare class MobileService {
             userId: string;
             content: string;
             taskId: string;
+            parentId: string | null;
         })[];
         activities: ({
             user: {
@@ -2028,6 +2501,19 @@ export declare class MobileService {
             userId: string;
             taskId: string;
             emoji: string;
+        })[];
+        subscribers: ({
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            userId: string;
+            taskId: string;
         })[];
     } & {
         id: string;
@@ -2072,6 +2558,16 @@ export declare class MobileService {
                 name: string;
                 avatarUrl: string | null;
             };
+            parent: {
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                id: string;
+                content: string;
+            } | null;
             reactions: ({
                 user: {
                     id: string;
@@ -2086,6 +2582,36 @@ export declare class MobileService {
                 emoji: string;
                 commentId: string;
             })[];
+            replies: ({
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                reactions: ({
+                    user: {
+                        id: string;
+                        email: string;
+                        name: string;
+                        avatarUrl: string | null;
+                    };
+                } & {
+                    id: string;
+                    createdAt: Date;
+                    userId: string;
+                    emoji: string;
+                    commentId: string;
+                })[];
+            } & {
+                id: string;
+                createdAt: Date;
+                updatedAt: Date;
+                userId: string;
+                content: string;
+                taskId: string;
+                parentId: string | null;
+            })[];
         } & {
             id: string;
             createdAt: Date;
@@ -2093,6 +2619,7 @@ export declare class MobileService {
             userId: string;
             content: string;
             taskId: string;
+            parentId: string | null;
         })[];
         activities: ({
             user: {
@@ -2238,6 +2765,19 @@ export declare class MobileService {
             taskId: string;
             emoji: string;
         })[];
+        subscribers: ({
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            userId: string;
+            taskId: string;
+        })[];
     } & {
         id: string;
         createdAt: Date;
@@ -2269,6 +2809,16 @@ export declare class MobileService {
             name: string;
             avatarUrl: string | null;
         };
+        parent: {
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+            id: string;
+            content: string;
+        } | null;
     } & {
         id: string;
         createdAt: Date;
@@ -2276,6 +2826,7 @@ export declare class MobileService {
         userId: string;
         content: string;
         taskId: string;
+        parentId: string | null;
     }>;
     updateComment(userId: string, commentId: string, content: string): Promise<{
         user: {
@@ -2291,6 +2842,7 @@ export declare class MobileService {
         userId: string;
         content: string;
         taskId: string;
+        parentId: string | null;
     }>;
     deleteComment(userId: string, commentId: string): Promise<{
         id: string;
@@ -2299,6 +2851,7 @@ export declare class MobileService {
         userId: string;
         content: string;
         taskId: string;
+        parentId: string | null;
     }>;
     toggleTaskReaction(userId: string, taskId: string, emoji: string): Promise<{
         action: string;
@@ -2407,6 +2960,16 @@ export declare class MobileService {
                 name: string;
                 avatarUrl: string | null;
             };
+            parent: {
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                id: string;
+                content: string;
+            } | null;
             reactions: ({
                 user: {
                     id: string;
@@ -2421,6 +2984,36 @@ export declare class MobileService {
                 emoji: string;
                 commentId: string;
             })[];
+            replies: ({
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                reactions: ({
+                    user: {
+                        id: string;
+                        email: string;
+                        name: string;
+                        avatarUrl: string | null;
+                    };
+                } & {
+                    id: string;
+                    createdAt: Date;
+                    userId: string;
+                    emoji: string;
+                    commentId: string;
+                })[];
+            } & {
+                id: string;
+                createdAt: Date;
+                updatedAt: Date;
+                userId: string;
+                content: string;
+                taskId: string;
+                parentId: string | null;
+            })[];
         } & {
             id: string;
             createdAt: Date;
@@ -2428,6 +3021,7 @@ export declare class MobileService {
             userId: string;
             content: string;
             taskId: string;
+            parentId: string | null;
         })[];
         activities: ({
             user: {
@@ -2572,6 +3166,19 @@ export declare class MobileService {
             userId: string;
             taskId: string;
             emoji: string;
+        })[];
+        subscribers: ({
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            userId: string;
+            taskId: string;
         })[];
     } & {
         id: string;

@@ -571,6 +571,314 @@ let EmailService = EmailService_1 = class EmailService {
             text: `${data.actorName} invited you to join ${data.workspaceName} on Eunomia.\n\nAccept invitation: ${acceptUrl}`,
         });
     }
+    async sendCommentReplyNotification(data) {
+        const taskUrl = `${this.frontendUrl}/issue/${data.taskId}`;
+        const subject = `${data.actorName} replied to your comment on [${data.taskIdentifier}] ${data.taskTitle}`;
+        const formattedReply = data.replyContent
+            .replace(/@([a-zA-Z0-9_\s]+)/g, '<span style="color: #5e6ad2; font-weight: 600;">@$1</span>')
+            .replace(/\n/g, '<br/>');
+        const formattedParent = (data.parentCommentContent || '')
+            .slice(0, 160)
+            .replace(/\n/g, ' ');
+        const actorInitials = (data.actorName || 'U')
+            .split(' ')
+            .map((n) => n[0])
+            .slice(0, 2)
+            .join('')
+            .toUpperCase();
+        const html = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${subject}</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f6f7f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f6f7f9; padding: 40px 16px;">
+    <tr>
+      <td align="center">
+        <!-- Main Card Container -->
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width: 580px; background-color: #ffffff; border-radius: 12px; border: 1px solid #e5e7eb; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04); overflow: hidden;">
+          
+          <!-- Card Header & Logo -->
+          <tr>
+            <td style="padding: 36px 36px 20px 36px;">
+              <table cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td style="vertical-align: middle;">
+                    <div style="width: 26px; height: 26px; background-color: #12131a; border-radius: 6px; text-align: center; line-height: 26px; color: #ffffff; font-weight: 800; font-size: 14px; font-family: sans-serif;">
+                      ▲
+                    </div>
+                  </td>
+                  <td style="vertical-align: middle; padding-left: 10px;">
+                    <span style="font-size: 17px; font-weight: 700; color: #111827; letter-spacing: -0.3px;">Eunomia</span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Main Title -->
+          <tr>
+            <td style="padding: 0 36px 20px 36px;">
+              <h1 style="margin: 0; font-size: 22px; font-weight: 700; color: #111827; line-height: 1.35; letter-spacing: -0.4px;">
+                New reply to your comment
+              </h1>
+            </td>
+          </tr>
+
+          <!-- Issue Identifier & Title -->
+          <tr>
+            <td style="padding: 0 36px 14px 36px;">
+              <div style="font-size: 14px; line-height: 1.5; color: #374151;">
+                <span style="font-weight: 600; color: #6b7280; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace; letter-spacing: -0.2px;">${data.taskIdentifier}</span>
+                <span style="font-weight: 600; color: #111827; margin-left: 6px;">${data.taskTitle}</span>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Actor & Action Row -->
+          <tr>
+            <td style="padding: 0 36px 14px 36px;">
+              <table cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td style="vertical-align: middle;">
+                    <div style="width: 24px; height: 24px; border-radius: 50%; background-color: #6366f1; color: #ffffff; font-size: 10px; font-weight: 700; text-align: center; line-height: 24px;">
+                      ${actorInitials}
+                    </div>
+                  </td>
+                  <td style="vertical-align: middle; padding-left: 10px; font-size: 13px; color: #4b5563;">
+                    <strong style="color: #111827; font-weight: 600;">${data.actorName}</strong>
+                    <span style="color: #4b5563;"> replied to your comment:</span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Original Comment Quote (Snippet) -->
+          <tr>
+            <td style="padding: 0 36px 12px 36px;">
+              <div style="padding: 10px 14px; background-color: #f9fafb; border-left: 3px solid #d1d5db; border-radius: 0 6px 6px 0; font-size: 12px; color: #6b7280; font-style: italic; line-height: 1.4;">
+                "${formattedParent}${data.parentCommentContent && data.parentCommentContent.length > 160 ? '...' : ''}"
+              </div>
+            </td>
+          </tr>
+
+          <!-- New Reply Body -->
+          <tr>
+            <td style="padding: 0 36px 24px 36px;">
+              <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid #6366f1; border-radius: 0 8px 8px 0; padding: 14px 16px; font-size: 14px; line-height: 1.6; color: #1e293b;">
+                ${formattedReply}
+              </div>
+            </td>
+          </tr>
+
+          <!-- Action Button -->
+          <tr>
+            <td style="padding: 0 36px 36px 36px;">
+              <table cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td style="border-radius: 6px; background-color: #5e6ad2; text-align: center;">
+                    <a href="${taskUrl}" style="background-color: #5e6ad2; border: 1px solid #5e6ad2; border-radius: 6px; color: #ffffff; display: inline-block; font-size: 13px; font-weight: 600; padding: 10px 22px; text-decoration: none; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);">
+                      Reply or view task
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Divider -->
+          <tr>
+            <td style="padding: 0 36px;">
+              <hr style="border: none; border-top: 1px solid #f3f4f6; margin: 0;" />
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 24px 36px 36px 36px;">
+              <p style="margin: 0; font-size: 12px; color: #9ca3af; line-height: 1.5;">
+                This notification was sent to <a href="mailto:${data.recipientEmail}" style="color: #6b7280; text-decoration: none;">${data.recipientEmail}</a> because you were replied to on issue ${data.taskIdentifier}.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+    `;
+        this.saveLocalEmailPreview(html);
+        return await this.dispatchEmail({
+            to: data.recipientEmail,
+            subject,
+            html,
+            text: `${data.actorName} replied to your comment on [${data.taskIdentifier}] ${data.taskTitle}:\n\n"${data.replyContent}"\n\nView task: ${taskUrl}`,
+        });
+    }
+    async sendTaskUpdateNotification(data) {
+        const taskUrl = `${this.frontendUrl}/issue/${data.taskId}`;
+        const subject = `[Update] ${data.actorName} updated [${data.taskIdentifier}] ${data.taskTitle}`;
+        const actorInitials = (data.actorName || 'U')
+            .split(' ')
+            .map((n) => n[0])
+            .slice(0, 2)
+            .join('')
+            .toUpperCase();
+        const changesListHtml = data.changes && data.changes.length > 0
+            ? data.changes
+                .map((c) => `
+            <tr style="border-bottom: 1px solid #f1f5f9;">
+              <td style="padding: 8px 12px; font-size: 12px; font-weight: 600; color: #475569; text-transform: capitalize; width: 110px;">
+                ${c.field}
+              </td>
+              <td style="padding: 8px 12px; font-size: 12px; color: #64748b;">
+                ${c.from ? `<span style="text-decoration: line-through; color: #94a3b8; margin-right: 6px;">${c.from}</span> &rarr; ` : ''}
+                <span style="font-weight: 600; color: #0f172a;">${c.to || 'Updated'}</span>
+              </td>
+            </tr>`)
+                .join('')
+            : `
+        <tr>
+          <td style="padding: 10px 12px; font-size: 13px; color: #334155;">
+            ${data.changeTitle}
+          </td>
+        </tr>`;
+        const html = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${subject}</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f6f7f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f6f7f9; padding: 40px 16px;">
+    <tr>
+      <td align="center">
+        <!-- Main Card Container -->
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width: 580px; background-color: #ffffff; border-radius: 12px; border: 1px solid #e5e7eb; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04); overflow: hidden;">
+          
+          <!-- Card Header & Logo -->
+          <tr>
+            <td style="padding: 36px 36px 20px 36px;">
+              <table cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td style="vertical-align: middle;">
+                    <div style="width: 26px; height: 26px; background-color: #12131a; border-radius: 6px; text-align: center; line-height: 26px; color: #ffffff; font-weight: 800; font-size: 14px; font-family: sans-serif;">
+                      ▲
+                    </div>
+                  </td>
+                  <td style="vertical-align: middle; padding-left: 10px;">
+                    <span style="font-size: 17px; font-weight: 700; color: #111827; letter-spacing: -0.3px;">Eunomia</span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Main Title -->
+          <tr>
+            <td style="padding: 0 36px 20px 36px;">
+              <h1 style="margin: 0; font-size: 22px; font-weight: 700; color: #111827; line-height: 1.35; letter-spacing: -0.4px;">
+                Task update on an issue you subscribed to
+              </h1>
+            </td>
+          </tr>
+
+          <!-- Issue Identifier & Title -->
+          <tr>
+            <td style="padding: 0 36px 14px 36px;">
+              <div style="font-size: 14px; line-height: 1.5; color: #374151;">
+                <span style="font-weight: 600; color: #6b7280; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace; letter-spacing: -0.2px;">${data.taskIdentifier}</span>
+                <span style="font-weight: 600; color: #111827; margin-left: 6px;">${data.taskTitle}</span>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Actor & Action Row -->
+          <tr>
+            <td style="padding: 0 36px 16px 36px;">
+              <table cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td style="vertical-align: middle;">
+                    <div style="width: 24px; height: 24px; border-radius: 50%; background-color: #0284c7; color: #ffffff; font-size: 10px; font-weight: 700; text-align: center; line-height: 24px;">
+                      ${actorInitials}
+                    </div>
+                  </td>
+                  <td style="vertical-align: middle; padding-left: 10px; font-size: 13px; color: #4b5563;">
+                    <strong style="color: #111827; font-weight: 600;">${data.actorName}</strong> made changes to this task:
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Changes Table -->
+          <tr>
+            <td style="padding: 0 36px 24px 36px;">
+              <div style="border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; background-color: #f8fafc;">
+                <div style="background-color: #f1f5f9; padding: 8px 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; border-bottom: 1px solid #e2e8f0;">
+                  ${data.changeTitle}
+                </div>
+                <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                  ${changesListHtml}
+                </table>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Action Button -->
+          <tr>
+            <td style="padding: 0 36px 36px 36px;">
+              <table cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td style="border-radius: 6px; background-color: #5e6ad2; text-align: center;">
+                    <a href="${taskUrl}" style="background-color: #5e6ad2; border: 1px solid #5e6ad2; border-radius: 6px; color: #ffffff; display: inline-block; font-size: 13px; font-weight: 600; padding: 10px 22px; text-decoration: none; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);">
+                      View updated task
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Divider -->
+          <tr>
+            <td style="padding: 0 36px;">
+              <hr style="border: none; border-top: 1px solid #f3f4f6; margin: 0;" />
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 24px 36px 36px 36px;">
+              <p style="margin: 0; font-size: 12px; color: #9ca3af; line-height: 1.5;">
+                This notification was sent to <a href="mailto:${data.recipientEmail}" style="color: #6b7280; text-decoration: none;">${data.recipientEmail}</a> because you are subscribed to task ${data.taskIdentifier}.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+    `;
+        this.saveLocalEmailPreview(html);
+        return await this.dispatchEmail({
+            to: data.recipientEmail,
+            subject,
+            html,
+            text: `${data.actorName} updated [${data.taskIdentifier}] ${data.taskTitle}: ${data.changeTitle}\n\nView task: ${taskUrl}`,
+        });
+    }
     async dispatchEmail(options) {
         const resendApiKey = this.configService.get('RESEND_API_KEY');
         if (resendApiKey) {

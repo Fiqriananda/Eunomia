@@ -22,6 +22,8 @@ import {
   Shield,
   X,
   Mail,
+  CornerDownRight,
+  Activity,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Button } from '../ui/button';
@@ -36,7 +38,7 @@ export function InboxView({ onUnreadCountChange }: InboxViewProps) {
   const [notifications, setNotifications] = useState<InboxNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<'all' | 'unread' | 'invitations' | 'assigned' | 'mentioned'>('all');
+  const [filter, setFilter] = useState<'all' | 'unread' | 'invitations' | 'assigned' | 'mentioned' | 'replies' | 'updates'>('all');
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
 
   const fetchInbox = useCallback(async () => {
@@ -212,6 +214,8 @@ export function InboxView({ onUnreadCountChange }: InboxViewProps) {
     if (filter === 'invitations') return n.type === 'WORKSPACE_INVITATION';
     if (filter === 'assigned') return n.type === 'ASSIGNED';
     if (filter === 'mentioned') return n.type === 'MENTIONED';
+    if (filter === 'replies') return n.type === 'COMMENT_REPLY';
+    if (filter === 'updates') return n.type === 'TASK_UPDATE';
     return true;
   });
 
@@ -235,7 +239,7 @@ export function InboxView({ onUnreadCountChange }: InboxViewProps) {
               )}
             </div>
             <p className="text-[11px] text-zinc-400">
-              Workspace invitations and updates for tasks you are assigned or mentioned in
+              Workspace invitations, replies, and updates for tasks you are assigned or subscribed to
             </p>
           </div>
         </div>
@@ -267,6 +271,28 @@ export function InboxView({ onUnreadCountChange }: InboxViewProps) {
               {unreadCount > 0 && (
                 <span className="w-1.5 h-1.5 rounded-full bg-indigo-400" />
               )}
+            </button>
+            <button
+              onClick={() => setFilter('replies')}
+              className={cn(
+                'px-2.5 py-1 rounded-md transition-all font-medium',
+                filter === 'replies'
+                  ? 'bg-secondary text-white shadow-sm'
+                  : 'text-zinc-400 hover:text-white',
+              )}
+            >
+              Replies
+            </button>
+            <button
+              onClick={() => setFilter('updates')}
+              className={cn(
+                'px-2.5 py-1 rounded-md transition-all font-medium',
+                filter === 'updates'
+                  ? 'bg-secondary text-white shadow-sm'
+                  : 'text-zinc-400 hover:text-white',
+              )}
+            >
+              Task Updates
             </button>
             <button
               onClick={() => setFilter('invitations')}
@@ -351,6 +377,8 @@ export function InboxView({ onUnreadCountChange }: InboxViewProps) {
             {filteredNotifications.map((notif) => {
               const isInvitation = notif.type === 'WORKSPACE_INVITATION';
               const isAssigned = notif.type === 'ASSIGNED';
+              const isReply = notif.type === 'COMMENT_REPLY';
+              const isUpdate = notif.type === 'TASK_UPDATE';
               const isDeclined = notif.invitation?.status === 'DECLINED';
               const isAccepted = notif.invitation?.status === 'ACCEPTED';
               const isActionLoading = actionLoadingId === notif.id;
@@ -379,6 +407,10 @@ export function InboxView({ onUnreadCountChange }: InboxViewProps) {
                           ? 'bg-indigo-500/20 border-indigo-500/40 text-indigo-400'
                           : isAssigned
                           ? 'bg-sky-500/15 border-sky-500/30 text-sky-400'
+                          : isReply
+                          ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400'
+                          : isUpdate
+                          ? 'bg-amber-500/15 border-amber-500/30 text-amber-400'
                           : 'bg-purple-500/15 border-purple-500/30 text-purple-400',
                       )}
                     >
@@ -386,6 +418,10 @@ export function InboxView({ onUnreadCountChange }: InboxViewProps) {
                         <Building2 className="w-4 h-4" />
                       ) : isAssigned ? (
                         <UserCheck className="w-4 h-4" />
+                      ) : isReply ? (
+                        <CornerDownRight className="w-4 h-4" />
+                      ) : isUpdate ? (
+                        <Activity className="w-4 h-4" />
                       ) : (
                         <AtSign className="w-4 h-4" />
                       )}
@@ -423,6 +459,10 @@ export function InboxView({ onUnreadCountChange }: InboxViewProps) {
                           ? 'invited you to join'
                           : isAssigned
                           ? 'assigned you to'
+                          : isReply
+                          ? 'replied to your comment on'
+                          : isUpdate
+                          ? 'updated subscribed task'
                           : 'mentioned you on'}
                       </span>
 

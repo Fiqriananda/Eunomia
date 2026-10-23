@@ -1,0 +1,7 @@
+{
+  "name": "my-project",
+  "workspaces": ["frontend", "backend"],
+  "scripts": {
+    "dev:all": "bunx concurrently \"cd frontend && bun run dev\" \"cd backend && bun run start:dev\""
+  }
+}
