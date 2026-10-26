@@ -1285,9 +1285,17 @@ export function TaskDetailModal({
               </button>
 
               <div className="hidden sm:flex items-center gap-1.5 shrink-0 text-zinc-300 font-medium">
-                <span className="w-4 h-4 rounded bg-[#5e6ad2] text-[10px] text-white flex items-center justify-center font-bold">
-                  {workspace?.name?.[0] || 'L'}
-                </span>
+                {workspace?.logoUrl ? (
+                  <img
+                    src={resolveMediaUrl(workspace.logoUrl)}
+                    alt={workspace?.name || 'Workspace'}
+                    className="w-4 h-4 rounded object-cover shrink-0"
+                  />
+                ) : (
+                  <span className="w-4 h-4 rounded bg-[#5e6ad2] text-[10px] text-white flex items-center justify-center font-bold">
+                    {workspace?.name?.[0] || 'L'}
+                  </span>
+                )}
                 <span>{workspace?.name || 'Workspace'}</span>
               </div>
 

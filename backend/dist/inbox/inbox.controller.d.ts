@@ -17,8 +17,8 @@ export declare class InboxController {
                     color: string | null;
                 };
                 id: string;
-                title: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
+                title: string;
                 identifier: string;
                 priority: import("@prisma/client").$Enums.TaskPriority;
             } | null;
@@ -53,8 +53,8 @@ export declare class InboxController {
     markAsRead(id: string, userId: string): Promise<{
         task: {
             id: string;
-            title: string;
             status: import("@prisma/client").$Enums.TaskStatus;
+            title: string;
             identifier: string;
         } | null;
         actor: {

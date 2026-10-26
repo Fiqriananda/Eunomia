@@ -19,7 +19,7 @@ import {
 import { TasksService } from './tasks.service.js';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard.js';
 import { CurrentUser } from '../auth/current-user.decorator.js';
-import { TaskStatus, TaskPriority } from '@prisma/client';
+import { TaskStatus, TaskPriority, TriageStatus } from '@prisma/client';
 
 @ApiTags('Tasks')
 @ApiBearerAuth('JWT-auth')
@@ -29,7 +29,7 @@ export class TasksController {
   constructor(private readonly tasksService: TasksService) {}
 
   @Get()
-  @ApiOperation({ summary: 'Get list of tasks with filters (including cycles and archived trash)' })
+  @ApiOperation({ summary: 'Get list of tasks with filters (including cycles, divisions, and archived trash)' })
   @ApiQuery({ name: 'workspaceId', required: true, description: 'Workspace ID' })
   @ApiQuery({ name: 'projectId', required: false, description: 'Filter by project' })
   @ApiQuery({ name: 'cycleId', required: false, description: 'Filter by cycle/sprint' })
@@ -39,6 +39,10 @@ export class TasksController {
   @ApiQuery({ name: 'search', required: false, description: 'Text search' })
   @ApiQuery({ name: 'parentId', required: false, description: 'Parent task ID' })
   @ApiQuery({ name: 'archived', required: false, description: 'Set to "true" to view trash / archived tasks' })
+  @ApiQuery({ name: 'requesterDivisionId', required: false, description: 'Filter by requester division' })
+  @ApiQuery({ name: 'assignedDivisionId', required: false, description: 'Filter by assigned division' })
+  @ApiQuery({ name: 'triageStatus', required: false, description: 'Filter by triage status' })
+  @ApiQuery({ name: 'includePendingTriage', required: false, description: 'Include pending triage requests' })
   async getTasks(
     @Query('workspaceId') workspaceId: string,
     @Query('projectId') projectId?: string,
@@ -49,6 +53,10 @@ export class TasksController {
     @Query('search') search?: string,
     @Query('parentId') parentId?: string,
     @Query('archived') archived?: string,
+    @Query('requesterDivisionId') requesterDivisionId?: string,
+    @Query('assignedDivisionId') assignedDivisionId?: string,
+    @Query('triageStatus') triageStatus?: TriageStatus | 'ALL',
+    @Query('includePendingTriage') includePendingTriage?: string,
   ) {
     return this.tasksService.getTasks({
       workspaceId,
@@ -60,6 +68,66 @@ export class TasksController {
       search,
       parentId,
       archived,
+      requesterDivisionId,
+      assignedDivisionId,
+      triageStatus,
+      includePendingTriage,
+    });
+  }
+
+  @Get('triage')
+  @ApiOperation({ summary: 'Get incoming intake requests waiting for triage review' })
+  @ApiQuery({ name: 'workspaceId', required: true, description: 'Workspace ID' })
+  async getTriageRequests(
+    @Query('workspaceId') workspaceId: string,
+    @CurrentUser('id') userId: string,
+  ) {
+    return this.tasksService.getTriageRequests(workspaceId, userId);
+  }
+
+  @Post('intake')
+  @ApiOperation({ summary: 'Submit an intake request from a division' })
+  async createIntakeRequest(
+    @CurrentUser('id') userId: string,
+    @Body()
+    body: {
+      workspaceId: string;
+      title: string;
+      requesterDivisionId?: string;
+      customDivisionName?: string;
+      description: string;
+      urgency?: 'LOW' | 'MEDIUM' | 'HIGH';
+      targetDeadline?: string;
+      assetLinks?: string;
+      businessObjective?: string;
+      targetAudience?: string;
+    },
+  ) {
+    return this.tasksService.createIntakeRequest(userId, body);
+  }
+
+  @Patch(':id/triage')
+  @ApiOperation({ summary: 'Approve or reject a request in triage review' })
+  @ApiParam({ name: 'id', description: 'Task ID' })
+  async updateTriageStatus(
+    @Param('id') taskId: string,
+    @CurrentUser('id') userId: string,
+    @Body()
+    body: {
+      action: 'APPROVE' | 'REJECT' | 'RESUBMIT';
+      priority?: TaskPriority;
+      estimate?: number;
+      cycleId?: string | null;
+      status?: TaskStatus;
+      comment?: string;
+    },
+  ) {
+    return this.tasksService.updateTriageStatus(taskId, userId, body.action, {
+      priority: body.priority,
+      estimate: body.estimate,
+      cycleId: body.cycleId,
+      status: body.status,
+      comment: body.comment,
     });
   }
 

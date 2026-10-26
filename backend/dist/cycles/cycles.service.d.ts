@@ -79,8 +79,8 @@ export declare class CyclesService {
             updatedAt: Date;
             description: string | null;
             workspaceId: string;
-            title: string;
             status: import("@prisma/client").$Enums.TaskStatus;
+            title: string;
             order: number;
             customStatus: string | null;
             identifier: string;
@@ -90,10 +90,14 @@ export declare class CyclesService {
             estimate: number | null;
             isArchived: boolean;
             deletedAt: Date | null;
+            triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
+            externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
             projectId: string;
             cycleId: string | null;
             creatorId: string;
             assigneeId: string | null;
+            requesterDivisionId: string | null;
+            assignedDivisionId: string | null;
             parentId: string | null;
         })[];
         number: number;

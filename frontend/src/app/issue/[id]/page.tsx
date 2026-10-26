@@ -24,6 +24,8 @@ import {
   MoreHorizontal,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
   Paperclip,
   MessageSquare,
   Send,
@@ -53,6 +55,9 @@ import {
   BellRing,
   CornerDownRight,
   ArrowUp,
+  Building2,
+  History,
+  AlertCircle,
 } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
 import { api } from '../../../lib/api';
@@ -235,7 +240,12 @@ function IssueDetailContent() {
   // UI state
   const [copiedLink, setCopiedLink] = useState(false);
   const [copiedBranch, setCopiedBranch] = useState(false);
+  const [copiedId, setCopiedId] = useState(false);
+  const [isCommentsCollapsed, setIsCommentsCollapsed] = useState(false);
+  const [showActivities, setShowActivities] = useState(false);
+  const [isResubmitting, setIsResubmitting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
 
   // Mention Tagging State
@@ -243,6 +253,7 @@ function IssueDetailContent() {
   const [mentionIndex, setMentionIndex] = useState<number>(0);
   const [mentionCursorPos, setMentionCursorPos] = useState<number>(-1);
   const commentTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const mainCommentFileInputRef = useRef<HTMLInputElement>(null);
 
   // Edit Comment Mention Tagging State
   const editCommentTextareaRef = useRef<HTMLTextAreaElement>(null);
@@ -976,6 +987,29 @@ function IssueDetailContent() {
     }
   };
 
+  const handleCopyId = () => {
+    if (!task) return;
+    if (typeof window !== 'undefined') {
+      navigator.clipboard.writeText(task.identifier);
+      setCopiedId(true);
+      setTimeout(() => setCopiedId(false), 2000);
+    }
+  };
+
+  const uniqueCommenters = useMemo(() => {
+    const map = new Map<string, { id: string; name: string; avatarUrl?: string | null }>();
+    comments.forEach((c) => {
+      if (c.user && !map.has(c.user.id)) {
+        map.set(c.user.id, {
+          id: c.user.id,
+          name: c.user.name || 'User',
+          avatarUrl: c.user.avatarUrl || undefined,
+        });
+      }
+    });
+    return Array.from(map.values());
+  }, [comments]);
+
   const handleCopyBranch = () => {
     if (!task) return;
     const cleanTitle = (task.title || 'issue')
@@ -1448,6 +1482,26 @@ function IssueDetailContent() {
     }
   };
 
+  const handleResubmitRequest = async (overrideComment?: string) => {
+    if (!task || isResubmitting) return;
+    setIsResubmitting(true);
+    const commentToSend = typeof overrideComment === 'string' ? overrideComment : newCommentText.trim();
+    try {
+      const updated = await api.tasks.updateTriageStatus(task.id, {
+        action: 'RESUBMIT',
+        comment: commentToSend || undefined,
+      });
+      setTask(updated);
+      if (commentToSend) {
+        setNewCommentText('');
+      }
+    } catch (err) {
+      console.error('Failed to resubmit request:', err);
+    } finally {
+      setIsResubmitting(false);
+    }
+  };
+
   const handleDeleteComment = async (commentId: string) => {
     if (!task) return;
     setComments((prev) => prev.filter((c) => c.id !== commentId));
@@ -1722,41 +1776,17 @@ function IssueDetailContent() {
 
   return (
     <div className="min-h-screen bg-[#090a0f] text-foreground flex flex-col font-sans select-text">
-      {/* Top Header Bar matching user's screenshot */}
-      <header className="sticky top-0 z-40 w-full h-12 flex items-center justify-between px-4 sm:px-8 border-b border-border/60 bg-[#090a0f]/95 backdrop-blur-md select-none shrink-0">
-        {/* Left: Breadcrumbs */}
-        <div className="flex items-center gap-2 text-xs text-muted-foreground overflow-hidden">
+      {/* Top Header Bar matching Linear screenshot */}
+      <header className="sticky top-0 z-40 w-full h-11 flex items-center justify-between px-4 sm:px-6 border-b border-[#1f202b] bg-[#090a0f]/95 backdrop-blur-md select-none shrink-0">
+        {/* Left: Identifier, Title, Favorite & Menu */}
+        <div className="flex items-center gap-2.5 text-xs text-muted-foreground overflow-hidden">
           <Link
             href="/"
-            className="flex items-center gap-1.5 shrink-0 text-zinc-300 hover:text-white font-medium transition-colors"
+            className="p-1 rounded hover:bg-[#1a1b26] text-zinc-400 hover:text-white transition-colors"
+            title="Back to board (Esc)"
           >
-            <span className="w-4 h-4 rounded bg-[#5e6ad2] text-[10px] text-white flex items-center justify-center font-bold">
-              {workspace?.name?.[0] || 'L'}
-            </span>
-            <span>{workspace?.name || 'Workspace'}</span>
+            <ChevronLeft className="w-4 h-4" />
           </Link>
-
-          <span>›</span>
-
-          <Link href="/" className="shrink-0 text-zinc-400 hover:text-zinc-200 transition-colors">
-            Issues
-          </Link>
-
-          <span>›</span>
-
-          {task.parent && (
-            <>
-              <Link
-                href={`/issue/${task.parent.id}`}
-                className="shrink-0 text-zinc-400 hover:text-white transition-colors flex items-center gap-1 font-mono text-xs max-w-[160px] truncate"
-                title={task.parent.title}
-              >
-                <GitFork className="w-3 h-3 text-indigo-400 rotate-180 shrink-0" />
-                <span className="truncate">{task.parent.identifier}</span>
-              </Link>
-              <span>›</span>
-            </>
-          )}
 
           <button
             type="button"
@@ -1764,156 +1794,111 @@ function IssueDetailContent() {
               setNewPrefix(activeProject?.key || 'TJAR');
               setShowPrefixModal(true);
             }}
-            className="flex items-center gap-1 font-mono font-medium text-zinc-200 hover:text-white bg-zinc-800/60 hover:bg-zinc-800 border border-zinc-700/50 px-1.5 py-0.5 rounded text-xs transition-colors shrink-0 group cursor-pointer"
+            className="font-mono font-medium text-zinc-300 hover:text-white transition-colors shrink-0 cursor-pointer"
             title="Click to change project issue prefix (e.g. TJAR)"
           >
-            <span>{task.identifier}</span>
-            <Edit3 className="w-2.5 h-2.5 text-zinc-500 group-hover:text-indigo-400 ml-0.5" />
+            {task.identifier}
           </button>
 
-          <span className="text-zinc-500 hidden md:inline truncate max-w-[340px]">
+          <span className="text-zinc-200 font-medium hidden sm:inline truncate max-w-[340px]">
             {task.title}
           </span>
 
           <button
-            className="p-1 rounded hover:bg-secondary text-zinc-500 hover:text-amber-400 transition-colors ml-1"
+            type="button"
+            onClick={() => setIsFavorite(!isFavorite)}
+            className={cn(
+              "p-1 rounded hover:bg-[#1a1b26] transition-colors ml-0.5",
+              isFavorite ? "text-amber-400" : "text-zinc-500 hover:text-amber-400"
+            )}
             title="Favorite"
           >
-            <Star className="w-3.5 h-3.5" />
+            <Star className={cn("w-3.5 h-3.5", isFavorite && "fill-amber-400")} />
           </button>
 
           <button
-            className="p-1 rounded hover:bg-secondary text-zinc-500 hover:text-zinc-300 transition-colors"
+            type="button"
+            onClick={() => setShowDeleteConfirm(!showDeleteConfirm)}
+            className="p-1 rounded hover:bg-[#1a1b26] text-zinc-500 hover:text-zinc-300 transition-colors"
             title="More options"
           >
             <MoreHorizontal className="w-3.5 h-3.5" />
           </button>
         </div>
 
-        {/* Right: Auto-save status, Navigation, Actions & Back */}
-        <div className="flex items-center gap-2.5 shrink-0 text-xs text-muted-foreground">
-          {/* Subscribe / Watch Task Button */}
-          <button
-            type="button"
-            onClick={handleToggleSubscribe}
-            disabled={isSubscribing}
-            className={cn(
-              'flex items-center gap-1.5 px-2.5 py-1 rounded text-xs transition-all group shrink-0 border',
-              isSubscribed
-                ? 'bg-indigo-500/15 text-indigo-300 border-indigo-500/40 hover:bg-indigo-500/25'
-                : 'bg-[#161724] hover:bg-[#1f2030] text-zinc-300 hover:text-white border-[#2b2c3a]',
-            )}
-            title={isSubscribed ? 'Subscribed to task updates (Click to unsubscribe)' : 'Subscribe to task updates'}
-          >
-            {isSubscribing ? (
-              <Loader2 className="w-3.5 h-3.5 animate-spin text-indigo-400" />
-            ) : isSubscribed ? (
-              <BellRing className="w-3.5 h-3.5 text-indigo-400" />
-            ) : (
-              <Bell className="w-3.5 h-3.5 text-zinc-400 group-hover:text-white" />
-            )}
-            <span className="font-medium text-[11px]">
-              {isSubscribed ? 'Subscribed' : 'Subscribe'}
-            </span>
-            {subscribers.length > 0 && (
-              <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-indigo-500/20 text-indigo-300 font-mono">
-                {subscribers.length}
-              </span>
-            )}
-          </button>
-
-          {/* Copy Git Branch Name Button */}
-          <button
-            type="button"
-            onClick={handleCopyBranch}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#161724] hover:bg-[#1f2030] text-zinc-300 hover:text-white border border-[#2b2c3a] text-xs font-mono transition-all group shrink-0"
-            title={`Copy git branch: ${task.identifier.toLowerCase()}-${(task.title || '').toLowerCase().replace(/[^a-z0-9]+/g, '-')}`}
-          >
-            {copiedBranch ? (
-              <>
-                <Check className="w-3.5 h-3.5 text-emerald-400 stroke-[2.5]" />
-                <span className="text-emerald-400 font-sans font-medium text-[11px]">Branch copied!</span>
-              </>
-            ) : (
-              <>
-                <GitBranch className="w-3.5 h-3.5 text-indigo-400 group-hover:text-indigo-300" />
-                <span className="text-zinc-300 group-hover:text-white font-sans text-[11px]">Copy branch</span>
-              </>
-            )}
-          </button>
-
+        {/* Right: Auto-save status, Live typing, 4 minimal stroke icons (Link, Copy ID, Git, Close) */}
+        <div className="flex items-center gap-1.5 shrink-0 text-xs text-muted-foreground">
           {/* Real-time Auto-save feedback */}
           {saveStatus === 'saving' && (
-            <span className="flex items-center gap-1 text-[11px] text-zinc-400 mr-2 animate-pulse">
+            <span className="flex items-center gap-1 text-[11px] text-zinc-400 mr-1 animate-pulse">
               <Loader2 className="w-3 h-3 animate-spin text-primary" />
               <span>Saving...</span>
             </span>
           )}
           {saveStatus === 'saved' && (
-            <span className="flex items-center gap-1 text-[11px] text-emerald-400 mr-2">
+            <span className="flex items-center gap-1 text-[11px] text-emerald-400 mr-1">
               <Check className="w-3 h-3 text-emerald-400" />
               <span>Saved</span>
             </span>
           )}
 
-          {/* Live Typing Indicator in Header */}
+          {/* Live Typing Indicator */}
           {typingIndicator && (
-            <span className="inline-flex items-center gap-1.5 text-[11px] text-indigo-400 mr-2 bg-indigo-500/10 border border-indigo-500/20 px-2 py-0.5 rounded-full animate-pulse">
+            <span className="inline-flex items-center gap-1 text-[11px] text-indigo-400 mr-2 animate-pulse">
               <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-ping inline-block" />
               <span>{typingIndicator.userName} is typing...</span>
             </span>
           )}
 
-          {totalTasks > 0 && (
-            <div className="hidden sm:flex items-center gap-1 text-[11px] text-zinc-400 px-2 border-r border-border/60 mr-1">
-              <span>
-                {currentIndex + 1} / {totalTasks}
-              </span>
-              <button
-                onClick={handlePrevTask}
-                disabled={currentIndex <= 0}
-                className="p-1 rounded hover:bg-secondary disabled:opacity-30 disabled:hover:bg-transparent"
-                title="Previous issue"
-              >
-                <ChevronLeft className="w-3.5 h-3.5" />
-              </button>
-              <button
-                onClick={handleNextTask}
-                disabled={currentIndex >= totalTasks - 1}
-                className="p-1 rounded hover:bg-secondary disabled:opacity-30 disabled:hover:bg-transparent"
-                title="Next issue"
-              >
-                <ChevronRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          )}
-
+          {/* 1. Copy Link Icon */}
           <button
+            type="button"
             onClick={handleCopyLink}
-            className="p-1.5 rounded hover:bg-secondary text-zinc-400 hover:text-white transition-colors"
+            className="p-1.5 rounded-md hover:bg-[#1a1b26] text-zinc-400 hover:text-white transition-colors"
             title="Copy link"
           >
             {copiedLink ? (
-              <Check className="w-4 h-4 text-emerald-400" />
+              <Check className="w-3.5 h-3.5 text-emerald-400" />
             ) : (
-              <Copy className="w-4 h-4" />
+              <Link2 className="w-3.5 h-3.5" />
             )}
           </button>
 
+          {/* 2. Copy Identifier Icon */}
           <button
-            onClick={() => setShowDeleteConfirm(!showDeleteConfirm)}
-            className="p-1.5 rounded hover:bg-destructive/15 text-zinc-500 hover:text-destructive transition-colors"
-            title="Delete issue"
+            type="button"
+            onClick={handleCopyId}
+            className="p-1.5 rounded-md hover:bg-[#1a1b26] text-zinc-400 hover:text-white transition-colors"
+            title={`Copy ID (${task.identifier})`}
           >
-            <Trash2 className="w-4 h-4" />
+            {copiedId ? (
+              <Check className="w-3.5 h-3.5 text-emerald-400" />
+            ) : (
+              <Copy className="w-3.5 h-3.5" />
+            )}
           </button>
 
+          {/* 3. Copy Git Branch Icon */}
+          <button
+            type="button"
+            onClick={handleCopyBranch}
+            className="p-1.5 rounded-md hover:bg-[#1a1b26] text-zinc-400 hover:text-white transition-colors"
+            title="Copy git branch name"
+          >
+            {copiedBranch ? (
+              <Check className="w-3.5 h-3.5 text-emerald-400" />
+            ) : (
+              <GitBranch className="w-3.5 h-3.5" />
+            )}
+          </button>
+
+          {/* 4. Close Icon */}
           <Link
             href="/"
-            className="p-1.5 rounded hover:bg-secondary text-zinc-400 hover:text-white transition-colors ml-1"
-            title="Back to board (Esc)"
+            className="p-1.5 rounded-md hover:bg-[#1a1b26] text-zinc-400 hover:text-white transition-colors"
+            title="Close (Esc)"
           >
-            <X className="w-4 h-4" />
+            <X className="w-3.5 h-3.5" />
           </Link>
         </div>
       </header>
@@ -1997,7 +1982,7 @@ function IssueDetailContent() {
       <div className="flex-1 flex flex-col lg:flex-row max-w-6xl w-full mx-auto px-4 sm:px-8 py-8 gap-10">
         {/* Left Column: Title & Document Body */}
         <div className="flex-1 space-y-6">
-          {/* Issue Title (Click anywhere to edit!) */}
+          {/* Issue Title */}
           <div className="relative">
             <input
               ref={titleInputRef}
@@ -2005,7 +1990,7 @@ function IssueDetailContent() {
               value={title}
               onChange={(e) => handleTitleChange(e.target.value)}
               onBlur={handleTitleBlur}
-              className="w-full text-2xl sm:text-3xl font-bold bg-transparent border-0 border-b border-transparent hover:border-border/60 focus:border-primary focus:outline-none text-foreground py-1 transition-all rounded"
+              className="w-full text-xl sm:text-2xl font-semibold bg-transparent border-none outline-none focus:ring-0 p-0 text-white placeholder:text-zinc-600 transition-colors tracking-tight"
               placeholder="Issue title..."
               title="Click directly to edit title"
             />
@@ -2018,7 +2003,7 @@ function IssueDetailContent() {
           </div>
 
           {/* Sub-issue / Parent link banner (Like Linear screenshot) */}
-          <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground pt-1">
+          <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground pt-0.5">
             <span className="text-zinc-500">Project:</span>
             <span className="font-medium text-zinc-300">{activeProject?.name || 'General'}</span>
             <span className="text-zinc-600">•</span>
@@ -2054,19 +2039,13 @@ function IssueDetailContent() {
           </div>
 
           {/* Description Section */}
-          <div className="space-y-2 pt-2">
-            <div className="flex items-center justify-between text-xs text-zinc-400">
-              <div className="flex items-center gap-2">
-                <span className="font-medium text-zinc-400 text-xs">Description</span>
-                {typingIndicator && typingIndicator.field === 'description' && (
-                  <span className="flex items-center gap-1.5 text-xs text-indigo-400 font-normal animate-pulse">
-                    <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 inline-block animate-ping" />
-                    {typingIndicator.userName} is typing...
-                  </span>
-                )}
+          <div className="space-y-2 pt-1">
+            {typingIndicator && typingIndicator.field === 'description' && (
+              <div className="flex items-center gap-1.5 text-xs text-indigo-400 font-normal animate-pulse pb-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 inline-block animate-ping" />
+                <span>{typingIndicator.userName} is typing...</span>
               </div>
-              <span className="text-[10px] text-zinc-600 font-normal">Auto-saves</span>
-            </div>
+            )}
 
             <LinearRichEditor
               value={description}
@@ -2160,80 +2139,105 @@ function IssueDetailContent() {
           </div>
 
           {/* Activity & Comments Stream */}
-          <div className="space-y-4 pt-8 border-t border-border/40">
-            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              <MessageSquare className="w-4 h-4 text-primary" />
-              <span>Activity & Comments ({comments.length + activities.length})</span>
-            </div>
-
-            {/* Activities Timeline */}
-            {activities.length > 0 && (
-              <div className="relative pl-7 space-y-4 py-2 before:absolute before:left-[11px] before:top-3 before:bottom-3 before:w-[1px] before:bg-[#2b2c3a]">
-                {activities.map((act) => {
-                  const initials = (act.user?.name || 'User')
-                    .split(' ')
-                    .map((n) => n[0])
-                    .join('')
-                    .slice(0, 2)
-                    .toUpperCase();
-
-                  return (
-                    <div key={act.id} className="relative flex items-center gap-2.5 text-xs text-zinc-300">
-                      {/* Left timeline circle / icon */}
-                      <div className="absolute -left-7 w-[23px] h-[23px] rounded-full flex items-center justify-center shrink-0 z-10 bg-[#090a0f]">
-                        {act.type === 'STATUS_CHANGE' ? (
-                          <div className="w-[18px] h-[18px] rounded-full flex items-center justify-center bg-rose-500/10 text-rose-300 ring-1 ring-rose-500/30">
-                            <Clock className="w-2.5 h-2.5" />
-                          </div>
-                        ) : act.type === 'ASSIGNEE_CHANGE' ? (
-                          <div className="w-[18px] h-[18px] rounded-full flex items-center justify-center bg-sky-500 text-white font-bold text-[8px] ring-1 ring-sky-400/30">
-                            {initials}
-                          </div>
+          <div className="space-y-3 pt-6 border-t border-[#1f202b]">
+            {/* Linear Style Comments Summary Bar (Collapsible) matching user's screenshot */}
+            {rootComments.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setIsCommentsCollapsed(!isCommentsCollapsed)}
+                className="w-full flex items-center justify-between py-2 px-1 text-xs text-zinc-400 hover:text-zinc-200 transition-colors group cursor-pointer select-none"
+              >
+                <div className="flex items-center gap-2.5 overflow-hidden">
+                  {/* Stacked avatars */}
+                  <div className="flex -space-x-1.5 shrink-0">
+                    {uniqueCommenters.slice(0, 3).map((cm, idx) => (
+                      <div
+                        key={cm.id}
+                        className={cn(
+                          "w-5 h-5 rounded-full ring-2 ring-[#090a0f] overflow-hidden flex items-center justify-center font-bold text-[8px] text-white shrink-0",
+                          idx === 0 ? "bg-rose-500" : idx === 1 ? "bg-sky-500" : "bg-indigo-500"
+                        )}
+                      >
+                        {cm.avatarUrl ? (
+                          <img src={cm.avatarUrl} alt={cm.name} className="w-full h-full object-cover" />
                         ) : (
-                          <div className="w-[18px] h-[18px] rounded-full flex items-center justify-center bg-indigo-500/20 text-indigo-400 ring-1 ring-indigo-500/30">
-                            <GitBranch className="w-2.5 h-2.5" />
-                          </div>
+                          cm.name.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()
                         )}
                       </div>
+                    ))}
+                  </div>
 
-                      {/* Timeline message matching user's screenshot */}
-                      <div className="leading-snug truncate">
-                        <span className="font-medium text-zinc-100">{act.user?.name || 'Someone'}</span>{' '}
-                        <span className="text-zinc-400">{act.details}</span>{' '}
-                        <span className="text-zinc-600">•</span>{' '}
-                        <span className="text-zinc-500 text-[11px]">{formatTimeAgo(act.createdAt)}</span>
-                      </div>
-                    </div>
-                  );
-                })}
+                  <span className="truncate text-xs text-zinc-400 group-hover:text-zinc-200 font-normal">
+                    {comments.length} {comments.length === 1 ? 'comment' : 'comments'} from{' '}
+                    {uniqueCommenters.slice(0, 2).map((cm) => cm.name).join(' and ')}
+                    {uniqueCommenters.length > 2 && ` and ${uniqueCommenters.length - 2} other`}
+                  </span>
+                </div>
+
+                <div className="shrink-0 p-1 text-zinc-500 group-hover:text-zinc-300">
+                  <ChevronDown
+                    className={cn(
+                      'w-3.5 h-3.5 transition-transform duration-200',
+                      isCommentsCollapsed && '-rotate-90'
+                    )}
+                  />
+                </div>
+              </button>
+            )}
+
+            {/* Needs Revision Chat & Resubmit Banner */}
+            {task.triageStatus === 'REJECTED' && (
+              <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs mb-1">
+                <div className="flex items-start gap-2.5 min-w-0">
+                  <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+                  <div>
+                    <div className="font-semibold text-rose-200">Request Needs Revision</div>
+                    <p className="text-zinc-300 text-[11px] mt-0.5">
+                      Chat directly below to clarify requirements or supply updates. You don&apos;t need to create another backlog ticket.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleResubmitRequest()}
+                  disabled={isResubmitting}
+                  className="shrink-0 px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-medium text-xs flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer self-start sm:self-auto"
+                >
+                  {isResubmitting ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <RotateCcw className="w-3.5 h-3.5" />
+                  )}
+                  <span>Resubmit for Review</span>
+                </button>
               </div>
             )}
 
-            {/* Comments List */}
-            <div className="space-y-3">
-              {rootComments.length === 0 && activities.length === 0 ? (
-                <div className="py-6 text-center text-xs text-zinc-600">
-                  No activity or comments yet.
-                </div>
-              ) : (
-                rootComments.map((c) => {
-                  const commentMember = members.find(
-                    (m) => m.userId === c.userId || m.user?.id === c.userId,
-                  );
-                  const isCommentAuthorOnline = user?.id === c.user?.id;
-                  const replies = comments.filter((r) => r.parentId === c.id);
+            {/* Comments List (Clean Chat-like Stream) */}
+            {!isCommentsCollapsed && (
+              <div className="space-y-1">
+                {rootComments.length === 0 ? (
+                  <div className="py-6 text-center text-xs text-zinc-600">
+                    No comments yet. Start the conversation below.
+                  </div>
+                ) : (
+                  rootComments.map((c) => {
+                    const commentMember = members.find(
+                      (m) => m.userId === c.userId || m.user?.id === c.userId,
+                    );
+                    const isCommentAuthorOnline = user?.id === c.user?.id;
+                    const replies = comments.filter((r) => r.parentId === c.id);
 
-                  return (
-                    <div
-                      key={c.id}
-                      id={`comment-${c.id}`}
-                      className={`p-3.5 rounded-lg border transition-all duration-300 group relative ${
-                        highlightedCommentId === c.id
-                          ? 'bg-indigo-500/15 border-indigo-500/60 ring-2 ring-indigo-500/50 shadow-lg shadow-indigo-500/20'
-                          : 'bg-[#11121c]/70 border-border/40 hover:border-border'
-                      }`}
-                    >
-                      <div className="flex items-start gap-3">
+                    return (
+                      <div
+                        key={c.id}
+                        id={`comment-${c.id}`}
+                        className={cn(
+                          'py-3.5 border-b border-[#181924]/50 transition-all duration-200 group relative',
+                          highlightedCommentId === c.id && 'bg-indigo-500/10 rounded-lg p-3 ring-1 ring-indigo-500/40'
+                        )}
+                      >
+                        <div className="flex items-start gap-3">
                         <UserAvatar
                           user={c.user}
                           member={commentMember}
@@ -2488,10 +2492,10 @@ function IssueDetailContent() {
                                   key={reply.id}
                                   id={`comment-${reply.id}`}
                                   className={cn(
-                                    'p-2.5 rounded-lg border transition-all duration-200 group/reply relative',
+                                    'py-2 px-1 rounded-md transition-all duration-200 group/reply relative',
                                     highlightedCommentId === reply.id
-                                      ? 'bg-indigo-500/15 border-indigo-500/60 ring-2 ring-indigo-500/50'
-                                      : 'bg-[#0f101a]/70 border-border/40 hover:border-border/70',
+                                      ? 'bg-indigo-500/15 ring-1 ring-indigo-500/50'
+                                      : 'hover:bg-zinc-800/20',
                                   )}
                                 >
                                   <div className="flex items-start gap-2.5">
@@ -2752,9 +2756,74 @@ function IssueDetailContent() {
                 })
               )}
             </div>
+          )}
 
-            {/* Comment Composer with Mentions */}
-            <div className="relative">
+          {/* Collapsed System Activities Toggle (Keeps conversation clean like a chat) */}
+          {activities.length > 0 && !isCommentsCollapsed && (
+            <div className="pt-2 pb-1">
+              <button
+                type="button"
+                onClick={() => setShowActivities(!showActivities)}
+                className="inline-flex items-center gap-1.5 py-1 px-2.5 rounded-md text-[11px] font-medium text-zinc-500 hover:text-zinc-300 hover:bg-[#13141f] border border-[#1f202b] transition-colors cursor-pointer"
+              >
+                <History className="w-3 h-3 text-zinc-500" />
+                <span>
+                  {showActivities
+                    ? 'Hide system activity history'
+                    : `Show ${activities.length} system activit${activities.length === 1 ? 'y' : 'ies'}`}
+                </span>
+                <ChevronDown
+                  className={cn(
+                    'w-3 h-3 transition-transform duration-200',
+                    showActivities && 'rotate-180'
+                  )}
+                />
+              </button>
+
+              {showActivities && (
+                <div className="relative pl-7 space-y-3.5 py-3 mt-2 before:absolute before:left-[11px] before:top-3 before:bottom-3 before:w-[1px] before:bg-[#202232]">
+                  {activities.map((act) => {
+                    const initials = (act.user?.name || 'User')
+                      .split(' ')
+                      .map((n) => n[0])
+                      .join('')
+                      .slice(0, 2)
+                      .toUpperCase();
+
+                    return (
+                      <div key={act.id} className="relative flex items-center gap-2.5 text-xs text-zinc-300">
+                        <div className="absolute -left-7 w-[23px] h-[23px] rounded-full flex items-center justify-center shrink-0 z-10 bg-[#090a0f]">
+                          {act.type === 'STATUS_CHANGE' ? (
+                            <div className="w-[18px] h-[18px] rounded-full flex items-center justify-center bg-rose-500/10 text-rose-300 ring-1 ring-rose-500/30">
+                              <Clock className="w-2.5 h-2.5" />
+                            </div>
+                          ) : act.type === 'ASSIGNEE_CHANGE' ? (
+                            <div className="w-[18px] h-[18px] rounded-full flex items-center justify-center bg-sky-500 text-white font-bold text-[8px] ring-1 ring-sky-400/30">
+                              {initials}
+                            </div>
+                          ) : (
+                            <div className="w-[18px] h-[18px] rounded-full flex items-center justify-center bg-indigo-500/20 text-indigo-400 ring-1 ring-indigo-500/30">
+                              <GitBranch className="w-2.5 h-2.5" />
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="leading-snug truncate">
+                          <span className="font-medium text-zinc-100">{act.user?.name || 'Someone'}</span>{' '}
+                          <span className="text-zinc-400">{act.details}</span>{' '}
+                          <span className="text-zinc-600">•</span>{' '}
+                          <span className="text-zinc-500 text-[11px]">{formatTimeAgo(act.createdAt)}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Comment Composer with Mentions */}
+          <div className="relative">
               {/* Mentions Autocomplete Floating Dropdown */}
               {mentionQuery !== null && matchingMembers.length > 0 && (
                 <div className="absolute bottom-full left-10 mb-2 z-50 w-72 rounded-xl bg-[#191a24] border border-[#2b2c3a] shadow-2xl p-1.5 animate-in fade-in-0 zoom-in-95 backdrop-blur-md">
@@ -2804,138 +2873,159 @@ function IssueDetailContent() {
 
               <form
                 onSubmit={handleAddComment}
-                className="flex items-start gap-3 p-3.5 rounded-lg bg-[#12131e] border border-border/70 focus-within:border-primary/80 transition-colors"
+                className="rounded-lg bg-[#121318] border border-[#22242c] p-3 focus-within:border-[#383b47] transition-colors"
               >
-                <img
-                  src={
-                    user?.avatarUrl ||
-                    `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
-                      user?.name || 'Me',
-                    )}`
+                {/* Replying banner */}
+                {replyingTo && (
+                  <div className="flex items-center justify-between px-2.5 py-1 bg-indigo-500/10 border border-indigo-500/30 rounded text-xs text-indigo-300 mb-2">
+                    <div className="flex items-center gap-1.5 truncate">
+                      <CornerDownRight className="w-3 h-3 text-indigo-400 shrink-0" />
+                      <span className="font-semibold text-white truncate">Replying to @{replyingTo.authorName}:</span>
+                      <span className="text-zinc-400 truncate text-[11px]">&ldquo;{replyingTo.contentPreview.slice(0, 50)}...&rdquo;</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setReplyingTo(null)}
+                      className="p-0.5 hover:bg-indigo-500/20 rounded text-zinc-400 hover:text-white transition-colors ml-2 shrink-0"
+                      title="Cancel reply"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                )}
+
+                <textarea
+                  ref={commentTextareaRef}
+                  value={newCommentText}
+                  onChange={handleCommentTextChange}
+                  onKeyDown={handleCommentKeyDown}
+                  onPaste={(e) =>
+                    handlePasteToTextarea(
+                      e,
+                      newCommentText,
+                      setNewCommentText,
+                      undefined,
+                      setIsUploadingCommentImage,
+                    )
                   }
-                  alt={user?.name || 'Me'}
-                  className="w-7 h-7 rounded-full object-cover shrink-0 ring-1 ring-border mt-1"
+                  onDrop={(e) =>
+                    handleDropToTextarea(
+                      e,
+                      newCommentText,
+                      setNewCommentText,
+                      undefined,
+                      setIsUploadingCommentImage,
+                    )
+                  }
+                  onDragOver={(e) => e.preventDefault()}
+                  rows={2}
+                  placeholder={
+                    replyingTo
+                      ? `Write a reply to @${replyingTo.authorName}...`
+                      : "Leave a comment..."
+                  }
+                  className="w-full bg-transparent border-0 text-xs text-zinc-200 placeholder:text-zinc-500 focus:outline-none resize-none leading-relaxed min-h-[44px]"
                 />
 
-                <div className="flex-1 min-w-0">
-                  {/* Replying banner */}
-                  {replyingTo && (
-                    <div className="flex items-center justify-between px-3 py-1.5 bg-indigo-500/10 border border-indigo-500/30 rounded-lg text-xs text-indigo-300 mb-2 animate-in fade-in slide-in-from-bottom-1">
-                      <div className="flex items-center gap-2 truncate">
-                        <CornerDownRight className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
-                        <span className="font-semibold text-white truncate">Replying to @{replyingTo.authorName}:</span>
-                        <span className="text-zinc-400 truncate text-[11px]">&ldquo;{replyingTo.contentPreview.slice(0, 50)}...&rdquo;</span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setReplyingTo(null)}
-                        className="p-1 hover:bg-indigo-500/20 rounded text-zinc-400 hover:text-white transition-colors ml-2 shrink-0"
-                        title="Cancel reply"
-                      >
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  )}
+                {/* Comment image live preview */}
+                {newCommentText && newCommentText.includes('![') && (
+                  <div className="p-2 border-t border-border/30 bg-[#0a0b12]/50 my-1 rounded">
+                    <MarkdownRenderer
+                      content={
+                        newCommentText
+                          .split('\n')
+                          .filter((l) => l.trim().startsWith('!['))
+                          .join('\n')
+                      }
+                      membersList={members}
+                      onImageClick={(url) => setLightboxUrl(url)}
+                    />
+                  </div>
+                )}
 
-                  <textarea
-                    ref={commentTextareaRef}
-                    value={newCommentText}
-                    onChange={handleCommentTextChange}
-                    onKeyDown={handleCommentKeyDown}
-                    onPaste={(e) =>
-                      handlePasteToTextarea(
-                        e,
-                        newCommentText,
-                        setNewCommentText,
-                        undefined,
-                        setIsUploadingCommentImage,
-                      )
-                    }
-                    onDrop={(e) =>
-                      handleDropToTextarea(
-                        e,
-                        newCommentText,
-                        setNewCommentText,
-                        undefined,
-                        setIsUploadingCommentImage,
-                      )
-                    }
-                    onDragOver={(e) => e.preventDefault()}
-                    rows={2}
-                    placeholder={
-                      replyingTo
-                        ? `Write a reply to @${replyingTo.authorName}... (Cmd + Enter to send)`
-                        : "Leave a comment... (Paste images directly here, type @ to mention, Cmd + Enter to send)"
-                    }
-                    className="w-full bg-transparent border-0 text-xs text-foreground placeholder:text-zinc-500 focus:outline-none resize-none leading-relaxed"
-                  />
-
-                  {/* Comment image live preview */}
-                  {newCommentText && newCommentText.includes('![') && (
-                    <div className="p-2 border-t border-border/30 bg-[#0a0b12]/50 my-1 rounded">
-                      <MarkdownRenderer
-                        content={
-                          newCommentText
-                            .split('\n')
-                            .filter((l) => l.trim().startsWith('!['))
-                            .join('\n')
+                <div className="flex items-center justify-between pt-2 mt-1">
+                  <div className="flex items-center gap-1.5">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      ref={mainCommentFileInputRef}
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          handleUploadImageFile(file, commentTextareaRef.current, newCommentText, setNewCommentText, undefined, setIsUploadingCommentImage);
                         }
-                        membersList={members}
-                        onImageClick={(url) => setLightboxUrl(url)}
-                      />
-                    </div>
-                  )}
+                        e.target.value = '';
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => mainCommentFileInputRef.current?.click()}
+                      className="p-1 rounded text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/60 transition-colors"
+                      title="Attach file/image"
+                    >
+                      <Paperclip className="w-3.5 h-3.5" />
+                    </button>
 
-                  <div className="flex items-center justify-between pt-2 border-t border-border/30 mt-1">
-                    <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const text = newCommentText ? `${newCommentText} @` : '@';
+                        setNewCommentText(text);
+                        setMentionQuery('');
+                        setMentionCursorPos(text.length - 1);
+                        setMentionIndex(0);
+                        setTimeout(() => {
+                          if (commentTextareaRef.current) {
+                            commentTextareaRef.current.focus();
+                            commentTextareaRef.current.setSelectionRange(text.length, text.length);
+                          }
+                        }, 10);
+                      }}
+                      className="p-1 rounded text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/60 transition-colors"
+                      title="Mention a team member (@)"
+                    >
+                      <AtSign className="w-3.5 h-3.5" />
+                    </button>
+
+                    {isUploadingCommentImage && (
+                      <span className="flex items-center gap-1 text-[11px] text-indigo-400 font-medium animate-pulse ml-1">
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                        <span>Uploading...</span>
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    {task.triageStatus === 'REJECTED' && (
                       <button
                         type="button"
-                        onClick={() => {
-                          const text = newCommentText ? `${newCommentText} @` : '@';
-                          setNewCommentText(text);
-                          setMentionQuery('');
-                          setMentionCursorPos(text.length - 1);
-                          setMentionIndex(0);
-                          setTimeout(() => {
-                            if (commentTextareaRef.current) {
-                              commentTextareaRef.current.focus();
-                              commentTextareaRef.current.setSelectionRange(text.length, text.length);
-                            }
-                          }, 10);
-                        }}
-                        className="flex items-center gap-1 text-[11px] text-zinc-400 hover:text-white px-1.5 py-0.5 rounded hover:bg-zinc-800 transition-colors"
-                        title="Mention a team member"
+                        onClick={() => handleResubmitRequest(newCommentText.trim())}
+                        disabled={isResubmitting || !newCommentText.trim()}
+                        className="px-2.5 py-1 rounded-md bg-rose-600 hover:bg-rose-500 text-white font-medium text-[11px] flex items-center gap-1 shadow-sm transition-colors cursor-pointer disabled:opacity-40"
+                        title="Send comment and resubmit request to Triage"
                       >
-                        <AtSign className="w-3.5 h-3.5 text-indigo-400" />
-                        <span>Mention</span>
+                        {isResubmitting ? (
+                          <Loader2 className="w-3 h-3 animate-spin text-white" />
+                        ) : (
+                          <RotateCcw className="w-3 h-3" />
+                        )}
+                        <span>Reply & Resubmit</span>
                       </button>
+                    )}
 
-                      {isUploadingCommentImage ? (
-                        <span className="flex items-center gap-1 text-[11px] text-indigo-400 font-medium animate-pulse">
-                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                          <span>Uploading image...</span>
-                        </span>
-                      ) : (
-                        <span className="text-[10px] text-zinc-600 hidden sm:inline">
-                          Paste images to upload
-                        </span>
-                      )}
-                    </div>
-
-                    <Button
+                    <button
                       type="submit"
-                      variant="linear"
-                      size="sm"
                       disabled={!newCommentText.trim() || submittingComment}
-                      className="h-7 text-xs px-3 ml-auto"
+                      className="w-6 h-6 rounded-full flex items-center justify-center transition-all bg-indigo-600 hover:bg-indigo-500 disabled:opacity-30 disabled:hover:bg-indigo-600 text-white shadow-sm shrink-0"
+                      title="Send comment (Cmd + Enter)"
                     >
                       {submittingComment ? (
-                        <Loader2 className="w-3 h-3 animate-spin mr-1" />
+                        <Loader2 className="w-3 h-3 animate-spin text-white" />
                       ) : (
-                        <Send className="w-3 h-3 mr-1" />
+                        <ArrowUp className="w-3.5 h-3.5 stroke-[2.5]" />
                       )}
-                      Comment
-                    </Button>
+                    </button>
                   </div>
                 </div>
               </form>
@@ -2943,393 +3033,564 @@ function IssueDetailContent() {
           </div>
         </div>
 
-        {/* Right Column: Properties Sidebar (Exact layout from Linear second screenshot) */}
-        <div className="w-full lg:w-64 space-y-6 shrink-0 select-none pt-2">
-          <div className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">
-            Properties
-          </div>
+        {/* Right Column: Properties Sidebar (Exact layout matching Linear screenshot) */}
+        <div className="w-full lg:w-64 space-y-5 shrink-0 select-none pt-1">
+          {/* Section 1: Properties */}
+          <div>
+            <div className="text-xs text-zinc-500 font-medium mb-1 px-1">
+              Properties
+            </div>
 
-          <div className="space-y-1.5 text-xs">
-            {/* Status Row */}
-            <div className="property-dropdown-container relative">
-              <button
-                type="button"
-                onClick={() => setActiveDropdown(activeDropdown === 'status' ? null : 'status')}
-                className="w-full flex items-center justify-between py-1.5 px-2.5 rounded-lg hover:bg-[#1a1b26] transition-colors cursor-pointer group text-left"
-              >
-                {(() => {
-                  const currentCustomSection = customStatus
-                    ? sections.find((s) => s.key === customStatus)
-                    : null;
-                  return (
-                    <div className="flex items-center gap-2.5">
-                      <StatusIcon
-                        status={currentCustomSection ? currentCustomSection.name : status}
-                        color={currentCustomSection?.color}
-                      />
-                      <span className="text-zinc-200 font-medium group-hover:text-white truncate">
-                        {currentCustomSection
-                          ? currentCustomSection.name
-                          : STATUS_CONFIG[status]?.label || status}
-                      </span>
-                    </div>
-                  );
-                })()}
-              </button>
-
-              {activeDropdown === 'status' && (
-                <div className="absolute top-full left-0 mt-1.5 w-60 rounded-xl border border-[#2b2c3a] bg-[#191a24] shadow-[0_12px_36px_rgba(0,0,0,0.75)] p-1 z-50 animate-in fade-in-0 zoom-in-95 duration-100 max-h-80 overflow-y-auto">
-                  <div className="flex items-center justify-between px-2.5 py-1.5 text-xs text-zinc-400 font-normal border-b border-[#2b2c3a]/70 mb-1">
-                    <span>Change status...</span>
-                    <kbd className="px-1.5 py-0.5 rounded bg-zinc-800 text-[10px] font-mono text-zinc-400 border border-zinc-700/60">
-                      S
-                    </kbd>
-                  </div>
-                  {[
-                    { s: 'BACKLOG' as TaskStatus, label: 'Backlog', shortcut: '1' },
-                    { s: 'TODO' as TaskStatus, label: 'Todo', shortcut: '2' },
-                    { s: 'IN_PROGRESS' as TaskStatus, label: 'In Progress', shortcut: '3' },
-                    { s: 'DONE' as TaskStatus, label: 'Done', shortcut: '4' },
-                    { s: 'CANCELED' as TaskStatus, label: 'Canceled', shortcut: '5' },
-                  ].map((item) => (
-                    <button
-                      key={item.s}
-                      onClick={() => handleStatusChange(item.s, null)}
-                      className={cn(
-                        'w-full flex items-center justify-between px-2.5 py-1.5 text-xs rounded-lg transition-colors',
-                        item.s === status && !customStatus
-                          ? 'bg-[#282a38] text-white font-medium'
-                          : 'text-zinc-300 hover:bg-[#232432] hover:text-white',
-                      )}
-                    >
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <StatusIcon status={item.s} />
-                        <span className="truncate">{item.label}</span>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        {item.s === status && !customStatus && <Check className="w-3.5 h-3.5 text-white stroke-[2.5]" />}
-                        <span className="text-[11px] font-mono text-zinc-500">{item.shortcut}</span>
-                      </div>
-                    </button>
-                  ))}
-
-                  {sections.length > 0 && (
-                    <>
-                      <div className="px-2.5 py-1 text-[10px] font-semibold tracking-wider uppercase text-zinc-500 border-t border-[#2b2c3a]/70 mt-1 pt-1.5">
-                        Custom Sections
-                      </div>
-                      {sections.map((sec) => (
-                        <button
-                          key={sec.id}
-                          onClick={() => handleStatusChange(sec.category || 'IN_PROGRESS', sec.key)}
-                          className={cn(
-                            'w-full flex items-center justify-between px-2.5 py-1.5 text-xs rounded-lg transition-colors',
-                            customStatus === sec.key
-                              ? 'bg-[#282a38] text-white font-medium'
-                              : 'text-zinc-300 hover:bg-[#232432] hover:text-white',
-                          )}
-                        >
-                          <div className="flex items-center gap-2.5 min-w-0">
-                            <StatusIcon status={sec.name} color={sec.color} />
-                            <span className="truncate">{sec.name}</span>
-                          </div>
-                          {customStatus === sec.key && (
-                            <Check className="w-3.5 h-3.5 text-white stroke-[2.5]" />
-                          )}
-                        </button>
-                      ))}
-                    </>
+            <div className="space-y-0.5 text-xs">
+              {/* Status Row */}
+              <div className="property-dropdown-container relative">
+                <button
+                  type="button"
+                  disabled={workspace?.role === 'STAKEHOLDER'}
+                  onClick={() => {
+                    if (workspace?.role === 'STAKEHOLDER') return;
+                    setActiveDropdown(activeDropdown === 'status' ? null : 'status');
+                  }}
+                  className={cn(
+                    "w-full flex items-center justify-between py-1.5 px-2 rounded-md hover:bg-[#1a1b26] transition-colors text-left",
+                    workspace?.role === 'STAKEHOLDER' ? 'cursor-not-allowed opacity-80' : 'cursor-pointer group'
                   )}
-                </div>
-              )}
-            </div>
-
-            {/* Workspace / Team Info (Matching screenshot: [T] Tjar) */}
-            <div className="py-1.5 px-2.5 flex items-center gap-2.5 rounded-lg text-zinc-300">
-              <span className="w-4 h-4 rounded bg-[#5e6ad2] text-white flex items-center justify-center font-bold text-[9px] shrink-0">
-                {workspace?.name?.[0] || 'T'}
-              </span>
-              <span className="font-medium text-zinc-300 truncate">
-                {workspace?.name || 'Workspace'}
-              </span>
-            </div>
-
-            {/* Parent Issue Property Row */}
-            <div className="property-dropdown-container relative">
-              {task.parent ? (
-                <div className="flex items-center justify-between py-1.5 px-2.5 rounded-lg bg-[#151624] border border-[#2b2c3d] text-xs">
-                  <div className="flex items-center gap-2 min-w-0 flex-1 pr-2">
-                    <GitFork className="w-3.5 h-3.5 text-indigo-400 rotate-180 shrink-0" />
-                    <Link
-                      href={`/issue/${task.parent.id}`}
-                      className="text-zinc-200 hover:text-white truncate font-medium"
-                      title={task.parent.title}
-                    >
-                      <span className="font-mono text-zinc-400 mr-1.5">{task.parent.identifier}</span>
-                      <span>{task.parent.title}</span>
-                    </Link>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      await api.tasks.update(task.id, { parentId: null });
-                      setTask((prev) => (prev ? { ...prev, parentId: null, parent: null } : null));
-                    }}
-                    className="p-1 rounded hover:bg-rose-500/15 text-zinc-500 hover:text-rose-400 transition-colors"
-                    title="Unlink parent"
-                  >
-                    <X className="w-3 h-3 stroke-[2.5]" />
-                  </button>
-                </div>
-              ) : (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => setShowParentPicker(!showParentPicker)}
-                    className="w-full flex items-center justify-between py-1.5 px-2.5 rounded-lg hover:bg-[#1a1b26] transition-colors cursor-pointer group text-left"
-                  >
-                    <div className="flex items-center gap-2.5 text-zinc-400 group-hover:text-zinc-200">
-                      <GitFork className="w-3.5 h-3.5 rotate-180" />
-                      <span>Set parent issue...</span>
-                    </div>
-                  </button>
-
-                  {showParentPicker && (
-                    <div className="absolute top-full left-0 mt-1.5 w-64 rounded-xl border border-[#2b2c3a] bg-[#191a24] shadow-[0_12px_36px_rgba(0,0,0,0.75)] p-2 z-50 animate-in fade-in-0 zoom-in-95 duration-100">
-                      <div className="relative mb-2">
-                        <Search className="w-3.5 h-3.5 text-zinc-500 absolute left-2 top-2" />
-                        <input
-                          type="text"
-                          autoFocus
-                          value={parentSearch}
-                          onChange={(e) => setParentSearch(e.target.value)}
-                          placeholder="Search parent issue..."
-                          className="w-full bg-[#12131d] text-xs text-white placeholder:text-zinc-500 pl-7 pr-2.5 py-1 rounded border border-[#2b2c3a] focus:outline-none"
+                >
+                  {(() => {
+                    const currentCustomSection = customStatus
+                      ? sections.find((s) => s.key === customStatus)
+                      : null;
+                    return (
+                      <div className="flex items-center gap-2.5">
+                        <StatusIcon
+                          status={currentCustomSection ? currentCustomSection.name : status}
+                          color={currentCustomSection?.color}
                         />
+                        <span className="text-zinc-200 font-medium group-hover:text-white truncate">
+                          {currentCustomSection
+                            ? currentCustomSection.name
+                            : STATUS_CONFIG[status]?.label || status}
+                        </span>
                       </div>
-                      <div className="max-h-40 overflow-y-auto space-y-1">
-                        {allTasks
-                          .filter(
-                            (t) =>
-                              t.id !== task.id &&
-                              t.parentId !== task.id &&
-                              (parentSearch.trim() === '' ||
-                                t.title.toLowerCase().includes(parentSearch.toLowerCase()) ||
-                                t.identifier.toLowerCase().includes(parentSearch.toLowerCase())),
-                          )
-                          .slice(0, 5)
-                          .map((t) => (
-                            <button
-                              key={t.id}
-                              type="button"
-                              onClick={async () => {
-                                const updated = await api.tasks.update(task.id, { parentId: t.id });
-                                setTask((prev) =>
-                                  prev
-                                    ? {
-                                        ...prev,
-                                        parentId: t.id,
-                                        parent: {
-                                          id: t.id,
-                                          identifier: t.identifier,
-                                          title: t.title,
-                                          status: t.status,
-                                        },
-                                      }
-                                    : null,
-                                );
-                                setShowParentPicker(false);
-                                setParentSearch('');
-                              }}
-                              className="w-full flex items-center justify-between px-2 py-1.5 rounded hover:bg-[#20212f] text-left text-xs text-zinc-300 hover:text-white transition-colors"
-                            >
-                              <div className="flex items-center gap-1.5 min-w-0 flex-1 pr-1">
-                                <span className="font-mono text-[11px] text-zinc-400">{t.identifier}</span>
-                                <span className="truncate">{t.title}</span>
-                              </div>
-                            </button>
-                          ))}
-                      </div>
+                    );
+                  })()}
+                </button>
+
+                {activeDropdown === 'status' && (
+                  <div className="absolute top-full left-0 mt-1.5 w-60 rounded-xl border border-[#2b2c3a] bg-[#191a24] shadow-[0_12px_36px_rgba(0,0,0,0.75)] p-1 z-50 animate-in fade-in-0 zoom-in-95 duration-100 max-h-80 overflow-y-auto">
+                    <div className="flex items-center justify-between px-2.5 py-1.5 text-xs text-zinc-400 font-normal border-b border-[#2b2c3a]/70 mb-1">
+                      <span>Change status...</span>
+                      <kbd className="px-1.5 py-0.5 rounded bg-zinc-800 text-[10px] font-mono text-zinc-400 border border-zinc-700/60">
+                        S
+                      </kbd>
                     </div>
-                  )}
-                </>
-              )}
-            </div>
+                    {[
+                      { s: 'BACKLOG' as TaskStatus, label: 'Backlog', shortcut: '1' },
+                      { s: 'TODO' as TaskStatus, label: 'Todo', shortcut: '2' },
+                      { s: 'IN_PROGRESS' as TaskStatus, label: 'In Progress', shortcut: '3' },
+                      { s: 'DONE' as TaskStatus, label: 'Done', shortcut: '4' },
+                      { s: 'CANCELED' as TaskStatus, label: 'Canceled', shortcut: '5' },
+                    ].map((item) => (
+                      <button
+                        key={item.s}
+                        onClick={() => handleStatusChange(item.s, null)}
+                        className={cn(
+                          'w-full flex items-center justify-between px-2.5 py-1.5 text-xs rounded-lg transition-colors',
+                          item.s === status && !customStatus
+                            ? 'bg-[#282a38] text-white font-medium'
+                            : 'text-zinc-300 hover:bg-[#232432] hover:text-white',
+                        )}
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <StatusIcon status={item.s} />
+                          <span className="truncate">{item.label}</span>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          {item.s === status && !customStatus && <Check className="w-3.5 h-3.5 text-white stroke-[2.5]" />}
+                          <span className="text-[11px] font-mono text-zinc-500">{item.shortcut}</span>
+                        </div>
+                      </button>
+                    ))}
 
-            {/* Priority Row (Matching screenshot: ··· Set priority) */}
-            <div className="property-dropdown-container relative">
-              <button
-                type="button"
-                onClick={() => setActiveDropdown(activeDropdown === 'priority' ? null : 'priority')}
-                className="w-full flex items-center justify-between py-1.5 px-2.5 rounded-lg hover:bg-[#1a1b26] transition-colors cursor-pointer group text-left"
-              >
-                <div className="flex items-center gap-2.5">
-                  <PriorityIcon priority={priority} />
-                  <span className="text-zinc-300 font-medium group-hover:text-white">
-                    {priority === 'NO_PRIORITY' ? '··· Set priority' : PRIORITY_CONFIG[priority].label}
-                  </span>
-                </div>
-              </button>
-
-              {activeDropdown === 'priority' && (
-                <div className="absolute top-full left-0 mt-1.5 w-60 rounded-xl border border-[#2b2c3a] bg-[#191a24] shadow-[0_12px_36px_rgba(0,0,0,0.75)] p-1 z-50 animate-in fade-in-0 zoom-in-95 duration-100">
-                  <div className="flex items-center justify-between px-2.5 py-1.5 text-xs text-zinc-400 font-normal border-b border-[#2b2c3a]/70 mb-1">
-                    <span>Set priority to...</span>
-                    <kbd className="px-1.5 py-0.5 rounded bg-zinc-800 text-[10px] font-mono text-zinc-400 border border-zinc-700/60">
-                      P
-                    </kbd>
-                  </div>
-                  {[
-                    { p: 'NO_PRIORITY' as TaskPriority, label: 'No priority', shortcut: '0' },
-                    { p: 'URGENT' as TaskPriority, label: 'Urgent', shortcut: '1' },
-                    { p: 'HIGH' as TaskPriority, label: 'High', shortcut: '2' },
-                    { p: 'MEDIUM' as TaskPriority, label: 'Medium', shortcut: '3' },
-                    { p: 'LOW' as TaskPriority, label: 'Low', shortcut: '4' },
-                  ].map((item) => (
-                    <button
-                      key={item.p}
-                      onClick={() => handlePriorityChange(item.p)}
-                      className={cn(
-                        'w-full flex items-center justify-between px-2.5 py-1.5 text-xs rounded-lg transition-colors',
-                        item.p === priority
-                          ? 'bg-[#282a38] text-white font-medium'
-                          : 'text-zinc-300 hover:bg-[#232432] hover:text-white',
-                      )}
-                    >
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <PriorityIcon priority={item.p} />
-                        <span className="truncate">{item.label}</span>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        {item.p === priority && <Check className="w-3.5 h-3.5 text-white stroke-[2.5]" />}
-                        <span className="text-[11px] font-mono text-zinc-500">{item.shortcut}</span>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Assignee Row */}
-            <div className="property-dropdown-container relative">
-              <button
-                type="button"
-                onClick={() => setActiveDropdown(activeDropdown === 'assignee' ? null : 'assignee')}
-                className="w-full flex items-center justify-between py-1.5 px-2.5 rounded-lg hover:bg-[#1a1b26] transition-colors cursor-pointer group text-left"
-              >
-                <div className="flex items-center gap-2.5">
-                  {currentAssignee ? (
-                    <>
-                      <img
-                        src={
-                          currentAssignee.avatarUrl ||
-                          `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
-                            currentAssignee.name,
-                          )}`
-                        }
-                        alt=""
-                        className="w-4 h-4 rounded-full object-cover shrink-0"
-                      />
-                      <span className="text-zinc-300 font-medium group-hover:text-white truncate">
-                        {currentAssignee.name}
-                      </span>
-                    </>
-                  ) : (
-                    <>
-                      <UserIcon className="w-3.5 h-3.5 text-zinc-500" />
-                      <span className="text-zinc-500">··· Assign</span>
-                    </>
-                  )}
-                </div>
-              </button>
-
-              {activeDropdown === 'assignee' && (
-                <div className="absolute top-full left-0 mt-1.5 w-60 rounded-xl border border-[#2b2c3a] bg-[#191a24] shadow-[0_12px_36px_rgba(0,0,0,0.75)] p-1 z-50 animate-in fade-in-0 zoom-in-95 duration-100">
-                  <div className="flex items-center justify-between px-2.5 py-1.5 text-xs text-zinc-400 font-normal border-b border-[#2b2c3a]/70 mb-1">
-                    <span>Assign to...</span>
-                    <kbd className="px-1.5 py-0.5 rounded bg-zinc-800 text-[10px] font-mono text-zinc-400 border border-zinc-700/60">
-                      A
-                    </kbd>
-                  </div>
-                  <button
-                    onClick={() => handleAssigneeChange(null)}
-                    className={cn(
-                      'w-full flex items-center justify-between px-2.5 py-1.5 text-xs rounded-lg transition-colors',
-                      assigneeId === null
-                        ? 'bg-[#282a38] text-white font-medium'
-                        : 'text-zinc-400 hover:bg-[#232432] hover:text-white',
+                    {sections.length > 0 && (
+                      <>
+                        <div className="px-2.5 py-1 text-[10px] font-semibold tracking-wider uppercase text-zinc-500 border-t border-[#2b2c3a]/70 mt-1 pt-1.5">
+                          Custom Sections
+                        </div>
+                        {sections.map((sec) => (
+                          <button
+                            key={sec.id}
+                            onClick={() => handleStatusChange(sec.category || 'IN_PROGRESS', sec.key)}
+                            className={cn(
+                              'w-full flex items-center justify-between px-2.5 py-1.5 text-xs rounded-lg transition-colors',
+                              customStatus === sec.key
+                                ? 'bg-[#282a38] text-white font-medium'
+                                : 'text-zinc-300 hover:bg-[#232432] hover:text-white',
+                            )}
+                          >
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <StatusIcon status={sec.name} color={sec.color} />
+                              <span className="truncate">{sec.name}</span>
+                            </div>
+                            {customStatus === sec.key && (
+                              <Check className="w-3.5 h-3.5 text-white stroke-[2.5]" />
+                            )}
+                          </button>
+                        ))}
+                      </>
                     )}
-                  >
-                    <div className="flex items-center gap-2">
-                      <UserIcon className="w-3.5 h-3.5" />
-                      <span>Unassigned</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Workspace / Team Info (Matching Linear: [T] Tjar) */}
+              <div className="py-1.5 px-2 flex items-center gap-2.5 rounded-md text-zinc-300">
+                {workspace?.logoUrl ? (
+                  <img
+                    src={resolveMediaUrl(workspace.logoUrl)}
+                    alt={workspace?.name || 'Workspace'}
+                    className="w-4 h-4 rounded object-cover shrink-0"
+                  />
+                ) : (
+                  <span className="w-4 h-4 rounded bg-[#5e6ad2] text-white flex items-center justify-center font-bold text-[9px] shrink-0">
+                    {workspace?.name?.[0] || 'T'}
+                  </span>
+                )}
+                <span className="font-medium text-zinc-300 truncate">
+                  {workspace?.name || 'Workspace'}
+                </span>
+              </div>
+
+              {/* Priority Row (Matching Linear: [PriorityIcon] High) */}
+              <div className="property-dropdown-container relative">
+                <button
+                  type="button"
+                  disabled={workspace?.role === 'STAKEHOLDER'}
+                  onClick={() => {
+                    if (workspace?.role === 'STAKEHOLDER') return;
+                    setActiveDropdown(activeDropdown === 'priority' ? null : 'priority');
+                  }}
+                  className={cn(
+                    "w-full flex items-center justify-between py-1.5 px-2 rounded-md hover:bg-[#1a1b26] transition-colors text-left",
+                    workspace?.role === 'STAKEHOLDER' ? 'cursor-not-allowed opacity-80' : 'cursor-pointer group'
+                  )}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <PriorityIcon priority={priority} />
+                    <span className="text-zinc-300 font-medium group-hover:text-white">
+                      {priority === 'NO_PRIORITY' ? '··· Set priority' : PRIORITY_CONFIG[priority].label}
+                    </span>
+                  </div>
+                </button>
+
+                {activeDropdown === 'priority' && (
+                  <div className="absolute top-full left-0 mt-1.5 w-60 rounded-xl border border-[#2b2c3a] bg-[#191a24] shadow-[0_12px_36px_rgba(0,0,0,0.75)] p-1 z-50 animate-in fade-in-0 zoom-in-95 duration-100">
+                    <div className="flex items-center justify-between px-2.5 py-1.5 text-xs text-zinc-400 font-normal border-b border-[#2b2c3a]/70 mb-1">
+                      <span>Set priority to...</span>
+                      <kbd className="px-1.5 py-0.5 rounded bg-zinc-800 text-[10px] font-mono text-zinc-400 border border-zinc-700/60">
+                        P
+                      </kbd>
                     </div>
-                    <div className="flex items-center gap-2">
-                      {assigneeId === null && <Check className="w-3.5 h-3.5 text-white stroke-[2.5]" />}
-                      <span className="text-[11px] font-mono text-zinc-500">-</span>
-                    </div>
-                  </button>
-                  {members.map((m, idx) => (
-                    <button
-                      key={m.userId}
-                      onClick={() => handleAssigneeChange(m.userId)}
-                      className={cn(
-                        'w-full flex items-center justify-between px-2.5 py-1.5 text-xs rounded-lg transition-colors',
-                        m.userId === assigneeId
-                          ? 'bg-[#282a38] text-white font-medium'
-                          : 'text-zinc-300 hover:bg-[#232432] hover:text-white',
-                      )}
-                    >
-                      <div className="flex items-center gap-2.5 truncate min-w-0">
+                    {[
+                      { p: 'NO_PRIORITY' as TaskPriority, label: 'No priority', shortcut: '0' },
+                      { p: 'URGENT' as TaskPriority, label: 'Urgent', shortcut: '1' },
+                      { p: 'HIGH' as TaskPriority, label: 'High', shortcut: '2' },
+                      { p: 'MEDIUM' as TaskPriority, label: 'Medium', shortcut: '3' },
+                      { p: 'LOW' as TaskPriority, label: 'Low', shortcut: '4' },
+                    ].map((item) => (
+                      <button
+                        key={item.p}
+                        onClick={() => handlePriorityChange(item.p)}
+                        className={cn(
+                          'w-full flex items-center justify-between px-2.5 py-1.5 text-xs rounded-lg transition-colors',
+                          item.p === priority
+                            ? 'bg-[#282a38] text-white font-medium'
+                            : 'text-zinc-300 hover:bg-[#232432] hover:text-white',
+                        )}
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <PriorityIcon priority={item.p} />
+                          <span className="truncate">{item.label}</span>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          {item.p === priority && <Check className="w-3.5 h-3.5 text-white stroke-[2.5]" />}
+                          <span className="text-[11px] font-mono text-zinc-500">{item.shortcut}</span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Assignee Row (Matching Linear: [Avatar] Muhammad Fiqri Ananda Hakin) */}
+              <div className="property-dropdown-container relative">
+                <button
+                  type="button"
+                  disabled={workspace?.role === 'STAKEHOLDER'}
+                  onClick={() => {
+                    if (workspace?.role === 'STAKEHOLDER') return;
+                    setActiveDropdown(activeDropdown === 'assignee' ? null : 'assignee');
+                  }}
+                  className={cn(
+                    "w-full flex items-center justify-between py-1.5 px-2 rounded-md hover:bg-[#1a1b26] transition-colors text-left",
+                    workspace?.role === 'STAKEHOLDER' ? 'cursor-not-allowed opacity-80' : 'cursor-pointer group'
+                  )}
+                >
+                  <div className="flex items-center gap-2.5">
+                    {currentAssignee ? (
+                      <>
                         <img
                           src={
-                            m.user.avatarUrl ||
+                            currentAssignee.avatarUrl ||
                             `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
-                              m.user.name,
+                              currentAssignee.name,
                             )}`
                           }
                           alt=""
                           className="w-4 h-4 rounded-full object-cover shrink-0"
                         />
-                        <span className="truncate">{m.user.name}</span>
+                        <span className="text-zinc-300 font-medium group-hover:text-white truncate">
+                          {currentAssignee.name}
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <UserIcon className="w-3.5 h-3.5 text-zinc-500" />
+                        <span className="text-zinc-500">··· Assign</span>
+                      </>
+                    )}
+                  </div>
+                </button>
+
+                {activeDropdown === 'assignee' && (
+                  <div className="absolute top-full left-0 mt-1.5 w-60 rounded-xl border border-[#2b2c3a] bg-[#191a24] shadow-[0_12px_36px_rgba(0,0,0,0.75)] p-1 z-50 animate-in fade-in-0 zoom-in-95 duration-100">
+                    <div className="flex items-center justify-between px-2.5 py-1.5 text-xs text-zinc-400 font-normal border-b border-[#2b2c3a]/70 mb-1">
+                      <span>Assign to...</span>
+                      <kbd className="px-1.5 py-0.5 rounded bg-zinc-800 text-[10px] font-mono text-zinc-400 border border-zinc-700/60">
+                        A
+                      </kbd>
+                    </div>
+                    <button
+                      onClick={() => handleAssigneeChange(null)}
+                      className={cn(
+                        'w-full flex items-center justify-between px-2.5 py-1.5 text-xs rounded-lg transition-colors',
+                        assigneeId === null
+                          ? 'bg-[#282a38] text-white font-medium'
+                          : 'text-zinc-400 hover:bg-[#232432] hover:text-white',
+                      )}
+                    >
+                      <div className="flex items-center gap-2">
+                        <UserIcon className="w-3.5 h-3.5" />
+                        <span>Unassigned</span>
                       </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        {m.userId === assigneeId && <Check className="w-3.5 h-3.5 text-white stroke-[2.5]" />}
-                        <span className="text-[11px] font-mono text-zinc-500">{idx + 1}</span>
+                      <div className="flex items-center gap-2">
+                        {assigneeId === null && <Check className="w-3.5 h-3.5 text-white stroke-[2.5]" />}
+                        <span className="text-[11px] font-mono text-zinc-500">-</span>
                       </div>
                     </button>
-                  ))}
+                    {members.map((m, idx) => (
+                      <button
+                        key={m.userId}
+                        onClick={() => handleAssigneeChange(m.userId)}
+                        className={cn(
+                          'w-full flex items-center justify-between px-2.5 py-1.5 text-xs rounded-lg transition-colors',
+                          m.userId === assigneeId
+                            ? 'bg-[#282a38] text-white font-medium'
+                            : 'text-zinc-300 hover:bg-[#232432] hover:text-white',
+                        )}
+                      >
+                        <div className="flex items-center gap-2.5 truncate min-w-0">
+                          <img
+                            src={
+                              m.user.avatarUrl ||
+                              `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
+                                m.user.name,
+                              )}`
+                            }
+                            alt=""
+                            className="w-4 h-4 rounded-full object-cover shrink-0"
+                          />
+                          <span className="truncate">{m.user.name}</span>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          {m.userId === assigneeId && <Check className="w-3.5 h-3.5 text-white stroke-[2.5]" />}
+                          <span className="text-[11px] font-mono text-zinc-500">{idx + 1}</span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Requesting Division Property Row (Clean Linear row if present) */}
+              {task.requesterDivision && (
+                <div className="py-1.5 px-2 flex items-center justify-between rounded-md hover:bg-[#1a1b26] transition-colors text-xs">
+                  <div className="flex items-center gap-2.5 text-zinc-300 truncate">
+                    <Building2 className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+                    <span className="truncate">{task.requesterDivision.name}</span>
+                  </div>
+                  {task.triageStatus && (
+                    <span
+                      className={cn(
+                        'text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.2 rounded-full border shrink-0',
+                        task.triageStatus === 'INBOX_PENDING' && 'bg-amber-500/10 text-amber-400 border-amber-500/30',
+                        task.triageStatus === 'APPROVED_BACKLOG' && 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
+                        task.triageStatus === 'REJECTED' && 'bg-rose-500/10 text-rose-400 border-rose-500/30',
+                      )}
+                    >
+                      {task.triageStatus === 'INBOX_PENDING' ? 'Pending' : task.triageStatus === 'APPROVED_BACKLOG' ? 'Approved' : 'Rejected'}
+                    </span>
+                  )}
                 </div>
               )}
+
+              {/* Due Date Property Row */}
+              <div className="property-dropdown-container relative">
+                <label className="w-full flex items-center justify-between py-1.5 px-2 rounded-md hover:bg-[#1a1b26] transition-colors cursor-pointer group text-left text-xs">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <Calendar className="w-3.5 h-3.5 text-zinc-500 group-hover:text-zinc-300 shrink-0" />
+                    <span className={cn("truncate", dueDate ? "text-zinc-300 group-hover:text-white" : "text-zinc-500")}>
+                      {dueDate ? new Date(dueDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : '··· Set due date'}
+                    </span>
+                  </div>
+                  <input
+                    type="date"
+                    value={dueDate}
+                    onChange={(e) => handleDueDateChange(e.target.value)}
+                    className="opacity-0 absolute inset-0 w-full h-full cursor-pointer"
+                  />
+                </label>
+              </div>
+
+              {/* Cycle (Sprint) Property Row */}
+              {workspace?.cyclesEnabled !== false && (
+                <div className="property-dropdown-container relative">
+                  {(() => {
+                    const activeCycleObj = cycles.find((c) => c.id === cycleId) || task.cycle;
+                    return (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => setActiveDropdown(activeDropdown === 'cycle' ? null : 'cycle')}
+                          className="w-full flex items-center justify-between py-1.5 px-2 rounded-md hover:bg-[#1a1b26] transition-colors cursor-pointer group text-left text-xs"
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <RotateCw className="w-3.5 h-3.5 text-indigo-400" />
+                            <span className="text-zinc-300 font-medium group-hover:text-white truncate">
+                              {activeCycleObj?.name || '··· Cycle'}
+                            </span>
+                          </div>
+                        </button>
+
+                        {activeDropdown === 'cycle' && (
+                          <div className="absolute top-full left-0 mt-1.5 w-60 rounded-xl border border-[#2b2c3a] bg-[#191a24] shadow-[0_12px_36px_rgba(0,0,0,0.75)] p-1 z-50 animate-in fade-in-0 zoom-in-95 duration-100">
+                            <div className="px-2.5 py-1.5 text-xs text-zinc-400 font-normal border-b border-[#2b2c3a]/70 mb-1">
+                              Select Cycle (Sprint)...
+                            </div>
+                            <button
+                              onClick={() => handleCycleChange(null)}
+                              className={cn(
+                                'w-full flex items-center justify-between px-2.5 py-1.5 text-xs rounded-lg transition-colors',
+                                cycleId === null
+                                  ? 'bg-[#282a38] text-white font-medium'
+                                  : 'text-zinc-400 hover:bg-[#232432] hover:text-white',
+                              )}
+                            >
+                              <span>No Cycle</span>
+                              {cycleId === null && <Check className="w-3.5 h-3.5 text-white stroke-[2.5]" />}
+                            </button>
+                            {cycles.map((c) => (
+                              <button
+                                key={c.id}
+                                onClick={() => handleCycleChange(c.id)}
+                                className={cn(
+                                  'w-full flex items-center justify-between px-2.5 py-1.5 text-xs rounded-lg transition-colors',
+                                  c.id === cycleId
+                                    ? 'bg-[#282a38] text-white font-medium'
+                                    : 'text-zinc-300 hover:bg-[#232432] hover:text-white',
+                                )}
+                              >
+                                <div className="flex items-center gap-2 truncate">
+                                  <span
+                                    className={`w-2 h-2 rounded-full shrink-0 ${
+                                      c.status === 'ACTIVE' ? 'bg-emerald-400' : 'bg-indigo-400'
+                                    }`}
+                                  />
+                                  <span className="truncate">{c.name}</span>
+                                </div>
+                                {c.id === cycleId && <Check className="w-3.5 h-3.5 text-white stroke-[2.5]" />}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
+                </div>
+              )}
+
+              {/* Estimate (Story Points) Property Row */}
+              <div className="property-dropdown-container relative">
+                <button
+                  type="button"
+                  onClick={() => setActiveDropdown(activeDropdown === 'estimate' ? null : 'estimate')}
+                  className="w-full flex items-center justify-between py-1.5 px-2 rounded-md hover:bg-[#1a1b26] transition-colors cursor-pointer group text-left text-xs"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <Target className="w-3.5 h-3.5 text-indigo-400" />
+                    <span className="text-zinc-300 font-medium group-hover:text-white">
+                      {estimate ? `${estimate} points` : '··· Estimate'}
+                    </span>
+                  </div>
+                </button>
+
+                {activeDropdown === 'estimate' && (
+                  <div className="absolute top-full left-0 mt-1.5 w-60 rounded-xl border border-[#2b2c3a] bg-[#191a24] shadow-[0_12px_36px_rgba(0,0,0,0.75)] p-1 z-50 animate-in fade-in-0 zoom-in-95 duration-100">
+                    <div className="px-2.5 py-1.5 text-xs text-zinc-400 font-normal border-b border-[#2b2c3a]/70 mb-1">
+                      Story Points Estimate
+                    </div>
+                    {[
+                      { pts: 1, label: '1 point (Small)' },
+                      { pts: 2, label: '2 points' },
+                      { pts: 3, label: '3 points (Medium)' },
+                      { pts: 5, label: '5 points (Large)' },
+                      { pts: 8, label: '8 points (XL)' },
+                      { pts: 13, label: '13 points (Epic)' },
+                    ].map((item) => (
+                      <button
+                        key={item.pts}
+                        onClick={() => handleEstimateChange(item.pts)}
+                        className={cn(
+                          'w-full flex items-center justify-between px-2.5 py-1.5 text-xs rounded-lg transition-colors',
+                          estimate === item.pts
+                            ? 'bg-[#282a38] text-white font-medium'
+                            : 'text-zinc-300 hover:bg-[#232432] hover:text-white',
+                        )}
+                      >
+                        <span>{item.label}</span>
+                        {estimate === item.pts && <Check className="w-3.5 h-3.5 text-white stroke-[2.5]" />}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Parent Issue Row */}
+              <div className="property-dropdown-container relative">
+                {task.parent ? (
+                  <div className="flex items-center justify-between py-1.5 px-2 rounded-md hover:bg-[#1a1b26] transition-colors text-xs">
+                    <div className="flex items-center gap-2 min-w-0 flex-1 pr-2">
+                      <GitFork className="w-3.5 h-3.5 text-indigo-400 rotate-180 shrink-0" />
+                      <Link
+                        href={`/issue/${task.parent.id}`}
+                        className="text-zinc-300 hover:text-white truncate font-medium"
+                        title={task.parent.title}
+                      >
+                        <span className="font-mono text-zinc-500 mr-1.5">{task.parent.identifier}</span>
+                        <span>{task.parent.title}</span>
+                      </Link>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        await api.tasks.update(task.id, { parentId: null });
+                        setTask((prev) => (prev ? { ...prev, parentId: null, parent: null } : null));
+                      }}
+                      className="p-1 rounded hover:bg-rose-500/15 text-zinc-500 hover:text-rose-400 transition-colors"
+                      title="Unlink parent"
+                    >
+                      <X className="w-3 h-3 stroke-[2.5]" />
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setShowParentPicker(!showParentPicker)}
+                      className="w-full flex items-center justify-between py-1.5 px-2 rounded-md hover:bg-[#1a1b26] transition-colors cursor-pointer group text-left"
+                    >
+                      <div className="flex items-center gap-2.5 text-zinc-500 group-hover:text-zinc-300">
+                        <GitFork className="w-3.5 h-3.5 rotate-180" />
+                        <span>··· Set parent issue</span>
+                      </div>
+                    </button>
+
+                    {showParentPicker && (
+                      <div className="absolute top-full left-0 mt-1.5 w-64 rounded-xl border border-[#2b2c3a] bg-[#191a24] shadow-[0_12px_36px_rgba(0,0,0,0.75)] p-2 z-50 animate-in fade-in-0 zoom-in-95 duration-100">
+                        <div className="relative mb-2">
+                          <Search className="w-3.5 h-3.5 text-zinc-500 absolute left-2 top-2" />
+                          <input
+                            type="text"
+                            autoFocus
+                            value={parentSearch}
+                            onChange={(e) => setParentSearch(e.target.value)}
+                            placeholder="Search parent issue..."
+                            className="w-full bg-[#12131d] text-xs text-white placeholder:text-zinc-500 pl-7 pr-2.5 py-1 rounded border border-[#2b2c3a] focus:outline-none"
+                          />
+                        </div>
+                        <div className="max-h-40 overflow-y-auto space-y-1">
+                          {allTasks
+                            .filter(
+                              (t) =>
+                                t.id !== task.id &&
+                                t.parentId !== task.id &&
+                                (parentSearch.trim() === '' ||
+                                  t.title.toLowerCase().includes(parentSearch.toLowerCase()) ||
+                                  t.identifier.toLowerCase().includes(parentSearch.toLowerCase())),
+                            )
+                            .slice(0, 5)
+                            .map((t) => (
+                              <button
+                                key={t.id}
+                                type="button"
+                                onClick={async () => {
+                                  await api.tasks.update(task.id, { parentId: t.id });
+                                  setTask((prev) =>
+                                    prev
+                                      ? {
+                                          ...prev,
+                                          parentId: t.id,
+                                          parent: {
+                                            id: t.id,
+                                            identifier: t.identifier,
+                                            title: t.title,
+                                            status: t.status,
+                                          },
+                                        }
+                                      : null,
+                                  );
+                                  setShowParentPicker(false);
+                                  setParentSearch('');
+                                }}
+                                className="w-full flex items-center justify-between px-2 py-1.5 rounded hover:bg-[#20212f] text-left text-xs text-zinc-300 hover:text-white transition-colors"
+                              >
+                                <div className="flex items-center gap-1.5 min-w-0 flex-1 pr-1">
+                                  <span className="font-mono text-[11px] text-zinc-400">{t.identifier}</span>
+                                  <span className="truncate">{t.title}</span>
+                                </div>
+                              </button>
+                            ))}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
             </div>
           </div>
 
-          {/* Labels Section */}
-          <div className="space-y-2 pt-4 border-t border-border/40 property-dropdown-container relative">
-            <div className="flex items-center justify-between">
-              <div className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">
-                Labels
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setActiveDropdown(activeDropdown === 'labels' ? null : 'labels');
-                  setLabelSearch('');
-                }}
-                className="text-[11px] text-zinc-400 hover:text-white hover:bg-secondary/70 rounded px-1.5 py-0.5 transition-colors flex items-center gap-1"
-                title="Add or manage labels (L)"
-              >
-                <Plus className="w-3 h-3" />
-                <span>Add</span>
-              </button>
+          {/* Section 2: Labels (matching Linear screenshot) */}
+          <div className="pt-3 border-t border-[#1f202b] property-dropdown-container relative">
+            <div className="text-xs text-zinc-500 font-medium mb-1.5 px-1">
+              Labels
             </div>
 
-            {/* Attached Labels List */}
-            <div className="flex flex-wrap items-center gap-1.5">
+            {/* Attached Labels List & Add button */}
+            <div className="flex flex-wrap items-center gap-1.5 px-1">
               {labels.map((lbl) => (
                 <span
                   key={lbl}
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs bg-[#1a1b28] text-zinc-200 border border-zinc-800/80 hover:border-zinc-700 transition-colors"
+                  className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs bg-[#1a1b28] text-zinc-200 border border-zinc-800/80 hover:border-zinc-700 transition-colors"
                 >
                   <span
                     className="w-2 h-2 rounded-full shrink-0"
@@ -3337,8 +3598,9 @@ function IssueDetailContent() {
                   />
                   <span>{lbl}</span>
                   <button
+                    type="button"
                     onClick={() => handleRemoveLabel(lbl)}
-                    className="hover:text-destructive text-zinc-500 hover:text-white transition-colors ml-0.5"
+                    className="hover:text-rose-400 text-zinc-500 transition-colors ml-0.5"
                     title="Remove label"
                   >
                     <X className="w-3 h-3" />
@@ -3352,17 +3614,17 @@ function IssueDetailContent() {
                   setActiveDropdown(activeDropdown === 'labels' ? null : 'labels');
                   setLabelSearch('');
                 }}
-                className="w-6 h-6 rounded-md border border-dashed border-zinc-700/80 hover:border-zinc-500 hover:bg-secondary/40 text-zinc-400 hover:text-white flex items-center justify-center text-xs transition-colors"
+                className="inline-flex items-center gap-1.5 py-1 px-1.5 rounded text-xs text-zinc-400 hover:text-zinc-200 hover:bg-[#1a1b26] transition-colors cursor-pointer"
                 title="Add label (L)"
               >
-                <Plus className="w-3.5 h-3.5" />
+                <Tag className="w-3.5 h-3.5 text-zinc-500" />
+                <span>Add label</span>
               </button>
             </div>
 
-            {/* Linear Labels Dropdown Menu with Search and All Existing Labels */}
+            {/* Linear Labels Dropdown Menu with Search */}
             {activeDropdown === 'labels' && (
               <div className="absolute top-full left-0 mt-1.5 w-64 rounded-xl border border-[#2b2c3a] bg-[#191a24] shadow-[0_12px_36px_rgba(0,0,0,0.75)] p-1.5 z-50 animate-in fade-in-0 zoom-in-95 duration-100 max-h-72 overflow-hidden flex flex-col">
-                {/* Search Bar with L badge */}
                 <div className="flex items-center gap-2 px-2 py-1.5 border-b border-[#2b2c3a]/70 mb-1">
                   <Search className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
                   <input
@@ -3384,7 +3646,6 @@ function IssueDetailContent() {
                   </kbd>
                 </div>
 
-                {/* List of Existing Workspace Labels */}
                 <div className="overflow-y-auto space-y-0.5 max-h-48 py-0.5 pr-0.5">
                   {filteredLabels.map((lbl) => {
                     const isSelected = labels.includes(lbl);
@@ -3421,7 +3682,6 @@ function IssueDetailContent() {
                   )}
                 </div>
 
-                {/* Option to create a new label if search term is typed */}
                 {labelSearch.trim() &&
                   !allWorkspaceLabels.some(
                     (l) => l.toLowerCase() === labelSearch.trim().toLowerCase(),
@@ -3439,9 +3699,9 @@ function IssueDetailContent() {
             )}
           </div>
 
-          {/* Project Section */}
-          <div className="space-y-1.5 pt-4 border-t border-border/40 property-dropdown-container relative">
-            <div className="flex items-center justify-between text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">
+          {/* Section 3: Project (matching Linear screenshot) */}
+          <div className="space-y-1.5 pt-3 border-t border-[#1f202b] property-dropdown-container relative">
+            <div className="flex items-center justify-between text-xs text-zinc-500 font-medium px-1">
               <span>Project</span>
               {activeProject && (
                 <button
@@ -3450,7 +3710,7 @@ function IssueDetailContent() {
                     setNewPrefix(activeProject.key);
                     setShowPrefixModal(true);
                   }}
-                  className="text-[10px] text-indigo-400 hover:text-indigo-300 font-mono flex items-center gap-1 cursor-pointer bg-indigo-500/10 hover:bg-indigo-500/20 px-1.5 py-0.5 rounded border border-indigo-500/20 transition-colors"
+                  className="text-[10px] text-zinc-500 hover:text-zinc-300 font-mono flex items-center gap-1 cursor-pointer transition-colors"
                   title="Change project prefix key (e.g. TJAR)"
                 >
                   <span className="font-bold">{activeProject.key}</span>
@@ -3462,11 +3722,11 @@ function IssueDetailContent() {
             <button
               type="button"
               onClick={() => setActiveDropdown(activeDropdown === 'project' ? null : 'project')}
-              className="w-full flex items-center justify-between py-1.5 px-2.5 rounded-lg hover:bg-[#1a1b26] transition-colors cursor-pointer group text-left text-xs"
+              className="w-full flex items-center justify-between py-1.5 px-2 rounded-md hover:bg-[#1a1b26] transition-colors cursor-pointer group text-left text-xs"
             >
               <div className="flex items-center gap-2.5">
-                <FolderKanban className="w-3.5 h-3.5 text-zinc-500" />
-                <span className="text-zinc-300 font-medium group-hover:text-white">
+                <Target className="w-3.5 h-3.5 text-zinc-500 group-hover:text-zinc-300" />
+                <span className={cn("font-medium group-hover:text-white truncate", activeProject ? "text-zinc-300" : "text-zinc-500")}>
                   {activeProject?.name || '+ Add to project'}
                 </span>
               </div>
@@ -3502,140 +3762,6 @@ function IssueDetailContent() {
                       {p.id === projectId && <Check className="w-3.5 h-3.5 text-white stroke-[2.5]" />}
                       <span className="text-[10px] font-mono text-zinc-500">{idx + 1}</span>
                     </div>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Due Date Section */}
-          <div className="space-y-1.5 pt-4 border-t border-border/40 text-xs">
-            <div className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">
-              Due Date
-            </div>
-            <input
-              type="date"
-              value={dueDate}
-              onChange={(e) => handleDueDateChange(e.target.value)}
-              className="w-full bg-[#141522] hover:bg-[#181a2b] border border-border/70 rounded-md px-2.5 py-1.5 text-xs text-foreground focus:ring-1 focus:ring-primary focus:outline-none cursor-pointer transition-colors"
-            />
-          </div>
-
-          {/* Cycle (Sprint) Property Row */}
-          {workspace?.cyclesEnabled !== false && (
-            <div className="space-y-1.5 pt-4 border-t border-border/40 property-dropdown-container relative">
-              <div className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">
-                Cycle (Sprint)
-              </div>
-
-              {(() => {
-                const activeCycleObj = cycles.find((c) => c.id === cycleId) || task.cycle;
-                return (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => setActiveDropdown(activeDropdown === 'cycle' ? null : 'cycle')}
-                      className="w-full flex items-center justify-between py-1.5 px-2.5 rounded-lg hover:bg-[#1a1b26] transition-colors cursor-pointer group text-left text-xs"
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <RotateCw className="w-3.5 h-3.5 text-indigo-400" />
-                        <span className="text-zinc-300 font-medium group-hover:text-white truncate">
-                          {activeCycleObj?.name || '··· No Cycle'}
-                        </span>
-                      </div>
-                    </button>
-
-                    {activeDropdown === 'cycle' && (
-                      <div className="absolute top-full left-0 mt-1.5 w-60 rounded-xl border border-[#2b2c3a] bg-[#191a24] shadow-[0_12px_36px_rgba(0,0,0,0.75)] p-1 z-50 animate-in fade-in-0 zoom-in-95 duration-100">
-                        <div className="px-2.5 py-1.5 text-xs text-zinc-400 font-normal border-b border-[#2b2c3a]/70 mb-1">
-                          Select Cycle (Sprint)...
-                        </div>
-                        <button
-                          onClick={() => handleCycleChange(null)}
-                          className={cn(
-                            'w-full flex items-center justify-between px-2.5 py-1.5 text-xs rounded-lg transition-colors',
-                            cycleId === null
-                              ? 'bg-[#282a38] text-white font-medium'
-                              : 'text-zinc-400 hover:bg-[#232432] hover:text-white',
-                          )}
-                        >
-                          <span>No Cycle</span>
-                          {cycleId === null && <Check className="w-3.5 h-3.5 text-white stroke-[2.5]" />}
-                        </button>
-                        {cycles.map((c) => (
-                          <button
-                            key={c.id}
-                            onClick={() => handleCycleChange(c.id)}
-                            className={cn(
-                              'w-full flex items-center justify-between px-2.5 py-1.5 text-xs rounded-lg transition-colors',
-                              c.id === cycleId
-                                ? 'bg-[#282a38] text-white font-medium'
-                                : 'text-zinc-300 hover:bg-[#232432] hover:text-white',
-                            )}
-                          >
-                            <div className="flex items-center gap-2 truncate">
-                              <span
-                                className={`w-2 h-2 rounded-full shrink-0 ${
-                                  c.status === 'ACTIVE' ? 'bg-emerald-400' : 'bg-indigo-400'
-                                }`}
-                              />
-                              <span className="truncate">{c.name}</span>
-                            </div>
-                            {c.id === cycleId && <Check className="w-3.5 h-3.5 text-white stroke-[2.5]" />}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </>
-                );
-              })()}
-            </div>
-          )}
-
-          {/* Estimate (Story Points) Property Row */}
-          <div className="space-y-1.5 pt-4 border-t border-border/40 property-dropdown-container relative">
-            <div className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">
-              Estimate
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setActiveDropdown(activeDropdown === 'estimate' ? null : 'estimate')}
-              className="w-full flex items-center justify-between py-1.5 px-2.5 rounded-lg hover:bg-[#1a1b26] transition-colors cursor-pointer group text-left text-xs"
-            >
-              <div className="flex items-center gap-2.5">
-                <Target className="w-3.5 h-3.5 text-indigo-400" />
-                <span className="text-zinc-300 font-medium group-hover:text-white">
-                  {estimate ? `${estimate} points` : '··· Estimate'}
-                </span>
-              </div>
-            </button>
-
-            {activeDropdown === 'estimate' && (
-              <div className="absolute top-full left-0 mt-1.5 w-60 rounded-xl border border-[#2b2c3a] bg-[#191a24] shadow-[0_12px_36px_rgba(0,0,0,0.75)] p-1 z-50 animate-in fade-in-0 zoom-in-95 duration-100">
-                <div className="px-2.5 py-1.5 text-xs text-zinc-400 font-normal border-b border-[#2b2c3a]/70 mb-1">
-                  Story Points Estimate
-                </div>
-                {[
-                  { pts: 1, label: '1 point (Small)' },
-                  { pts: 2, label: '2 points' },
-                  { pts: 3, label: '3 points (Medium)' },
-                  { pts: 5, label: '5 points (Large)' },
-                  { pts: 8, label: '8 points (XL)' },
-                  { pts: 13, label: '13 points (Epic)' },
-                ].map((item) => (
-                  <button
-                    key={item.pts}
-                    onClick={() => handleEstimateChange(item.pts)}
-                    className={cn(
-                      'w-full flex items-center justify-between px-2.5 py-1.5 text-xs rounded-lg transition-colors',
-                      estimate === item.pts
-                        ? 'bg-[#282a38] text-white font-medium'
-                        : 'text-zinc-300 hover:bg-[#232432] hover:text-white',
-                    )}
-                  >
-                    <span>{item.label}</span>
-                    {estimate === item.pts && <Check className="w-3.5 h-3.5 text-white stroke-[2.5]" />}
                   </button>
                 ))}
               </div>

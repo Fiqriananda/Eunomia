@@ -2,7 +2,9 @@ export type TaskStatus = 'BACKLOG' | 'TODO' | 'IN_PROGRESS' | 'DONE' | 'CANCELED
 
 export type TaskPriority = 'NO_PRIORITY' | 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
 
-export type WorkspaceRole = 'OWNER' | 'ADMIN' | 'MEMBER';
+export type WorkspaceRole = 'OWNER' | 'ADMIN' | 'MEMBER' | 'STAKEHOLDER';
+
+export type TriageStatus = 'INBOX_PENDING' | 'APPROVED_BACKLOG' | 'REJECTED';
 
 export interface User {
   id: string;
@@ -38,12 +40,14 @@ export interface Workspace {
   id: string;
   name: string;
   slug: string;
+  logoUrl?: string | null;
   columnOrder?: string[];
   cyclesEnabled?: boolean;
   createdAt: string;
   updatedAt: string;
   projects?: Project[];
   members?: WorkspaceMember[];
+  divisions?: Division[];
   role?: WorkspaceRole;
 }
 
@@ -180,6 +184,12 @@ export interface Task {
   cycle?: Cycle | null;
   creator?: User;
   assignee?: User | null;
+  requesterDivisionId?: string | null;
+  requesterDivision?: Division | null;
+  assignedDivisionId?: string | null;
+  assignedDivision?: Division | null;
+  triageStatus?: TriageStatus | null;
+  externalMetadata?: ExternalMetadata | null;
   parentId?: string | null;
   parent?: {
     id: string;
@@ -284,8 +294,43 @@ export interface InboxNotification {
   invitation?: {
     id: string;
     token: string;
-    role: 'OWNER' | 'ADMIN' | 'MEMBER';
+    role: WorkspaceRole;
     status: 'PENDING' | 'ACCEPTED' | 'DECLINED';
   };
+}
+
+export interface ExternalMetadata {
+  urgency?: 'LOW' | 'MEDIUM' | 'HIGH';
+  targetDeadline?: string | null;
+  assetLinks?: string | string[] | null;
+  businessObjective?: string | null;
+  targetAudience?: string | null;
+  submittedAt?: string;
+  [key: string]: any;
+}
+
+export interface DivisionMember {
+  id: string;
+  divisionId: string;
+  userId: string;
+  user: User;
+  role?: string;
+  createdAt?: string;
+}
+
+export interface Division {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string | null;
+  isTechnical: boolean;
+  workspaceId: string;
+  members?: DivisionMember[];
+  _count?: {
+    requestedTasks?: number;
+    assignedTasks?: number;
+  };
+  createdAt?: string;
+  updatedAt?: string;
 }
 

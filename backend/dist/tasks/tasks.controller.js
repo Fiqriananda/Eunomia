@@ -21,7 +21,7 @@ let TasksController = class TasksController {
     constructor(tasksService) {
         this.tasksService = tasksService;
     }
-    async getTasks(workspaceId, projectId, cycleId, status, priority, assigneeId, search, parentId, archived) {
+    async getTasks(workspaceId, projectId, cycleId, status, priority, assigneeId, search, parentId, archived, requesterDivisionId, assignedDivisionId, triageStatus, includePendingTriage) {
         return this.tasksService.getTasks({
             workspaceId,
             projectId,
@@ -32,6 +32,25 @@ let TasksController = class TasksController {
             search,
             parentId,
             archived,
+            requesterDivisionId,
+            assignedDivisionId,
+            triageStatus,
+            includePendingTriage,
+        });
+    }
+    async getTriageRequests(workspaceId, userId) {
+        return this.tasksService.getTriageRequests(workspaceId, userId);
+    }
+    async createIntakeRequest(userId, body) {
+        return this.tasksService.createIntakeRequest(userId, body);
+    }
+    async updateTriageStatus(taskId, userId, body) {
+        return this.tasksService.updateTriageStatus(taskId, userId, body.action, {
+            priority: body.priority,
+            estimate: body.estimate,
+            cycleId: body.cycleId,
+            status: body.status,
+            comment: body.comment,
         });
     }
     async getTaskById(id) {
@@ -100,7 +119,7 @@ let TasksController = class TasksController {
 };
 __decorate([
     Get(),
-    ApiOperation({ summary: 'Get list of tasks with filters (including cycles and archived trash)' }),
+    ApiOperation({ summary: 'Get list of tasks with filters (including cycles, divisions, and archived trash)' }),
     ApiQuery({ name: 'workspaceId', required: true, description: 'Workspace ID' }),
     ApiQuery({ name: 'projectId', required: false, description: 'Filter by project' }),
     ApiQuery({ name: 'cycleId', required: false, description: 'Filter by cycle/sprint' }),
@@ -110,6 +129,10 @@ __decorate([
     ApiQuery({ name: 'search', required: false, description: 'Text search' }),
     ApiQuery({ name: 'parentId', required: false, description: 'Parent task ID' }),
     ApiQuery({ name: 'archived', required: false, description: 'Set to "true" to view trash / archived tasks' }),
+    ApiQuery({ name: 'requesterDivisionId', required: false, description: 'Filter by requester division' }),
+    ApiQuery({ name: 'assignedDivisionId', required: false, description: 'Filter by assigned division' }),
+    ApiQuery({ name: 'triageStatus', required: false, description: 'Filter by triage status' }),
+    ApiQuery({ name: 'includePendingTriage', required: false, description: 'Include pending triage requests' }),
     __param(0, Query('workspaceId')),
     __param(1, Query('projectId')),
     __param(2, Query('cycleId')),
@@ -119,10 +142,44 @@ __decorate([
     __param(6, Query('search')),
     __param(7, Query('parentId')),
     __param(8, Query('archived')),
+    __param(9, Query('requesterDivisionId')),
+    __param(10, Query('assignedDivisionId')),
+    __param(11, Query('triageStatus')),
+    __param(12, Query('includePendingTriage')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String, String, String, String, String, String, String, String]),
+    __metadata("design:paramtypes", [String, String, String, String, String, String, String, String, String, String, String, String, String]),
     __metadata("design:returntype", Promise)
 ], TasksController.prototype, "getTasks", null);
+__decorate([
+    Get('triage'),
+    ApiOperation({ summary: 'Get incoming intake requests waiting for triage review' }),
+    ApiQuery({ name: 'workspaceId', required: true, description: 'Workspace ID' }),
+    __param(0, Query('workspaceId')),
+    __param(1, CurrentUser('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], TasksController.prototype, "getTriageRequests", null);
+__decorate([
+    Post('intake'),
+    ApiOperation({ summary: 'Submit an intake request from a division' }),
+    __param(0, CurrentUser('id')),
+    __param(1, Body()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], TasksController.prototype, "createIntakeRequest", null);
+__decorate([
+    Patch(':id/triage'),
+    ApiOperation({ summary: 'Approve or reject a request in triage review' }),
+    ApiParam({ name: 'id', description: 'Task ID' }),
+    __param(0, Param('id')),
+    __param(1, CurrentUser('id')),
+    __param(2, Body()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, Object]),
+    __metadata("design:returntype", Promise)
+], TasksController.prototype, "updateTriageStatus", null);
 __decorate([
     Get(':id'),
     ApiOperation({ summary: 'Get task by ID' }),

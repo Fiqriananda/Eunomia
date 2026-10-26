@@ -33,6 +33,7 @@ export declare class AuthService {
             createdAt: Date;
             updatedAt: Date;
             slug: string;
+            logoUrl: string | null;
             columnOrder: string[];
             cyclesEnabled: boolean;
         };
@@ -75,6 +76,7 @@ export declare class AuthService {
             createdAt: Date;
             updatedAt: Date;
             slug: string;
+            logoUrl: string | null;
             columnOrder: string[];
             cyclesEnabled: boolean;
         };
@@ -126,6 +128,7 @@ export declare class AuthService {
                 createdAt: Date;
                 updatedAt: Date;
                 slug: string;
+                logoUrl: string | null;
                 columnOrder: string[];
                 cyclesEnabled: boolean;
             };

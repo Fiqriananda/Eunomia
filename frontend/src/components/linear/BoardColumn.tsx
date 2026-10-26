@@ -23,6 +23,7 @@ interface BoardColumnProps {
   onMoveRight?: () => void;
   canMoveLeft?: boolean;
   canMoveRight?: boolean;
+  isDragDisabled?: boolean;
 }
 
 export function BoardColumn({
@@ -40,9 +41,11 @@ export function BoardColumn({
   onMoveRight,
   canMoveLeft = false,
   canMoveRight = false,
+  isDragDisabled = false,
 }: BoardColumnProps) {
   const { setNodeRef, isOver } = useDroppable({
     id,
+    disabled: isDragDisabled,
     data: { columnId: id },
   });
 
@@ -116,7 +119,7 @@ export function BoardColumn({
             </button>
           )}
 
-          {onAddTask && (
+          {onAddTask && !isDragDisabled && (
             <button
               onClick={() => onAddTask(id)}
               className="p-1 rounded hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors"
@@ -140,6 +143,7 @@ export function BoardColumn({
               task={task}
               onClick={onTaskClick}
               showStatus={showStatus}
+              disabled={isDragDisabled}
             />
           ))}
         </SortableContext>

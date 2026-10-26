@@ -9,7 +9,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
-import { TaskStatus, TaskPriority } from '@prisma/client';
+import { TaskStatus, TaskPriority, WorkspaceRole } from '@prisma/client';
 import { EmailService } from '../email/email.service.js';
 import { EventsGateway } from '../events/events.gateway.js';
 const taskIncludeConfig = {
@@ -24,6 +24,12 @@ const taskIncludeConfig = {
     },
     creator: {
         select: { id: true, name: true, email: true, avatarUrl: true },
+    },
+    requesterDivision: {
+        select: { id: true, name: true, slug: true, isTechnical: true },
+    },
+    assignedDivision: {
+        select: { id: true, name: true, slug: true, isTechnical: true },
     },
     parent: {
         select: { id: true, identifier: true, title: true, status: true, customStatus: true, priority: true },
@@ -237,7 +243,7 @@ let TasksService = class TasksService {
         }
     }
     async getTasks(params) {
-        const { workspaceId, projectId, cycleId, status, priority, assigneeId, search, parentId, archived } = params;
+        const { workspaceId, projectId, cycleId, status, priority, assigneeId, search, parentId, archived, requesterDivisionId, assignedDivisionId, triageStatus, includePendingTriage, } = params;
         const where = { workspaceId };
         if (archived === 'true') {
             where.isArchived = true;
@@ -255,6 +261,19 @@ let TasksService = class TasksService {
             where.priority = priority;
         if (assigneeId)
             where.assigneeId = assigneeId;
+        if (requesterDivisionId)
+            where.requesterDivisionId = requesterDivisionId;
+        if (assignedDivisionId)
+            where.assignedDivisionId = assignedDivisionId;
+        if (triageStatus && triageStatus !== 'ALL') {
+            where.triageStatus = triageStatus;
+        }
+        else if (includePendingTriage !== 'true' && !triageStatus) {
+            where.OR = [
+                { triageStatus: { not: 'INBOX_PENDING' } },
+                { triageStatus: null },
+            ];
+        }
         if (parentId !== undefined) {
             if (parentId === 'null' || parentId === '') {
                 where.parentId = null;
@@ -338,6 +357,10 @@ let TasksService = class TasksService {
                 estimate: data.estimate !== undefined ? data.estimate : 1,
                 creatorId: userId,
                 assigneeId: data.assigneeId || null,
+                requesterDivisionId: data.requesterDivisionId || null,
+                assignedDivisionId: data.assignedDivisionId || null,
+                triageStatus: data.triageStatus || 'APPROVED_BACKLOG',
+                externalMetadata: data.externalMetadata || null,
                 parentId: data.parentId || null,
             },
             include: taskIncludeConfig,
@@ -416,6 +439,24 @@ let TasksService = class TasksService {
         });
         if (!currentTask) {
             throw new NotFoundException(`Task with ID ${id} not found`);
+        }
+        if (userId) {
+            const membership = await this.prisma.workspaceMember.findUnique({
+                where: { workspaceId_userId: { workspaceId: currentTask.workspaceId, userId } },
+            });
+            if (membership?.role === 'STAKEHOLDER') {
+                if (data.status !== undefined ||
+                    data.customStatus !== undefined ||
+                    data.assigneeId !== undefined ||
+                    data.estimate !== undefined ||
+                    data.cycleId !== undefined ||
+                    data.isArchived !== undefined) {
+                    throw new ForbiddenException('Stakeholders are not allowed to modify technical status, assignees, or sprint planning');
+                }
+                if (currentTask.triageStatus !== 'INBOX_PENDING' && currentTask.creatorId !== userId) {
+                    throw new ForbiddenException('Stakeholders can only edit pending requests they created');
+                }
+            }
         }
         const updateData = { ...data };
         if (data.dueDate !== undefined) {
@@ -607,6 +648,14 @@ let TasksService = class TasksService {
         if (!currentTask) {
             throw new NotFoundException(`Task with ID ${id} not found`);
         }
+        if (userId) {
+            const membership = await this.prisma.workspaceMember.findUnique({
+                where: { workspaceId_userId: { workspaceId: currentTask.workspaceId, userId } },
+            });
+            if (membership?.role === 'STAKEHOLDER') {
+                throw new ForbiddenException('Stakeholders are not allowed to change task status on board');
+            }
+        }
         const updateData = {};
         if (data.status !== undefined)
             updateData.status = data.status;
@@ -677,6 +726,14 @@ let TasksService = class TasksService {
         const existing = await this.prisma.task.findUnique({ where: { id } });
         if (!existing) {
             throw new NotFoundException(`Task with ID ${id} not found`);
+        }
+        if (userId) {
+            const membership = await this.prisma.workspaceMember.findUnique({
+                where: { workspaceId_userId: { workspaceId: existing.workspaceId, userId } },
+            });
+            if (membership?.role === 'STAKEHOLDER') {
+                throw new ForbiddenException('Stakeholders are not allowed to delete tasks');
+            }
         }
         const archivedTask = await this.prisma.task.update({
             where: { id },
@@ -1214,6 +1271,309 @@ let TasksService = class TasksService {
             },
             orderBy: { createdAt: 'asc' },
         });
+    }
+    async createIntakeRequest(userId, data) {
+        let finalRequesterDivisionId = data.requesterDivisionId;
+        if (!finalRequesterDivisionId && data.customDivisionName?.trim()) {
+            const cleanName = data.customDivisionName.trim();
+            const slug = cleanName
+                .toLowerCase()
+                .replace(/[^a-z0-9]+/g, '-')
+                .replace(/(^-|-$)/g, '') || `div-${Date.now()}`;
+            let division = await this.prisma.division.findFirst({
+                where: {
+                    workspaceId: data.workspaceId,
+                    OR: [
+                        { name: { equals: cleanName, mode: 'insensitive' } },
+                        { slug: { equals: slug, mode: 'insensitive' } },
+                    ],
+                },
+            });
+            if (!division) {
+                division = await this.prisma.division.create({
+                    data: {
+                        workspaceId: data.workspaceId,
+                        name: cleanName,
+                        slug,
+                        isTechnical: false,
+                    },
+                });
+            }
+            finalRequesterDivisionId = division.id;
+        }
+        let project = await this.prisma.project.findFirst({
+            where: { workspaceId: data.workspaceId },
+            orderBy: { createdAt: 'asc' },
+        });
+        if (!project) {
+            project = await this.prisma.project.create({
+                data: {
+                    name: 'General',
+                    key: 'REQ',
+                    workspaceId: data.workspaceId,
+                },
+            });
+        }
+        let priority = TaskPriority.MEDIUM;
+        if (data.urgency === 'HIGH')
+            priority = TaskPriority.HIGH;
+        else if (data.urgency === 'LOW')
+            priority = TaskPriority.LOW;
+        const existingTasks = await this.prisma.task.findMany({
+            where: { projectId: project.id },
+            select: { identifier: true },
+        });
+        let maxNumber = 0;
+        for (const t of existingTasks) {
+            if (t.identifier) {
+                const match = t.identifier.match(/-(\d+)$/);
+                if (match) {
+                    const num = parseInt(match[1], 10);
+                    if (!isNaN(num) && num > maxNumber) {
+                        maxNumber = num;
+                    }
+                }
+            }
+        }
+        const identifier = `${project.key}-${maxNumber + 1}`;
+        const lastTask = await this.prisma.task.findFirst({
+            where: { workspaceId: data.workspaceId },
+            orderBy: { order: 'desc' },
+        });
+        const order = lastTask ? lastTask.order + 1000 : 1000;
+        const externalMetadata = {
+            urgency: data.urgency || 'MEDIUM',
+            targetDeadline: data.targetDeadline || null,
+            assetLinks: data.assetLinks || null,
+            businessObjective: data.businessObjective || null,
+            targetAudience: data.targetAudience || null,
+            submittedAt: new Date().toISOString(),
+        };
+        const task = await this.prisma.task.create({
+            data: {
+                identifier,
+                title: data.title,
+                description: data.description,
+                status: TaskStatus.BACKLOG,
+                priority,
+                order,
+                dueDate: data.targetDeadline ? new Date(data.targetDeadline) : undefined,
+                projectId: project.id,
+                workspaceId: data.workspaceId,
+                creatorId: userId,
+                requesterDivisionId: finalRequesterDivisionId || null,
+                triageStatus: 'INBOX_PENDING',
+                externalMetadata,
+            },
+            include: taskIncludeConfig,
+        });
+        await this.prisma.taskSubscription.upsert({
+            where: { taskId_userId: { taskId: task.id, userId } },
+            create: { taskId: task.id, userId },
+            update: {},
+        });
+        await this.prisma.taskActivity.create({
+            data: {
+                type: 'CUSTOM',
+                details: `submitted request via Intake Form for cross-division review`,
+                taskId: task.id,
+                userId,
+            },
+        });
+        const admins = await this.prisma.workspaceMember.findMany({
+            where: {
+                workspaceId: data.workspaceId,
+                role: { in: [WorkspaceRole.OWNER, WorkspaceRole.ADMIN] },
+                userId: { not: userId },
+            },
+            include: { user: true },
+        });
+        const creator = await this.prisma.user.findUnique({
+            where: { id: userId },
+            select: { name: true },
+        });
+        for (const admin of admins) {
+            const notif = await this.prisma.inboxNotification.create({
+                data: {
+                    userId: admin.userId,
+                    actorId: userId,
+                    taskId: task.id,
+                    workspaceId: data.workspaceId,
+                    type: 'INTAKE_REQUEST',
+                    title: `New Intake Request: ${task.identifier}`,
+                    body: `${creator?.name || 'A stakeholder'} submitted: "${task.title}"`,
+                },
+            });
+            this.eventsGateway.emitNotification(admin.userId, notif);
+        }
+        return task;
+    }
+    async getTriageRequests(workspaceId, userId) {
+        const membership = await this.prisma.workspaceMember.findUnique({
+            where: { workspaceId_userId: { workspaceId, userId } },
+        });
+        if (!membership) {
+            throw new ForbiddenException('You do not have access to this workspace');
+        }
+        return this.prisma.task.findMany({
+            where: {
+                workspaceId,
+                triageStatus: 'INBOX_PENDING',
+                isArchived: false,
+            },
+            include: taskIncludeConfig,
+            orderBy: { createdAt: 'desc' },
+        });
+    }
+    async updateTriageStatus(taskId, userId, action, options) {
+        const task = await this.prisma.task.findUnique({
+            where: { id: taskId },
+            include: { workspace: true, creator: true },
+        });
+        if (!task)
+            throw new NotFoundException('Task not found');
+        const membership = await this.prisma.workspaceMember.findUnique({
+            where: { workspaceId_userId: { workspaceId: task.workspaceId, userId } },
+        });
+        if (action === 'RESUBMIT') {
+            const isCreator = task.creatorId === userId;
+            const isMember = !!membership;
+            if (!isCreator && !isMember) {
+                throw new ForbiddenException('You do not have permission to resubmit this request');
+            }
+        }
+        else {
+            if (!membership ||
+                (membership.role !== WorkspaceRole.OWNER &&
+                    membership.role !== WorkspaceRole.ADMIN &&
+                    membership.role !== WorkspaceRole.MEMBER)) {
+                throw new ForbiddenException('Only technical members or admins can triage requests');
+            }
+        }
+        const reviewer = await this.prisma.user.findUnique({
+            where: { id: userId },
+            select: { name: true, avatarUrl: true },
+        });
+        if (action === 'APPROVE') {
+            const updated = await this.prisma.task.update({
+                where: { id: taskId },
+                data: {
+                    triageStatus: 'APPROVED_BACKLOG',
+                    priority: options?.priority || task.priority,
+                    estimate: options?.estimate !== undefined ? options?.estimate : task.estimate,
+                    cycleId: options?.cycleId !== undefined ? options?.cycleId : task.cycleId,
+                    status: options?.status || TaskStatus.BACKLOG,
+                },
+                include: taskIncludeConfig,
+            });
+            await this.prisma.taskActivity.create({
+                data: {
+                    type: 'CUSTOM',
+                    details: `approved request into technical backlog`,
+                    taskId,
+                    userId,
+                },
+            });
+            if (options?.comment?.trim()) {
+                await this.addComment(taskId, userId, options.comment.trim());
+            }
+            if (task.creatorId !== userId) {
+                const notif = await this.prisma.inboxNotification.create({
+                    data: {
+                        userId: task.creatorId,
+                        actorId: userId,
+                        taskId,
+                        workspaceId: task.workspaceId,
+                        type: 'TRIAGE_APPROVED',
+                        title: `Request Approved: ${task.identifier}`,
+                        body: `${reviewer?.name || 'Lead Dev'} approved your request "${task.title}" to Backlog.`,
+                    },
+                });
+                this.eventsGateway.emitNotification(task.creatorId, notif);
+            }
+            this.eventsGateway.emitTaskUpdated(task.workspaceId, updated);
+            return updated;
+        }
+        else if (action === 'RESUBMIT') {
+            const updated = await this.prisma.task.update({
+                where: { id: taskId },
+                data: {
+                    triageStatus: 'INBOX_PENDING',
+                },
+                include: taskIncludeConfig,
+            });
+            await this.prisma.taskActivity.create({
+                data: {
+                    type: 'CUSTOM',
+                    details: `resubmitted request with updates for triage review`,
+                    taskId,
+                    userId,
+                },
+            });
+            if (options?.comment?.trim()) {
+                await this.addComment(taskId, userId, options.comment.trim());
+            }
+            const adminMembers = await this.prisma.workspaceMember.findMany({
+                where: {
+                    workspaceId: task.workspaceId,
+                    role: { in: [WorkspaceRole.OWNER, WorkspaceRole.ADMIN, WorkspaceRole.MEMBER] },
+                    userId: { not: userId },
+                },
+                select: { userId: true },
+            });
+            for (const m of adminMembers) {
+                const notif = await this.prisma.inboxNotification.create({
+                    data: {
+                        userId: m.userId,
+                        actorId: userId,
+                        taskId,
+                        workspaceId: task.workspaceId,
+                        type: 'TRIAGE_REJECTED',
+                        title: `Request Resubmitted: ${task.identifier}`,
+                        body: `${reviewer?.name || 'Requester'} updated and resubmitted "${task.title}".`,
+                    },
+                });
+                this.eventsGateway.emitNotification(m.userId, notif);
+            }
+            this.eventsGateway.emitTaskUpdated(task.workspaceId, updated);
+            return updated;
+        }
+        else {
+            const updated = await this.prisma.task.update({
+                where: { id: taskId },
+                data: {
+                    triageStatus: 'REJECTED',
+                },
+                include: taskIncludeConfig,
+            });
+            await this.prisma.taskActivity.create({
+                data: {
+                    type: 'CUSTOM',
+                    details: `rejected request / requested revisions`,
+                    taskId,
+                    userId,
+                },
+            });
+            if (options?.comment?.trim()) {
+                await this.addComment(taskId, userId, options.comment.trim());
+            }
+            if (task.creatorId !== userId) {
+                const notif = await this.prisma.inboxNotification.create({
+                    data: {
+                        userId: task.creatorId,
+                        actorId: userId,
+                        taskId,
+                        workspaceId: task.workspaceId,
+                        type: 'TRIAGE_REJECTED',
+                        title: `Request Needs Revision: ${task.identifier}`,
+                        body: `${reviewer?.name || 'Lead Dev'} responded to your request "${task.title}".`,
+                    },
+                });
+                this.eventsGateway.emitNotification(task.creatorId, notif);
+            }
+            this.eventsGateway.emitTaskUpdated(task.workspaceId, updated);
+            return updated;
+        }
     }
 };
 TasksService = __decorate([

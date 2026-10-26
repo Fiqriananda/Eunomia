@@ -110,7 +110,7 @@ describe('MobileController', () => {
 
   it('should update task status', async () => {
     const res = await controller.updateStatus('usr_1', 'task_1', { status: TaskStatus.DONE });
-    expect(res.status).toBe(TaskStatus.DONE);
+    expect(res?.status).toBe(TaskStatus.DONE);
     expect(service.updateTaskStatus).toHaveBeenCalledWith('usr_1', 'task_1', TaskStatus.DONE, undefined);
   });
 });

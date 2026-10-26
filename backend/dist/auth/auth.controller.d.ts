@@ -28,6 +28,7 @@ export declare class AuthController {
             createdAt: Date;
             updatedAt: Date;
             slug: string;
+            logoUrl: string | null;
             columnOrder: string[];
             cyclesEnabled: boolean;
         };
@@ -67,6 +68,7 @@ export declare class AuthController {
             createdAt: Date;
             updatedAt: Date;
             slug: string;
+            logoUrl: string | null;
             columnOrder: string[];
             cyclesEnabled: boolean;
         };
@@ -118,6 +120,7 @@ export declare class AuthController {
                 createdAt: Date;
                 updatedAt: Date;
                 slug: string;
+                logoUrl: string | null;
                 columnOrder: string[];
                 cyclesEnabled: boolean;
             };

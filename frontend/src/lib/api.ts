@@ -15,6 +15,8 @@ import {
   TaskReaction,
   CommentReaction,
   WorkspaceInvitation,
+  Division,
+  DivisionMember,
 } from '../types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
@@ -94,7 +96,10 @@ class ApiClient {
         method: 'POST',
         body: JSON.stringify(data),
       }),
-    update: (id: string, data: { name?: string; cyclesEnabled?: boolean }) =>
+    update: (
+      id: string,
+      data: { name?: string; cyclesEnabled?: boolean; logoUrl?: string | null },
+    ) =>
       this.request<Workspace>(`/workspaces/${id}`, {
         method: 'PATCH',
         body: JSON.stringify(data),
@@ -138,6 +143,31 @@ class ApiClient {
       this.request<WorkspaceInvitation[]>(`/workspaces/${workspaceId}/invitations`),
     cancelInvitation: (workspaceId: string, invitationId: string) =>
       this.request<{ success: boolean }>(`/workspaces/${workspaceId}/invitations/${invitationId}`, {
+        method: 'DELETE',
+      }),
+    getDivisions: (workspaceId: string) =>
+      this.request<Division[]>(`/workspaces/${workspaceId}/divisions`),
+    createDivision: (workspaceId: string, data: { name: string; slug?: string; description?: string; isTechnical?: boolean }) =>
+      this.request<Division>(`/workspaces/${workspaceId}/divisions`, {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+    updateDivision: (workspaceId: string, divisionId: string, data: { name?: string; slug?: string; description?: string; isTechnical?: boolean }) =>
+      this.request<Division>(`/workspaces/${workspaceId}/divisions/${divisionId}`, {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      }),
+    deleteDivision: (workspaceId: string, divisionId: string) =>
+      this.request<{ success: boolean }>(`/workspaces/${workspaceId}/divisions/${divisionId}`, {
+        method: 'DELETE',
+      }),
+    addDivisionMember: (workspaceId: string, divisionId: string, userId: string, role?: string) =>
+      this.request<DivisionMember>(`/workspaces/${workspaceId}/divisions/${divisionId}/members`, {
+        method: 'POST',
+        body: JSON.stringify({ userId, role }),
+      }),
+    removeDivisionMember: (workspaceId: string, divisionId: string, userId: string) =>
+      this.request<{ success: boolean }>(`/workspaces/${workspaceId}/divisions/${divisionId}/members/${userId}`, {
         method: 'DELETE',
       }),
   };
@@ -208,6 +238,10 @@ class ApiClient {
       parentId?: string;
       cycleId?: string;
       archived?: boolean | string;
+      requesterDivisionId?: string;
+      assignedDivisionId?: string;
+      triageStatus?: string;
+      includePendingTriage?: boolean | string;
     }) => {
       const query = new URLSearchParams();
       query.append('workspaceId', params.workspaceId);
@@ -219,10 +253,50 @@ class ApiClient {
       if (params.parentId !== undefined) query.append('parentId', params.parentId);
       if (params.cycleId) query.append('cycleId', params.cycleId);
       if (params.archived !== undefined) query.append('archived', String(params.archived));
+      if (params.requesterDivisionId) query.append('requesterDivisionId', params.requesterDivisionId);
+      if (params.assignedDivisionId) query.append('assignedDivisionId', params.assignedDivisionId);
+      if (params.triageStatus) query.append('triageStatus', params.triageStatus);
+      if (params.includePendingTriage !== undefined) query.append('includePendingTriage', String(params.includePendingTriage));
       return this.request<Task[]>(`/tasks?${query.toString()}`);
     },
 
     getById: (id: string) => this.request<Task>(`/tasks/${id}`),
+
+    createIntake: (data: {
+      workspaceId: string;
+      title: string;
+      requesterDivisionId?: string;
+      customDivisionName?: string;
+      description: string;
+      urgency?: 'LOW' | 'MEDIUM' | 'HIGH';
+      targetDeadline?: string;
+      assetLinks?: string;
+      businessObjective?: string;
+      targetAudience?: string;
+    }) =>
+      this.request<Task>('/tasks/intake', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+
+    getTriageRequests: (workspaceId: string) =>
+      this.request<Task[]>(`/tasks/triage?workspaceId=${workspaceId}`),
+
+    updateTriageStatus: (
+      taskId: string,
+      data: {
+        action: 'APPROVE' | 'REJECT' | 'RESUBMIT';
+        priority?: TaskPriority;
+        estimate?: number;
+        cycleId?: string | null;
+        status?: TaskStatus;
+        comment?: string;
+      },
+    ) =>
+      this.request<Task>(`/tasks/${taskId}/triage`, {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      }),
 
     create: (data: {
       workspaceId: string;

@@ -53,6 +53,18 @@ export class WorkspacesService {
         workspace: {
           include: {
             projects: true,
+            divisions: {
+              include: {
+                members: {
+                  include: {
+                    user: {
+                      select: { id: true, name: true, email: true, avatarUrl: true },
+                    },
+                  },
+                },
+              },
+              orderBy: [{ isTechnical: 'desc' }, { name: 'asc' }],
+            },
             members: {
               include: {
                 user: {
@@ -67,6 +79,24 @@ export class WorkspacesService {
 
     if (!membership) {
       throw new ForbiddenException('You do not have access to this workspace');
+    }
+
+    if (!membership.workspace.divisions || membership.workspace.divisions.length === 0) {
+      await this.ensureDefaultDivisions(workspaceId);
+      const updatedDivisions = await this.prisma.division.findMany({
+        where: { workspaceId },
+        include: {
+          members: {
+            include: {
+              user: {
+                select: { id: true, name: true, email: true, avatarUrl: true },
+              },
+            },
+          },
+        },
+        orderBy: [{ isTechnical: 'desc' }, { name: 'asc' }],
+      });
+      membership.workspace.divisions = updatedDivisions;
     }
 
     return {
@@ -322,7 +352,7 @@ export class WorkspacesService {
   async updateWorkspace(
     workspaceId: string,
     userId: string,
-    data: { name?: string; cyclesEnabled?: boolean },
+    data: { name?: string; cyclesEnabled?: boolean; logoUrl?: string | null },
   ) {
     const membership = await this.prisma.workspaceMember.findUnique({
       where: {
@@ -344,6 +374,7 @@ export class WorkspacesService {
     const updateData: any = {};
     if (data.name !== undefined) updateData.name = data.name.trim();
     if (data.cyclesEnabled !== undefined) updateData.cyclesEnabled = data.cyclesEnabled;
+    if (data.logoUrl !== undefined) updateData.logoUrl = data.logoUrl;
 
     const updated = await this.prisma.workspace.update({
       where: { id: workspaceId },
@@ -670,5 +701,166 @@ export class WorkspacesService {
       workspace: invitation.workspace,
       membership,
     };
+  }
+
+  // --- Division / Teams Management ---
+
+  async ensureDefaultDivisions(workspaceId: string) {
+    const existing = await this.prisma.division.count({ where: { workspaceId } });
+    if (existing > 0) return;
+
+    const defaults = [
+      { name: 'Core Tech & Dev', slug: 'core-dev', isTechnical: true, description: 'Engineering, software development, and technical backlog' },
+      { name: 'Event & Operational', slug: 'event-ops', isTechnical: false, description: 'Event planning, workshop logistics, and equipment' },
+      { name: 'PR & Media', slug: 'pr-media', isTechnical: false, description: 'Creative branding, publication, and external relations' },
+      { name: 'Human Resources (HR)', slug: 'hr', isTechnical: false, description: 'Talent recruitment, internal affairs, and member growth' },
+    ];
+
+    for (const d of defaults) {
+      await this.prisma.division.create({
+        data: {
+          ...d,
+          workspaceId,
+        },
+      });
+    }
+  }
+
+  async getWorkspaceDivisions(workspaceId: string) {
+    await this.ensureDefaultDivisions(workspaceId);
+    return this.prisma.division.findMany({
+      where: { workspaceId },
+      include: {
+        members: {
+          include: {
+            user: { select: { id: true, name: true, email: true, avatarUrl: true } },
+          },
+        },
+        _count: {
+          select: {
+            requestedTasks: true,
+            assignedTasks: true,
+          },
+        },
+      },
+      orderBy: [{ isTechnical: 'desc' }, { name: 'asc' }],
+    });
+  }
+
+  async createDivision(
+    workspaceId: string,
+    userId: string,
+    data: { name: string; slug?: string; description?: string; isTechnical?: boolean },
+  ) {
+    const membership = await this.prisma.workspaceMember.findUnique({
+      where: { workspaceId_userId: { workspaceId, userId } },
+    });
+    if (!membership || (membership.role !== WorkspaceRole.OWNER && membership.role !== WorkspaceRole.ADMIN)) {
+      throw new ForbiddenException('Only workspace admins or owners can create divisions');
+    }
+
+    const baseSlug = (data.slug || data.name).toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-');
+    const slug = `${baseSlug}-${Date.now().toString(36)}`;
+    return this.prisma.division.create({
+      data: {
+        name: data.name,
+        slug,
+        description: data.description,
+        isTechnical: data.isTechnical ?? false,
+        workspaceId,
+      },
+      include: {
+        members: {
+          include: {
+            user: { select: { id: true, name: true, email: true, avatarUrl: true } },
+          },
+        },
+      },
+    });
+  }
+
+  async updateDivision(
+    divisionId: string,
+    userId: string,
+    data: { name?: string; slug?: string; description?: string; isTechnical?: boolean },
+  ) {
+    const division = await this.prisma.division.findUnique({ where: { id: divisionId } });
+    if (!division) throw new NotFoundException('Division not found');
+
+    const membership = await this.prisma.workspaceMember.findUnique({
+      where: { workspaceId_userId: { workspaceId: division.workspaceId, userId } },
+    });
+    if (!membership || (membership.role !== WorkspaceRole.OWNER && membership.role !== WorkspaceRole.ADMIN)) {
+      throw new ForbiddenException('Only workspace admins or owners can update divisions');
+    }
+
+    return this.prisma.division.update({
+      where: { id: divisionId },
+      data,
+      include: {
+        members: {
+          include: {
+            user: { select: { id: true, name: true, email: true, avatarUrl: true } },
+          },
+        },
+      },
+    });
+  }
+
+  async deleteDivision(divisionId: string, userId: string) {
+    const division = await this.prisma.division.findUnique({ where: { id: divisionId } });
+    if (!division) throw new NotFoundException('Division not found');
+
+    const membership = await this.prisma.workspaceMember.findUnique({
+      where: { workspaceId_userId: { workspaceId: division.workspaceId, userId } },
+    });
+    if (!membership || (membership.role !== WorkspaceRole.OWNER && membership.role !== WorkspaceRole.ADMIN)) {
+      throw new ForbiddenException('Only workspace admins or owners can delete divisions');
+    }
+
+    return this.prisma.division.delete({ where: { id: divisionId } });
+  }
+
+  async addDivisionMember(
+    divisionId: string,
+    userId: string,
+    targetUserId: string,
+    role: string = 'MEMBER',
+  ) {
+    const division = await this.prisma.division.findUnique({ where: { id: divisionId } });
+    if (!division) throw new NotFoundException('Division not found');
+
+    const membership = await this.prisma.workspaceMember.findUnique({
+      where: { workspaceId_userId: { workspaceId: division.workspaceId, userId } },
+    });
+    if (!membership || (membership.role !== WorkspaceRole.OWNER && membership.role !== WorkspaceRole.ADMIN)) {
+      throw new ForbiddenException('Only workspace admins or owners can assign division members');
+    }
+
+    return this.prisma.divisionMember.upsert({
+      where: { divisionId_userId: { divisionId, userId: targetUserId } },
+      create: { divisionId, userId: targetUserId, role },
+      update: { role },
+      include: {
+        user: { select: { id: true, name: true, email: true, avatarUrl: true } },
+        division: true,
+      },
+    });
+  }
+
+  async removeDivisionMember(divisionId: string, userId: string, targetUserId: string) {
+    const division = await this.prisma.division.findUnique({ where: { id: divisionId } });
+    if (!division) throw new NotFoundException('Division not found');
+
+    const membership = await this.prisma.workspaceMember.findUnique({
+      where: { workspaceId_userId: { workspaceId: division.workspaceId, userId } },
+    });
+    if (!membership || (membership.role !== WorkspaceRole.OWNER && membership.role !== WorkspaceRole.ADMIN)) {
+      throw new ForbiddenException('Only workspace admins or owners can remove division members');
+    }
+
+    return this.prisma.divisionMember.delete({
+      where: { divisionId_userId: { divisionId, userId: targetUserId } },
+    });
   }
 }

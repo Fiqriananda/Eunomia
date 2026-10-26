@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../lib/api';
+import { Division } from '../../types';
 import {
   X,
   Settings,
@@ -14,6 +15,8 @@ import {
   Loader2,
   ShieldAlert,
   Save,
+  Plus,
+  Trash2,
 } from 'lucide-react';
 import { Button } from '../ui/button';
 
@@ -32,12 +35,33 @@ export function WorkspaceSettingsModal({ isOpen, onClose }: WorkspaceSettingsMod
     null,
   );
 
+  // Divisions State
+  const [divisions, setDivisions] = useState<Division[]>([]);
+  const [isLoadingDivisions, setIsLoadingDivisions] = useState(false);
+  const [showAddDivision, setShowAddDivision] = useState(false);
+  const [newDivisionName, setNewDivisionName] = useState('');
+  const [newDivisionIsTechnical, setNewDivisionIsTechnical] = useState(false);
+  const [isSubmittingDivision, setIsSubmittingDivision] = useState(false);
+  const [deletingDivisionId, setDeletingDivisionId] = useState<string | null>(null);
+
   // Sync workspace name when workspace changes
-  React.useEffect(() => {
+  useEffect(() => {
     if (workspace) {
       setWorkspaceName(workspace.name);
     }
   }, [workspace]);
+
+  // Load divisions when opened
+  useEffect(() => {
+    if (isOpen && workspace) {
+      setIsLoadingDivisions(true);
+      api.workspaces
+        .getDivisions(workspace.id)
+        .then((data) => setDivisions(data))
+        .catch((err) => console.error('Failed to load divisions:', err))
+        .finally(() => setIsLoadingDivisions(false));
+    }
+  }, [isOpen, workspace]);
 
   if (!isOpen || !workspace) return null;
 
@@ -120,6 +144,64 @@ export function WorkspaceSettingsModal({ isOpen, onClose }: WorkspaceSettingsMod
       });
     } finally {
       setIsUpdatingName(false);
+    }
+  };
+
+  const handleCreateDivision = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!canManage) return;
+    if (!newDivisionName.trim()) {
+      setFeedback({ type: 'error', message: 'Division name is required.' });
+      return;
+    }
+
+    setIsSubmittingDivision(true);
+    setFeedback(null);
+    try {
+      const created = await api.workspaces.createDivision(workspace.id, {
+        name: newDivisionName.trim(),
+        isTechnical: newDivisionIsTechnical,
+      });
+      setDivisions((prev) => [...prev, created]);
+      setNewDivisionName('');
+      setNewDivisionIsTechnical(false);
+      setShowAddDivision(false);
+      setFeedback({
+        type: 'success',
+        message: `Department / Division "${created.name}" created successfully.`,
+      });
+    } catch (err: any) {
+      console.error('Failed to create division:', err);
+      setFeedback({
+        type: 'error',
+        message: err.message || 'Failed to create division.',
+      });
+    } finally {
+      setIsSubmittingDivision(false);
+    }
+  };
+
+  const handleDeleteDivision = async (divisionId: string, divisionName: string) => {
+    if (!canManage) return;
+    if (!window.confirm(`Are you sure you want to delete the division "${divisionName}"?`)) return;
+
+    setDeletingDivisionId(divisionId);
+    setFeedback(null);
+    try {
+      await api.workspaces.deleteDivision(workspace.id, divisionId);
+      setDivisions((prev) => prev.filter((d) => d.id !== divisionId));
+      setFeedback({
+        type: 'success',
+        message: `Division "${divisionName}" deleted successfully.`,
+      });
+    } catch (err: any) {
+      console.error('Failed to delete division:', err);
+      setFeedback({
+        type: 'error',
+        message: err.message || 'Failed to delete division.',
+      });
+    } finally {
+      setDeletingDivisionId(null);
     }
   };
 
@@ -247,6 +329,144 @@ export function WorkspaceSettingsModal({ isOpen, onClose }: WorkspaceSettingsMod
                   </div>
                 </div>
               </form>
+            </div>
+
+            <div className="h-px bg-border/60" />
+
+            {/* Custom Divisions / Departments Section */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-xs font-semibold text-zinc-300 uppercase tracking-wider flex items-center gap-2">
+                    <Building2 className="w-3.5 h-3.5 text-indigo-400" />
+                    <span>Departments & Divisions</span>
+                  </h4>
+                  <p className="text-[11px] text-zinc-400 mt-0.5">
+                    Custom departments used for cross-division intake requests and tracking.
+                  </p>
+                </div>
+                {canManage && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="linear"
+                    onClick={() => setShowAddDivision(!showAddDivision)}
+                    className="text-xs h-7 px-2.5 flex items-center gap-1"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>{showAddDivision ? 'Cancel' : 'Add Division'}</span>
+                  </Button>
+                )}
+              </div>
+
+              {/* Add Division Form */}
+              {showAddDivision && canManage && (
+                <form
+                  onSubmit={handleCreateDivision}
+                  className="p-3 rounded-xl bg-[#141524] border border-indigo-500/30 space-y-3"
+                >
+                  <div className="space-y-1.5">
+                    <label className="text-xs text-zinc-300 font-medium">Division Name</label>
+                    <input
+                      type="text"
+                      placeholder="e.g., Growth Marketing, Legal, Finance..."
+                      value={newDivisionName}
+                      onChange={(e) => setNewDivisionName(e.target.value)}
+                      required
+                      className="w-full bg-[#1b1c2e] border border-border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500"
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="isTechCheckbox"
+                      checked={newDivisionIsTechnical}
+                      onChange={(e) => setNewDivisionIsTechnical(e.target.checked)}
+                      className="rounded border-border bg-[#1b1c2e] text-indigo-600 focus:ring-0 cursor-pointer"
+                    />
+                    <label htmlFor="isTechCheckbox" className="text-xs text-zinc-300 cursor-pointer">
+                      Is Technical / Core Engineering Team
+                    </label>
+                  </div>
+
+                  <div className="flex items-center justify-end gap-2 pt-1">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowAddDivision(false)}
+                      className="text-xs h-7 px-3 text-zinc-400 hover:text-white"
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="submit"
+                      variant="linear"
+                      size="sm"
+                      disabled={isSubmittingDivision || !newDivisionName.trim()}
+                      className="text-xs h-7 px-3"
+                    >
+                      {isSubmittingDivision ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" />
+                      ) : (
+                        <Plus className="w-3.5 h-3.5 mr-1" />
+                      )}
+                      <span>Create Division</span>
+                    </Button>
+                  </div>
+                </form>
+              )}
+
+              {/* Divisions List */}
+              {isLoadingDivisions ? (
+                <div className="flex items-center justify-center py-4 text-zinc-500 text-xs gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin text-indigo-400" />
+                  <span>Loading divisions...</span>
+                </div>
+              ) : divisions.length === 0 ? (
+                <div className="p-3 text-center rounded-lg bg-[#141524] border border-border/50 text-xs text-zinc-500">
+                  No divisions configured yet.
+                </div>
+              ) : (
+                <div className="space-y-1.5">
+                  {divisions.map((div) => (
+                    <div
+                      key={div.id}
+                      className="flex items-center justify-between p-2.5 rounded-lg bg-[#141524] border border-border/50 hover:border-[#2d2f44] transition-colors"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <span className="text-xs font-medium text-white">{div.name}</span>
+                        {div.isTechnical ? (
+                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">
+                            Technical Core
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-300 border border-purple-500/20">
+                            Department
+                          </span>
+                        )}
+                      </div>
+
+                      {canManage && (
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteDivision(div.id, div.name)}
+                          disabled={deletingDivisionId === div.id}
+                          className="text-zinc-500 hover:text-rose-400 p-1 rounded transition-colors"
+                          title="Delete division"
+                        >
+                          {deletingDivisionId === div.id ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin text-rose-400" />
+                          ) : (
+                            <Trash2 className="w-3.5 h-3.5" />
+                          )}
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="h-px bg-border/60" />

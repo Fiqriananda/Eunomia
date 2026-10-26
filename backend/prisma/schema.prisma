@@ -27,6 +27,13 @@ enum WorkspaceRole {
   OWNER
   ADMIN
   MEMBER
+  STAKEHOLDER
+}
+
+enum TriageStatus {
+  INBOX_PENDING
+  APPROVED_BACKLOG
+  REJECTED
 }
 
 enum InvitationStatus {
@@ -55,12 +62,14 @@ model User {
   taskReactions    TaskReaction[]
   commentReactions CommentReaction[]
   taskSubscriptions TaskSubscription[] @relation("UserTaskSubscriptions")
+  divisionMemberships DivisionMember[] @relation("UserDivisionMemberships")
 }
 
 model Workspace {
   id          String            @id @default(uuid())
   name        String
   slug        String            @unique
+  logoUrl     String?
   columnOrder   String[]          @default([])
   cyclesEnabled Boolean           @default(true)
   createdAt     DateTime          @default(now())
@@ -72,6 +81,7 @@ model Workspace {
   tasks       Task[]
   cycles      Cycle[]
   sections    WorkflowSection[]
+  divisions   Division[]
 }
 
 model WorkspaceMember {
@@ -168,6 +178,16 @@ model Task {
   
   assigneeId  String?
   assignee    User?        @relation("AssignedTasks", fields: [assigneeId], references: [id])
+
+  // Cross-Division Request Intake & Triage
+  requesterDivisionId String?
+  requesterDivision   Division?    @relation("RequesterDivisionTasks", fields: [requesterDivisionId], references: [id], onDelete: SetNull)
+
+  assignedDivisionId  String?
+  assignedDivision    Division?    @relation("AssignedDivisionTasks", fields: [assignedDivisionId], references: [id], onDelete: SetNull)
+
+  triageStatus        TriageStatus? @default(APPROVED_BACKLOG)
+  externalMetadata    Json?
   
   // Sub-issues (Parent-Child)
   parentId    String?
@@ -190,6 +210,9 @@ model Task {
   @@index([workspaceId, status])
   @@index([workspaceId, priority])
   @@index([workspaceId, isArchived])
+  @@index([workspaceId, triageStatus])
+  @@index([requesterDivisionId])
+  @@index([assignedDivisionId])
   @@index([cycleId])
   @@index([parentId])
 }
@@ -337,4 +360,38 @@ model WorkflowSection {
   updatedAt   DateTime   @updatedAt
 
   @@unique([workspaceId, key])
+}
+
+model Division {
+  id             String           @id @default(uuid())
+  name           String           // e.g. "Tech/Dev", "Event", "PR & Media", "HR"
+  slug           String           // e.g. "tech-dev", "event", "pr-media", "hr"
+  description    String?
+  isTechnical    Boolean          @default(false)
+  workspaceId    String
+  workspace      Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  members        DivisionMember[]
+  requestedTasks Task[]           @relation("RequesterDivisionTasks")
+  assignedTasks  Task[]           @relation("AssignedDivisionTasks")
+
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@unique([workspaceId, slug])
+  @@index([workspaceId])
+}
+
+model DivisionMember {
+  id         String   @id @default(uuid())
+  divisionId String
+  division   Division @relation(fields: [divisionId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User     @relation("UserDivisionMemberships", fields: [userId], references: [id], onDelete: Cascade)
+  role       String?  @default("MEMBER") // "LEAD" (Department / Division Lead) or "MEMBER"
+  createdAt  DateTime @default(now())
+
+  @@unique([divisionId, userId])
+  @@index([divisionId])
+  @@index([userId])
 }

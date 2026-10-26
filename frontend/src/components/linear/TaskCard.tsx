@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { Task } from '../../types';
 import { PriorityIcon } from './PriorityIcon';
 import { StatusIcon } from './StatusIcon';
-import { Paperclip, Calendar, GitFork } from 'lucide-react';
+import { Paperclip, Calendar, GitFork, Users } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
 interface TaskCardProps {
@@ -106,6 +106,19 @@ export function TaskCard({
               {label}
             </span>
           ))}
+        </div>
+      )}
+
+      {/* Requester Division Tag */}
+      {task.requesterDivision && (
+        <div className="mt-2 flex items-center gap-1">
+          <span
+            className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+            title={`Requested by: ${task.requesterDivision.name}`}
+          >
+            <Users className="w-2.5 h-2.5" />
+            <span className="truncate max-w-[120px]">{task.requesterDivision.name}</span>
+          </span>
         </div>
       )}
 

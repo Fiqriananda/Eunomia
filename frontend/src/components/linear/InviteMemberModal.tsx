@@ -163,8 +163,9 @@ export function InviteMemberModal({
                     onChange={(e) => setRole(e.target.value as any)}
                     className="w-full bg-[#141520] border border-border text-xs rounded px-2.5 py-2 text-foreground focus:ring-1 focus:ring-primary focus:outline-none cursor-pointer"
                   >
-                    <option value="MEMBER">Member (Can create, edit, and comment on tasks)</option>
-                    <option value="ADMIN">Admin (Can manage workspace settings)</option>
+                    <option value="MEMBER">Member (Core Team: manage board & sprint tasks)</option>
+                    <option value="ADMIN">Admin (Workspace Admin / Lead: full access to triage & settings)</option>
+                    <option value="STAKEHOLDER">Stakeholder (Department Head / Requester: submit requests & track progress)</option>
                   </select>
                 </div>
 

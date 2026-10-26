@@ -81,7 +81,7 @@ export class WorkspacesController {
   async updateWorkspace(
     @Param('id') id: string,
     @CurrentUser('id') userId: string,
-    @Body() body: { name?: string; cyclesEnabled?: boolean },
+    @Body() body: { name?: string; cyclesEnabled?: boolean; logoUrl?: string | null },
   ) {
     return this.workspacesService.updateWorkspace(id, userId, body);
   }
@@ -228,5 +228,69 @@ export class WorkspacesController {
     @Body() body: { columnOrder: string[] },
   ) {
     return this.workspacesService.updateColumnOrder(id, body.columnOrder);
+  }
+
+  // --- Divisions / Teams Endpoints ---
+
+  @Get(':id/divisions')
+  @ApiOperation({ summary: 'Get all divisions in a workspace' })
+  @ApiParam({ name: 'id', description: 'Workspace ID' })
+  async getDivisions(@Param('id') workspaceId: string) {
+    return this.workspacesService.getWorkspaceDivisions(workspaceId);
+  }
+
+  @Post(':id/divisions')
+  @ApiOperation({ summary: 'Create a new division' })
+  @ApiParam({ name: 'id', description: 'Workspace ID' })
+  async createDivision(
+    @Param('id') workspaceId: string,
+    @CurrentUser('id') userId: string,
+    @Body() body: { name: string; slug?: string; description?: string; isTechnical?: boolean },
+  ) {
+    return this.workspacesService.createDivision(workspaceId, userId, body);
+  }
+
+  @Patch(':id/divisions/:divisionId')
+  @ApiOperation({ summary: 'Update a division' })
+  @ApiParam({ name: 'divisionId', description: 'Division ID' })
+  async updateDivision(
+    @Param('divisionId') divisionId: string,
+    @CurrentUser('id') userId: string,
+    @Body() body: { name?: string; slug?: string; description?: string; isTechnical?: boolean },
+  ) {
+    return this.workspacesService.updateDivision(divisionId, userId, body);
+  }
+
+  @Delete(':id/divisions/:divisionId')
+  @ApiOperation({ summary: 'Delete a division' })
+  @ApiParam({ name: 'divisionId', description: 'Division ID' })
+  async deleteDivision(
+    @Param('divisionId') divisionId: string,
+    @CurrentUser('id') userId: string,
+  ) {
+    return this.workspacesService.deleteDivision(divisionId, userId);
+  }
+
+  @Post(':id/divisions/:divisionId/members')
+  @ApiOperation({ summary: 'Add/assign user to a division' })
+  @ApiParam({ name: 'divisionId', description: 'Division ID' })
+  async addDivisionMember(
+    @Param('divisionId') divisionId: string,
+    @CurrentUser('id') userId: string,
+    @Body() body: { userId: string; role?: string },
+  ) {
+    return this.workspacesService.addDivisionMember(divisionId, userId, body.userId, body.role);
+  }
+
+  @Delete(':id/divisions/:divisionId/members/:targetUserId')
+  @ApiOperation({ summary: 'Remove user from a division' })
+  @ApiParam({ name: 'divisionId', description: 'Division ID' })
+  @ApiParam({ name: 'targetUserId', description: 'Target User ID to remove' })
+  async removeDivisionMember(
+    @Param('divisionId') divisionId: string,
+    @Param('targetUserId') targetUserId: string,
+    @CurrentUser('id') userId: string,
+  ) {
+    return this.workspacesService.removeDivisionMember(divisionId, userId, targetUserId);
   }
 }

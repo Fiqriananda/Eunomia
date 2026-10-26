@@ -17,9 +17,12 @@ import { InboxView } from '../components/linear/InboxView';
 import { CyclesView } from '../components/linear/CyclesView';
 import { TrashView } from '../components/linear/TrashView';
 import { TeamView } from '../components/linear/TeamView';
-import { Task, TaskPriority, TaskStatus, WorkflowSection, Cycle } from '../types';
+import { TriageView } from '../components/linear/TriageView';
+import { StakeholderRequestsView } from '../components/linear/StakeholderRequestsView';
+import { CreateIntakeModal } from '../components/linear/CreateIntakeModal';
+import { Task, TaskPriority, TaskStatus, WorkflowSection, Cycle, Division } from '../types';
 import { api } from '../lib/api';
-import { Loader2, Plus, SlidersHorizontal, Filter, X, Sparkles, UserPlus, RotateCw, Trash2, Layers, Inbox, Users, Menu } from 'lucide-react';
+import { Loader2, Plus, SlidersHorizontal, Filter, X, Sparkles, UserPlus, RotateCw, Trash2, Layers, Inbox, Users, Menu, GitPullRequest } from 'lucide-react';
 import { Button } from '../components/ui/button';
 
 function Dashboard() {
@@ -32,6 +35,12 @@ function Dashboard() {
   const [columnOrder, setColumnOrder] = useState<string[]>([]);
   const [unreadInboxCount, setUnreadInboxCount] = useState(0);
 
+  // Divisions & Intake Triage state
+  const [divisions, setDivisions] = useState<Division[]>([]);
+  const [filterDivision, setFilterDivision] = useState<string>('ALL');
+  const [triageCount, setTriageCount] = useState<number>(0);
+  const [isIntakeModalOpen, setIsIntakeModalOpen] = useState(false);
+
   // Cycles & Trash state
   const [cycles, setCycles] = useState<Cycle[]>([]);
   const [activeCycle, setActiveCycle] = useState<Cycle | null>(null);
@@ -39,7 +48,7 @@ function Dashboard() {
   const [trashCount, setTrashCount] = useState<number>(0);
 
   // View & Tab state
-  const [sidebarTab, setSidebarTab] = useState<'all' | 'active' | 'backlog' | 'inbox' | 'cycles' | 'trash' | 'team'>('all');
+  const [sidebarTab, setSidebarTab] = useState<'all' | 'active' | 'backlog' | 'inbox' | 'cycles' | 'trash' | 'team' | 'triage' | 'requests'>('all');
   const [viewMode, setViewMode] = useState<'board-priority' | 'board-status' | 'list'>('board-status');
   const [searchQuery, setSearchQuery] = useState('');
   const [filterPriority, setFilterPriority] = useState<string>('ALL');
@@ -59,6 +68,13 @@ function Dashboard() {
       setSidebarTab('all');
     }
   }, [workspace?.cyclesEnabled, sidebarTab]);
+
+  // Default stakeholders to their dedicated cross-division requests tab
+  useEffect(() => {
+    if (workspace?.role === 'STAKEHOLDER' && (sidebarTab === 'all' || sidebarTab === 'active' || sidebarTab === 'backlog')) {
+      setSidebarTab('requests');
+    }
+  }, [workspace?.role]);
 
   // Group default for new task modal
   const [createDefaultPriority, setCreateDefaultPriority] = useState<TaskPriority>('NO_PRIORITY');
@@ -80,6 +96,26 @@ function Dashboard() {
       setTasksLoading(false);
     }
   }, [workspace, project]);
+
+  const fetchDivisions = useCallback(async () => {
+    if (!workspace) return;
+    try {
+      const res = await api.workspaces.getDivisions(workspace.id);
+      setDivisions(res);
+    } catch (err) {
+      console.error('Failed to load divisions:', err);
+    }
+  }, [workspace]);
+
+  const fetchTriageCount = useCallback(async () => {
+    if (!workspace) return;
+    try {
+      const res = await api.tasks.getTriageRequests(workspace.id);
+      setTriageCount(res.length);
+    } catch (err) {
+      // Silently handle
+    }
+  }, [workspace]);
 
   const fetchSections = useCallback(async () => {
     if (!workspace) return;
@@ -119,6 +155,8 @@ function Dashboard() {
   useEffect(() => {
     if (workspace) {
       fetchTasks();
+      fetchDivisions();
+      fetchTriageCount();
       fetchSections();
       fetchCycles();
       fetchTrashCount();
@@ -126,7 +164,7 @@ function Dashboard() {
         setColumnOrder(workspace.columnOrder);
       }
     }
-  }, [workspace, project, fetchTasks, fetchSections, fetchCycles, fetchTrashCount]);
+  }, [workspace, project, fetchTasks, fetchDivisions, fetchTriageCount, fetchSections, fetchCycles, fetchTrashCount]);
 
   // Real-time WebSockets listeners for live collaboration
   useEffect(() => {
@@ -212,6 +250,12 @@ function Dashboard() {
       setUnreadInboxCount((prev) => prev + 1);
     };
 
+    // Triage request updates
+    const handleTriageUpdated = () => {
+      fetchTriageCount();
+      fetchTasks();
+    };
+
     socket.on('task:moved', handleTaskMoved);
     socket.on('task:created', handleTaskCreated);
     socket.on('task:updated', handleTaskUpdated);
@@ -219,6 +263,8 @@ function Dashboard() {
     socket.on('task:restored', handleTaskRestored);
     socket.on('task:deleted', handleTaskDeleted);
     socket.on('notification', handleNotification);
+    socket.on('triage:new', handleTriageUpdated);
+    socket.on('triage:updated', handleTriageUpdated);
 
     return () => {
       socket.off('task:moved', handleTaskMoved);
@@ -228,8 +274,10 @@ function Dashboard() {
       socket.off('task:restored', handleTaskRestored);
       socket.off('task:deleted', handleTaskDeleted);
       socket.off('notification', handleNotification);
+      socket.off('triage:new', handleTriageUpdated);
+      socket.off('triage:updated', handleTriageUpdated);
     };
-  }, [socket, workspace]);
+  }, [socket, workspace, fetchTriageCount, fetchTasks]);
 
   // Fetch and poll unread inbox notifications
   useEffect(() => {
@@ -252,7 +300,13 @@ function Dashboard() {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       const tabParam = params.get('tab');
-      if (tabParam === 'inbox' || tabParam === 'cycles' || tabParam === 'trash') {
+      if (
+        tabParam === 'inbox' ||
+        tabParam === 'cycles' ||
+        tabParam === 'trash' ||
+        tabParam === 'triage' ||
+        tabParam === 'requests'
+      ) {
         setSidebarTab(tabParam as any);
       }
     }
@@ -505,6 +559,10 @@ function Dashboard() {
       return false;
     }
 
+    if (filterDivision !== 'ALL' && t.requesterDivisionId !== filterDivision) {
+      return false;
+    }
+
     return true;
   });
 
@@ -517,14 +575,20 @@ function Dashboard() {
         currentTab={sidebarTab}
         onTabChange={setSidebarTab}
         unreadInboxCount={unreadInboxCount}
+        triageCount={triageCount}
+        onOpenIntakeModal={() => setIsIntakeModalOpen(true)}
         onOpenCreateIssue={() => {
-          setCreateDefaultPriority('NO_PRIORITY');
-          setCreateDefaultStatus('TODO');
-          setIsCreateOpen(true);
+          if (workspace?.role === 'STAKEHOLDER') {
+            setIsIntakeModalOpen(true);
+          } else {
+            setCreateDefaultPriority('NO_PRIORITY');
+            setCreateDefaultStatus('TODO');
+            setIsCreateOpen(true);
+          }
         }}
         onOpenInviteModal={() => setIsInviteOpen(true)}
         onOpenCommandMenu={() => setIsCommandOpen(true)}
-        onOpenWorkspaceSettings={() => setIsWorkspaceSettingsOpen(true)}
+        onOpenWorkspaceSettings={() => router.push('/settings/workspace')}
         taskCounts={{
           all: tasks.length,
           active: tasks.filter((t) => t.status === 'TODO' || t.status === 'IN_PROGRESS').length,
@@ -543,13 +607,17 @@ function Dashboard() {
           unreadInboxCount={unreadInboxCount}
           onOpenMobileNav={() => setIsMobileNavOpen(true)}
           onOpenCreateTask={() => {
-            setCreateDefaultPriority('NO_PRIORITY');
-            setCreateDefaultStatus('TODO');
-            setIsCreateOpen(true);
+            if (workspace?.role === 'STAKEHOLDER') {
+              setIsIntakeModalOpen(true);
+            } else {
+              setCreateDefaultPriority('NO_PRIORITY');
+              setCreateDefaultStatus('TODO');
+              setIsCreateOpen(true);
+            }
           }}
           onOpenCommandMenu={() => setIsCommandOpen(true)}
           onOpenInviteModal={() => setIsInviteOpen(true)}
-          onOpenWorkspaceSettings={() => setIsWorkspaceSettingsOpen(true)}
+          onOpenWorkspaceSettings={() => router.push('/settings/workspace')}
           onOpenTeam={() => setSidebarTab('team')}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
@@ -589,6 +657,23 @@ function Dashboard() {
               setSidebarTab('all');
             }}
             onRefreshWorkspace={refreshWorkspacesAndProjects}
+          />
+        ) : sidebarTab === 'triage' && workspace ? (
+          <TriageView
+            workspace={workspace}
+            currentUser={user}
+            cycles={cycles}
+            onOpenTaskDetail={handleTaskClick}
+            onTaskTriaged={(task) => {
+              fetchTasks();
+              setTriageCount((c) => Math.max(0, c - 1));
+            }}
+          />
+        ) : sidebarTab === 'requests' && workspace ? (
+          <StakeholderRequestsView
+            workspace={workspace}
+            currentUser={user}
+            onOpenTaskDetail={handleTaskClick}
           />
         ) : (
           <>
@@ -634,6 +719,20 @@ function Dashboard() {
                   <span className="hidden sm:inline">Filter:</span>
                 </div>
 
+                {/* Division Filter */}
+                <select
+                  value={filterDivision}
+                  onChange={(e) => setFilterDivision(e.target.value)}
+                  className="bg-[#141520] border border-border text-xs rounded px-2 py-1 text-zinc-300 focus:outline-none focus:border-primary cursor-pointer shrink-0"
+                >
+                  <option value="ALL">All Divisions</option>
+                  {divisions.map((d) => (
+                    <option key={d.id} value={d.id}>
+                      {d.name}
+                    </option>
+                  ))}
+                </select>
+
                 {/* Cycle Filter */}
                 <select
                   value={filterCycle}
@@ -675,13 +774,14 @@ function Dashboard() {
                   <option value="CANCELED">Canceled</option>
                 </select>
 
-                {(filterPriority !== 'ALL' || filterStatus !== 'ALL' || filterCycle !== 'ALL' || filterAssignee !== 'ALL' || searchQuery || sidebarTab !== 'all') && (
+                {(filterPriority !== 'ALL' || filterStatus !== 'ALL' || filterCycle !== 'ALL' || filterDivision !== 'ALL' || filterAssignee !== 'ALL' || searchQuery || sidebarTab !== 'all') && (
                   <button
                     onClick={() => {
                       setSidebarTab('all');
                       setFilterPriority('ALL');
                       setFilterStatus('ALL');
                       setFilterCycle('ALL');
+                      setFilterDivision('ALL');
                       setFilterAssignee('ALL');
                       setSearchQuery('');
                     }}
@@ -734,11 +834,17 @@ function Dashboard() {
                   <Button
                     variant="linear"
                     size="sm"
-                    onClick={() => setIsCreateOpen(true)}
+                    onClick={() => {
+                      if (workspace?.role === 'STAKEHOLDER') {
+                        setIsIntakeModalOpen(true);
+                      } else {
+                        setIsCreateOpen(true);
+                      }
+                    }}
                     className="inline-flex items-center gap-1.5"
                   >
                     <Plus className="w-4 h-4" />
-                    <span>Create Issue</span>
+                    <span>{workspace?.role === 'STAKEHOLDER' ? 'Submit Request' : 'Create Issue'}</span>
                   </Button>
                 </div>
               ) : viewMode === 'board-priority' ? (
@@ -749,6 +855,7 @@ function Dashboard() {
                   onTaskMove={handleTaskMove}
                   onAddTaskToGroup={handleAddTaskToGroup}
                   customSections={sections}
+                  isDragDisabled={workspace?.role === 'STAKEHOLDER'}
                 />
               ) : viewMode === 'board-status' ? (
                 <BoardView
@@ -762,6 +869,7 @@ function Dashboard() {
                   onUpdateColumnOrder={handleUpdateColumnOrder}
                   onCreateSection={handleCreateSection}
                   onDeleteSection={handleDeleteSection}
+                  isDragDisabled={workspace?.role === 'STAKEHOLDER'}
                 />
               ) : (
                 <ListView
@@ -820,6 +928,20 @@ function Dashboard() {
         <WorkspaceSettingsModal
           isOpen={isWorkspaceSettingsOpen}
           onClose={() => setIsWorkspaceSettingsOpen(false)}
+        />
+      )}
+
+      {/* Cross-Division Intake Request Modal */}
+      {workspace && (
+        <CreateIntakeModal
+          isOpen={isIntakeModalOpen}
+          onClose={() => setIsIntakeModalOpen(false)}
+          workspace={workspace}
+          onRequestCreated={(task) => {
+            fetchTasks();
+            fetchTriageCount();
+            fetchDivisions();
+          }}
         />
       )}
 

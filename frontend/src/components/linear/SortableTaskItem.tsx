@@ -10,9 +10,10 @@ interface SortableTaskItemProps {
   task: Task;
   onClick: (task: Task) => void;
   showStatus?: boolean;
+  disabled?: boolean;
 }
 
-export function SortableTaskItem({ task, onClick, showStatus }: SortableTaskItemProps) {
+export function SortableTaskItem({ task, onClick, showStatus, disabled = false }: SortableTaskItemProps) {
   const {
     attributes,
     listeners,
@@ -23,6 +24,7 @@ export function SortableTaskItem({ task, onClick, showStatus }: SortableTaskItem
   } = useSortable({
     id: task.id,
     data: { task },
+    disabled,
   });
 
   const style = {
@@ -36,7 +38,7 @@ export function SortableTaskItem({ task, onClick, showStatus }: SortableTaskItem
         task={task}
         onClick={onClick}
         isDragging={isDragging}
-        dragHandleProps={listeners}
+        dragHandleProps={disabled ? undefined : listeners}
         showStatus={showStatus}
       />
     </div>

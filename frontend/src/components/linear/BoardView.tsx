@@ -44,6 +44,7 @@ interface BoardViewProps {
     positionPlacement?: string,
   ) => Promise<void>;
   onDeleteSection?: (sectionId: string) => Promise<void>;
+  isDragDisabled?: boolean;
 }
 
 const PRIORITY_COLUMNS: TaskPriority[] = ['URGENT', 'HIGH', 'MEDIUM', 'LOW', 'NO_PRIORITY'];
@@ -79,6 +80,7 @@ export function BoardView({
   onUpdateColumnOrder,
   onCreateSection,
   onDeleteSection,
+  isDragDisabled = false,
 }: BoardViewProps) {
   const [activeTask, setActiveTask] = useState<Task | null>(null);
 
@@ -299,6 +301,7 @@ export function BoardView({
                 onTaskClick={onTaskClick}
                 onAddTask={onAddTaskToGroup}
                 showStatus={true}
+                isDragDisabled={isDragDisabled}
               />
             );
           })
@@ -332,6 +335,7 @@ export function BoardView({
                   onAddTask={onAddTaskToGroup}
                   showStatus={false}
                   isCustom={col.isCustom}
+                  isDragDisabled={isDragDisabled}
                   onDelete={
                     col.isCustom && onDeleteSection && col.sectionId
                       ? () => onDeleteSection(col.sectionId!)
@@ -346,7 +350,7 @@ export function BoardView({
             })}
 
             {/* + Add Section Button & Inline Popover Form */}
-            {onCreateSection && (
+            {onCreateSection && !isDragDisabled && (
               <div className="w-[85vw] max-w-[340px] sm:w-80 shrink-0 snap-center sm:snap-align-none">
                 {!isAddingSection ? (
                   <button

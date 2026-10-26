@@ -2,8 +2,10 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../lib/api';
+import { resolveMediaUrl } from '../ui/MarkdownRenderer';
 import {
   Inbox,
   CheckCircle2,
@@ -29,19 +31,23 @@ import {
   RotateCw,
   Trash2,
   X,
+  FileText,
+  GitPullRequest,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../../lib/utils';
 
 interface SidebarProps {
-  currentTab: 'all' | 'active' | 'backlog' | 'inbox' | 'cycles' | 'trash' | 'team';
-  onTabChange: (tab: 'all' | 'active' | 'backlog' | 'inbox' | 'cycles' | 'trash' | 'team') => void;
+  currentTab: 'all' | 'active' | 'backlog' | 'inbox' | 'cycles' | 'trash' | 'team' | 'triage' | 'requests';
+  onTabChange: (tab: 'all' | 'active' | 'backlog' | 'inbox' | 'cycles' | 'trash' | 'team' | 'triage' | 'requests') => void;
   onOpenCreateIssue: () => void;
   onOpenInviteModal: () => void;
   onOpenCommandMenu: () => void;
   onOpenWorkspaceSettings?: () => void;
+  onOpenIntakeModal?: () => void;
   taskCounts?: { all: number; active: number; backlog: number; trash?: number };
   unreadInboxCount?: number;
+  triageCount?: number;
   isMobileOpen?: boolean;
   onMobileClose?: () => void;
 }
@@ -55,10 +61,13 @@ export function Sidebar({
   onOpenWorkspaceSettings,
   taskCounts = { all: 0, active: 0, backlog: 0 },
   unreadInboxCount = 0,
+  triageCount = 0,
+  onOpenIntakeModal,
   isMobileOpen = false,
   onMobileClose,
 }: SidebarProps) {
   const { user, workspace, workspaces, setWorkspace, projects, project, setProject, logout, refreshWorkspacesAndProjects } = useAuth();
+  const router = useRouter();
   const [isWsDropdownOpen, setIsWsDropdownOpen] = useState(false);
   const [isCreatingWs, setIsCreatingWs] = useState(false);
   const [newWsName, setNewWsName] = useState('');
@@ -94,7 +103,7 @@ export function Sidebar({
     }
   };
 
-  const handleTabSelect = (tab: 'all' | 'active' | 'backlog' | 'inbox' | 'cycles' | 'trash' | 'team') => {
+  const handleTabSelect = (tab: 'all' | 'active' | 'backlog' | 'inbox' | 'cycles' | 'trash' | 'team' | 'triage' | 'requests') => {
     onTabChange(tab);
     onMobileClose?.();
   };
@@ -122,8 +131,8 @@ export function Sidebar({
 
   const handleWorkspaceSettingsClick = () => {
     setIsWsDropdownOpen(false);
-    onOpenWorkspaceSettings?.();
     onMobileClose?.();
+    router.push('/settings/workspace');
   };
 
   const renderSidebarBody = () => (
@@ -142,9 +151,17 @@ export function Sidebar({
                   : 'border-transparent hover:bg-[#141522] text-zinc-300 hover:text-white',
               )}
             >
-              <span className="w-5 h-5 rounded bg-[#5e6ad2] text-white flex items-center justify-center font-bold text-[10px] shadow-sm shrink-0">
-                {workspace?.name?.[0] || 'L'}
-              </span>
+              {workspace?.logoUrl ? (
+                <img
+                  src={resolveMediaUrl(workspace.logoUrl)}
+                  alt={workspace?.name || 'Workspace'}
+                  className="w-5 h-5 rounded object-cover shadow-sm shrink-0"
+                />
+              ) : (
+                <span className="w-5 h-5 rounded bg-[#5e6ad2] text-white flex items-center justify-center font-bold text-[10px] shadow-sm shrink-0">
+                  {workspace?.name?.[0] || 'L'}
+                </span>
+              )}
               <span className="font-semibold truncate max-w-[110px]">
                 {workspace?.name || 'Workspace'}
               </span>
@@ -166,9 +183,17 @@ export function Sidebar({
                   </div>
                   <div className="flex items-center justify-between mt-1">
                     <div className="flex items-center gap-2 min-w-0">
-                      <span className="w-5 h-5 rounded bg-[#5e6ad2] text-white flex items-center justify-center font-bold text-[10px] shrink-0">
-                        {workspace?.name?.[0] || 'L'}
-                      </span>
+                      {workspace?.logoUrl ? (
+                        <img
+                          src={resolveMediaUrl(workspace.logoUrl)}
+                          alt={workspace?.name || 'Workspace'}
+                          className="w-5 h-5 rounded object-cover shadow-sm shrink-0"
+                        />
+                      ) : (
+                        <span className="w-5 h-5 rounded bg-[#5e6ad2] text-white flex items-center justify-center font-bold text-[10px] shrink-0">
+                          {workspace?.name?.[0] || 'L'}
+                        </span>
+                      )}
                       <span className="font-medium text-white truncate text-xs">
                         {workspace?.name}
                       </span>
@@ -197,9 +222,17 @@ export function Sidebar({
                           }}
                           className="w-full text-left px-2 py-1.5 text-xs rounded hover:bg-secondary transition-colors text-zinc-300 hover:text-white flex items-center gap-2"
                         >
-                          <span className="w-4 h-4 rounded bg-zinc-800 text-zinc-300 flex items-center justify-center text-[9px] font-bold">
-                            {w.name[0]}
-                          </span>
+                          {w.logoUrl ? (
+                            <img
+                              src={resolveMediaUrl(w.logoUrl)}
+                              alt={w.name}
+                              className="w-4 h-4 rounded object-cover shrink-0"
+                            />
+                          ) : (
+                            <span className="w-4 h-4 rounded bg-zinc-800 text-zinc-300 flex items-center justify-center text-[9px] font-bold">
+                              {w.name[0]}
+                            </span>
+                          )}
                           <span className="truncate">{w.name}</span>
                         </button>
                       ))}
@@ -208,15 +241,13 @@ export function Sidebar({
 
                 {/* Actions: Settings, Invite, Create, Logout */}
                 <div className="pt-1 space-y-0.5">
-                  {onOpenWorkspaceSettings && (
-                    <button
-                      onClick={handleWorkspaceSettingsClick}
-                      className="w-full text-left px-2 py-1.5 text-xs rounded hover:bg-secondary text-zinc-300 hover:text-white flex items-center gap-2 transition-colors font-medium"
-                    >
-                      <Settings className="w-3.5 h-3.5 text-zinc-400" />
-                      <span>Workspace settings</span>
-                    </button>
-                  )}
+                  <button
+                    onClick={handleWorkspaceSettingsClick}
+                    className="w-full text-left px-2 py-1.5 text-xs rounded hover:bg-secondary text-zinc-300 hover:text-white flex items-center gap-2 transition-colors font-medium cursor-pointer"
+                  >
+                    <Settings className="w-3.5 h-3.5 text-zinc-400" />
+                    <span>Workspace Settings</span>
+                  </button>
 
                   <button
                     onClick={handleInviteClick}
@@ -371,6 +402,50 @@ export function Sidebar({
             </div>
             <span className="text-[10px] font-mono text-zinc-500 bg-zinc-800/60 px-1.5 py-0.2 rounded">
               {taskCounts.backlog}
+            </span>
+          </button>
+
+          {/* Cross-Division Triage (For Admin & Dev Members) */}
+          {workspace?.role !== 'STAKEHOLDER' && (
+            <button
+              onClick={() => handleTabSelect('triage')}
+              className={cn(
+                'w-full flex items-center justify-between px-2.5 py-1.5 rounded-md transition-colors text-left font-medium',
+                currentTab === 'triage'
+                  ? 'bg-secondary text-white'
+                  : 'text-zinc-400 hover:text-zinc-200 hover:bg-secondary/40',
+              )}
+            >
+              <div className="flex items-center gap-2.5">
+                <Inbox className={cn('w-4 h-4', currentTab === 'triage' ? 'text-amber-400' : 'text-zinc-400')} />
+                <span>Triage Requests</span>
+              </div>
+              {triageCount > 0 ? (
+                <span className="text-[10px] font-mono font-bold text-amber-300 bg-amber-500/20 border border-amber-500/30 px-1.5 py-0.2 rounded">
+                  {triageCount}
+                </span>
+              ) : (
+                <span className="text-[10px] font-mono text-zinc-600">0</span>
+              )}
+            </button>
+          )}
+
+          {/* Cross-Division Tracker (For Stakeholders or general roadmap view) */}
+          <button
+            onClick={() => handleTabSelect('requests')}
+            className={cn(
+              'w-full flex items-center justify-between px-2.5 py-1.5 rounded-md transition-colors text-left font-medium',
+              currentTab === 'requests'
+                ? 'bg-secondary text-white'
+                : 'text-zinc-400 hover:text-zinc-200 hover:bg-secondary/40',
+            )}
+          >
+            <div className="flex items-center gap-2.5">
+              <FileText className={cn('w-4 h-4', currentTab === 'requests' ? 'text-indigo-400' : 'text-zinc-400')} />
+              <span>{workspace?.role === 'STAKEHOLDER' ? 'My Division Requests' : 'Division Requests'}</span>
+            </div>
+            <span className="text-[10px] font-medium text-indigo-400 bg-indigo-500/10 px-1.5 py-0.2 rounded">
+              Tracker
             </span>
           </button>
 

@@ -2,8 +2,10 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../ui/button';
+import { resolveMediaUrl } from '../ui/MarkdownRenderer';
 import {
   LayoutGrid,
   List,
@@ -57,6 +59,7 @@ export function Navbar({
 }: NavbarProps) {
   const { user, workspace, project, workspaces, projects, setWorkspace, setProject, logout } =
     useAuth();
+  const router = useRouter();
 
   const [isWsOpen, setIsWsOpen] = useState(false);
   const [isProjOpen, setIsProjOpen] = useState(false);
@@ -140,9 +143,17 @@ export function Navbar({
                 </div>
                 <div className="px-2 py-1.5 rounded bg-secondary/50 flex items-center justify-between mb-1">
                   <div className="flex items-center gap-2 min-w-0">
-                    <span className="w-4 h-4 rounded bg-[#5e6ad2] text-white flex items-center justify-center text-[9px] font-bold shrink-0">
-                      {workspace?.name?.[0] || 'W'}
-                    </span>
+                    {workspace?.logoUrl ? (
+                      <img
+                        src={resolveMediaUrl(workspace.logoUrl)}
+                        alt={workspace.name}
+                        className="w-4 h-4 rounded object-cover shrink-0"
+                      />
+                    ) : (
+                      <span className="w-4 h-4 rounded bg-[#5e6ad2] text-white flex items-center justify-center text-[9px] font-bold shrink-0">
+                        {workspace?.name?.[0] || 'W'}
+                      </span>
+                    )}
                     <span className="text-xs font-medium text-white truncate">
                       {workspace?.name}
                     </span>
@@ -166,9 +177,17 @@ export function Navbar({
                           }}
                           className="w-full text-left px-2 py-1.5 text-xs rounded hover:bg-secondary transition-colors text-zinc-300 hover:text-white flex items-center gap-2"
                         >
-                          <span className="w-4 h-4 rounded bg-zinc-800 text-zinc-300 flex items-center justify-center text-[9px] font-bold shrink-0">
-                            {w.name[0]}
-                          </span>
+                          {w.logoUrl ? (
+                            <img
+                              src={resolveMediaUrl(w.logoUrl)}
+                              alt={w.name}
+                              className="w-4 h-4 rounded object-cover shrink-0"
+                            />
+                          ) : (
+                            <span className="w-4 h-4 rounded bg-zinc-800 text-zinc-300 flex items-center justify-center text-[9px] font-bold shrink-0">
+                              {w.name[0]}
+                            </span>
+                          )}
                           <span className="truncate">{w.name}</span>
                         </button>
                       ))}
@@ -176,18 +195,16 @@ export function Navbar({
                 )}
 
                 <div className="pt-1 mt-1 border-t border-border/40 space-y-0.5">
-                  {onOpenWorkspaceSettings && (
-                    <button
-                      onClick={() => {
-                        setIsWsOpen(false);
-                        onOpenWorkspaceSettings();
-                      }}
-                      className="w-full text-left px-2 py-1.5 text-xs rounded hover:bg-secondary text-zinc-300 hover:text-white flex items-center gap-2 transition-colors font-medium"
-                    >
-                      <Settings className="w-3.5 h-3.5 text-zinc-400" />
-                      <span>Workspace settings</span>
-                    </button>
-                  )}
+                  <button
+                    onClick={() => {
+                      setIsWsOpen(false);
+                      router.push('/settings/workspace');
+                    }}
+                    className="w-full text-left px-2 py-1.5 text-xs rounded hover:bg-secondary text-zinc-300 hover:text-white flex items-center gap-2 transition-colors font-medium cursor-pointer"
+                  >
+                    <Settings className="w-3.5 h-3.5 text-zinc-400" />
+                    <span>Workspace Settings</span>
+                  </button>
 
                   {onOpenInviteModal && (
                     <button
@@ -395,18 +412,16 @@ export function Navbar({
                       </button>
                     )}
 
-                    {onOpenWorkspaceSettings && (
-                      <button
-                        onClick={() => {
-                          setIsUserMenuOpen(false);
-                          onOpenWorkspaceSettings();
-                        }}
-                        className="w-full text-left px-2 py-1.5 text-xs rounded hover:bg-secondary text-zinc-200 hover:text-white flex items-center gap-2 transition-colors mt-0.5 font-medium"
-                      >
-                        <Settings className="w-3.5 h-3.5 text-zinc-400" />
-                        <span>Workspace Settings</span>
-                      </button>
-                    )}
+                    <button
+                      onClick={() => {
+                        setIsUserMenuOpen(false);
+                        router.push('/settings/workspace');
+                      }}
+                      className="w-full text-left px-2 py-1.5 text-xs rounded hover:bg-secondary text-zinc-200 hover:text-white flex items-center gap-2 transition-colors mt-0.5 font-medium cursor-pointer"
+                    >
+                      <Settings className="w-3.5 h-3.5 text-zinc-400" />
+                      <span>Workspace Settings</span>
+                    </button>
 
                     <button
                       onClick={() => {

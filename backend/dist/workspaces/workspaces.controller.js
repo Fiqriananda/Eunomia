@@ -75,6 +75,24 @@ let WorkspacesController = class WorkspacesController {
     async updateColumnOrder(id, body) {
         return this.workspacesService.updateColumnOrder(id, body.columnOrder);
     }
+    async getDivisions(workspaceId) {
+        return this.workspacesService.getWorkspaceDivisions(workspaceId);
+    }
+    async createDivision(workspaceId, userId, body) {
+        return this.workspacesService.createDivision(workspaceId, userId, body);
+    }
+    async updateDivision(divisionId, userId, body) {
+        return this.workspacesService.updateDivision(divisionId, userId, body);
+    }
+    async deleteDivision(divisionId, userId) {
+        return this.workspacesService.deleteDivision(divisionId, userId);
+    }
+    async addDivisionMember(divisionId, userId, body) {
+        return this.workspacesService.addDivisionMember(divisionId, userId, body.userId, body.role);
+    }
+    async removeDivisionMember(divisionId, targetUserId, userId) {
+        return this.workspacesService.removeDivisionMember(divisionId, userId, targetUserId);
+    }
 };
 __decorate([
     Get(),
@@ -305,6 +323,70 @@ __decorate([
     __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", Promise)
 ], WorkspacesController.prototype, "updateColumnOrder", null);
+__decorate([
+    Get(':id/divisions'),
+    ApiOperation({ summary: 'Get all divisions in a workspace' }),
+    ApiParam({ name: 'id', description: 'Workspace ID' }),
+    __param(0, Param('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], WorkspacesController.prototype, "getDivisions", null);
+__decorate([
+    Post(':id/divisions'),
+    ApiOperation({ summary: 'Create a new division' }),
+    ApiParam({ name: 'id', description: 'Workspace ID' }),
+    __param(0, Param('id')),
+    __param(1, CurrentUser('id')),
+    __param(2, Body()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, Object]),
+    __metadata("design:returntype", Promise)
+], WorkspacesController.prototype, "createDivision", null);
+__decorate([
+    Patch(':id/divisions/:divisionId'),
+    ApiOperation({ summary: 'Update a division' }),
+    ApiParam({ name: 'divisionId', description: 'Division ID' }),
+    __param(0, Param('divisionId')),
+    __param(1, CurrentUser('id')),
+    __param(2, Body()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, Object]),
+    __metadata("design:returntype", Promise)
+], WorkspacesController.prototype, "updateDivision", null);
+__decorate([
+    Delete(':id/divisions/:divisionId'),
+    ApiOperation({ summary: 'Delete a division' }),
+    ApiParam({ name: 'divisionId', description: 'Division ID' }),
+    __param(0, Param('divisionId')),
+    __param(1, CurrentUser('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], WorkspacesController.prototype, "deleteDivision", null);
+__decorate([
+    Post(':id/divisions/:divisionId/members'),
+    ApiOperation({ summary: 'Add/assign user to a division' }),
+    ApiParam({ name: 'divisionId', description: 'Division ID' }),
+    __param(0, Param('divisionId')),
+    __param(1, CurrentUser('id')),
+    __param(2, Body()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, Object]),
+    __metadata("design:returntype", Promise)
+], WorkspacesController.prototype, "addDivisionMember", null);
+__decorate([
+    Delete(':id/divisions/:divisionId/members/:targetUserId'),
+    ApiOperation({ summary: 'Remove user from a division' }),
+    ApiParam({ name: 'divisionId', description: 'Division ID' }),
+    ApiParam({ name: 'targetUserId', description: 'Target User ID to remove' }),
+    __param(0, Param('divisionId')),
+    __param(1, Param('targetUserId')),
+    __param(2, CurrentUser('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, String]),
+    __metadata("design:returntype", Promise)
+], WorkspacesController.prototype, "removeDivisionMember", null);
 WorkspacesController = __decorate([
     ApiTags('Workspaces'),
     ApiBearerAuth('JWT-auth'),

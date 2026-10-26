@@ -1,9 +1,9 @@
 import { TasksService } from './tasks.service.js';
-import { TaskStatus, TaskPriority } from '@prisma/client';
+import { TaskStatus, TaskPriority, TriageStatus } from '@prisma/client';
 export declare class TasksController {
     private readonly tasksService;
     constructor(tasksService: TasksService);
-    getTasks(workspaceId: string, projectId?: string, cycleId?: string, status?: TaskStatus, priority?: TaskPriority, assigneeId?: string, search?: string, parentId?: string, archived?: string): Promise<({
+    getTasks(workspaceId: string, projectId?: string, cycleId?: string, status?: TaskStatus, priority?: TaskPriority, assigneeId?: string, search?: string, parentId?: string, archived?: string, requesterDivisionId?: string, assignedDivisionId?: string, triageStatus?: TriageStatus | 'ALL', includePendingTriage?: string): Promise<({
         project: {
             id: string;
             name: string;
@@ -115,10 +115,22 @@ export declare class TasksController {
             name: string;
             avatarUrl: string | null;
         } | null;
+        requesterDivision: {
+            id: string;
+            name: string;
+            slug: string;
+            isTechnical: boolean;
+        } | null;
+        assignedDivision: {
+            id: string;
+            name: string;
+            slug: string;
+            isTechnical: boolean;
+        } | null;
         parent: {
             id: string;
-            title: string;
             status: import("@prisma/client").$Enums.TaskStatus;
+            title: string;
             customStatus: string | null;
             identifier: string;
             priority: import("@prisma/client").$Enums.TaskPriority;
@@ -142,8 +154,8 @@ export declare class TasksController {
             updatedAt: Date;
             description: string | null;
             workspaceId: string;
-            title: string;
             status: import("@prisma/client").$Enums.TaskStatus;
+            title: string;
             order: number;
             customStatus: string | null;
             identifier: string;
@@ -153,17 +165,21 @@ export declare class TasksController {
             estimate: number | null;
             isArchived: boolean;
             deletedAt: Date | null;
+            triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
+            externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
             projectId: string;
             cycleId: string | null;
             creatorId: string;
             assigneeId: string | null;
+            requesterDivisionId: string | null;
+            assignedDivisionId: string | null;
             parentId: string | null;
         })[];
         sourceRelations: ({
             targetTask: {
                 id: string;
-                title: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
+                title: string;
                 customStatus: string | null;
                 identifier: string;
                 priority: import("@prisma/client").$Enums.TaskPriority;
@@ -185,8 +201,8 @@ export declare class TasksController {
         targetRelations: ({
             sourceTask: {
                 id: string;
-                title: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
+                title: string;
                 customStatus: string | null;
                 identifier: string;
                 priority: import("@prisma/client").$Enums.TaskPriority;
@@ -208,12 +224,12 @@ export declare class TasksController {
         attachments: {
             id: string;
             createdAt: Date;
-            url: string;
             taskId: string | null;
             filename: string;
             originalName: string;
             mimeType: string;
             size: number;
+            url: string;
             uploaderId: string;
         }[];
         reactions: ({
@@ -249,8 +265,8 @@ export declare class TasksController {
         updatedAt: Date;
         description: string | null;
         workspaceId: string;
-        title: string;
         status: import("@prisma/client").$Enums.TaskStatus;
+        title: string;
         order: number;
         customStatus: string | null;
         identifier: string;
@@ -260,12 +276,883 @@ export declare class TasksController {
         estimate: number | null;
         isArchived: boolean;
         deletedAt: Date | null;
+        triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
+        externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
         projectId: string;
         cycleId: string | null;
         creatorId: string;
         assigneeId: string | null;
+        requesterDivisionId: string | null;
+        assignedDivisionId: string | null;
         parentId: string | null;
     })[]>;
+    getTriageRequests(workspaceId: string, userId: string): Promise<({
+        project: {
+            id: string;
+            name: string;
+            key: string;
+            color: string | null;
+        };
+        cycle: {
+            number: number;
+            id: string;
+            name: string | null;
+            status: string;
+        } | null;
+        comments: ({
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+            parent: {
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                id: string;
+                content: string;
+            } | null;
+            reactions: ({
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+            } & {
+                id: string;
+                createdAt: Date;
+                userId: string;
+                emoji: string;
+                commentId: string;
+            })[];
+            replies: ({
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                reactions: ({
+                    user: {
+                        id: string;
+                        email: string;
+                        name: string;
+                        avatarUrl: string | null;
+                    };
+                } & {
+                    id: string;
+                    createdAt: Date;
+                    userId: string;
+                    emoji: string;
+                    commentId: string;
+                })[];
+            } & {
+                id: string;
+                createdAt: Date;
+                updatedAt: Date;
+                userId: string;
+                content: string;
+                taskId: string;
+                parentId: string | null;
+            })[];
+        } & {
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            userId: string;
+            content: string;
+            taskId: string;
+            parentId: string | null;
+        })[];
+        activities: ({
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            userId: string;
+            type: string;
+            taskId: string;
+            fromValue: string | null;
+            toValue: string | null;
+            details: string | null;
+        })[];
+        creator: {
+            id: string;
+            email: string;
+            name: string;
+            avatarUrl: string | null;
+        };
+        assignee: {
+            id: string;
+            email: string;
+            name: string;
+            avatarUrl: string | null;
+        } | null;
+        requesterDivision: {
+            id: string;
+            name: string;
+            slug: string;
+            isTechnical: boolean;
+        } | null;
+        assignedDivision: {
+            id: string;
+            name: string;
+            slug: string;
+            isTechnical: boolean;
+        } | null;
+        parent: {
+            id: string;
+            status: import("@prisma/client").$Enums.TaskStatus;
+            title: string;
+            customStatus: string | null;
+            identifier: string;
+            priority: import("@prisma/client").$Enums.TaskPriority;
+        } | null;
+        subTasks: ({
+            project: {
+                id: string;
+                name: string;
+                key: string;
+                color: string | null;
+            };
+            assignee: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            } | null;
+        } & {
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            description: string | null;
+            workspaceId: string;
+            status: import("@prisma/client").$Enums.TaskStatus;
+            title: string;
+            order: number;
+            customStatus: string | null;
+            identifier: string;
+            priority: import("@prisma/client").$Enums.TaskPriority;
+            dueDate: Date | null;
+            labels: string[];
+            estimate: number | null;
+            isArchived: boolean;
+            deletedAt: Date | null;
+            triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
+            externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
+            projectId: string;
+            cycleId: string | null;
+            creatorId: string;
+            assigneeId: string | null;
+            requesterDivisionId: string | null;
+            assignedDivisionId: string | null;
+            parentId: string | null;
+        })[];
+        sourceRelations: ({
+            targetTask: {
+                id: string;
+                status: import("@prisma/client").$Enums.TaskStatus;
+                title: string;
+                customStatus: string | null;
+                identifier: string;
+                priority: import("@prisma/client").$Enums.TaskPriority;
+                labels: string[];
+                assignee: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                } | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            type: string;
+            sourceTaskId: string;
+            targetTaskId: string;
+        })[];
+        targetRelations: ({
+            sourceTask: {
+                id: string;
+                status: import("@prisma/client").$Enums.TaskStatus;
+                title: string;
+                customStatus: string | null;
+                identifier: string;
+                priority: import("@prisma/client").$Enums.TaskPriority;
+                labels: string[];
+                assignee: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                } | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            type: string;
+            sourceTaskId: string;
+            targetTaskId: string;
+        })[];
+        attachments: {
+            id: string;
+            createdAt: Date;
+            taskId: string | null;
+            filename: string;
+            originalName: string;
+            mimeType: string;
+            size: number;
+            url: string;
+            uploaderId: string;
+        }[];
+        reactions: ({
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            userId: string;
+            taskId: string;
+            emoji: string;
+        })[];
+        subscribers: ({
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            userId: string;
+            taskId: string;
+        })[];
+    } & {
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        description: string | null;
+        workspaceId: string;
+        status: import("@prisma/client").$Enums.TaskStatus;
+        title: string;
+        order: number;
+        customStatus: string | null;
+        identifier: string;
+        priority: import("@prisma/client").$Enums.TaskPriority;
+        dueDate: Date | null;
+        labels: string[];
+        estimate: number | null;
+        isArchived: boolean;
+        deletedAt: Date | null;
+        triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
+        externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
+        projectId: string;
+        cycleId: string | null;
+        creatorId: string;
+        assigneeId: string | null;
+        requesterDivisionId: string | null;
+        assignedDivisionId: string | null;
+        parentId: string | null;
+    })[]>;
+    createIntakeRequest(userId: string, body: {
+        workspaceId: string;
+        title: string;
+        requesterDivisionId?: string;
+        customDivisionName?: string;
+        description: string;
+        urgency?: 'LOW' | 'MEDIUM' | 'HIGH';
+        targetDeadline?: string;
+        assetLinks?: string;
+        businessObjective?: string;
+        targetAudience?: string;
+    }): Promise<{
+        project: {
+            id: string;
+            name: string;
+            key: string;
+            color: string | null;
+        };
+        cycle: {
+            number: number;
+            id: string;
+            name: string | null;
+            status: string;
+        } | null;
+        comments: ({
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+            parent: {
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                id: string;
+                content: string;
+            } | null;
+            reactions: ({
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+            } & {
+                id: string;
+                createdAt: Date;
+                userId: string;
+                emoji: string;
+                commentId: string;
+            })[];
+            replies: ({
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                reactions: ({
+                    user: {
+                        id: string;
+                        email: string;
+                        name: string;
+                        avatarUrl: string | null;
+                    };
+                } & {
+                    id: string;
+                    createdAt: Date;
+                    userId: string;
+                    emoji: string;
+                    commentId: string;
+                })[];
+            } & {
+                id: string;
+                createdAt: Date;
+                updatedAt: Date;
+                userId: string;
+                content: string;
+                taskId: string;
+                parentId: string | null;
+            })[];
+        } & {
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            userId: string;
+            content: string;
+            taskId: string;
+            parentId: string | null;
+        })[];
+        activities: ({
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            userId: string;
+            type: string;
+            taskId: string;
+            fromValue: string | null;
+            toValue: string | null;
+            details: string | null;
+        })[];
+        creator: {
+            id: string;
+            email: string;
+            name: string;
+            avatarUrl: string | null;
+        };
+        assignee: {
+            id: string;
+            email: string;
+            name: string;
+            avatarUrl: string | null;
+        } | null;
+        requesterDivision: {
+            id: string;
+            name: string;
+            slug: string;
+            isTechnical: boolean;
+        } | null;
+        assignedDivision: {
+            id: string;
+            name: string;
+            slug: string;
+            isTechnical: boolean;
+        } | null;
+        parent: {
+            id: string;
+            status: import("@prisma/client").$Enums.TaskStatus;
+            title: string;
+            customStatus: string | null;
+            identifier: string;
+            priority: import("@prisma/client").$Enums.TaskPriority;
+        } | null;
+        subTasks: ({
+            project: {
+                id: string;
+                name: string;
+                key: string;
+                color: string | null;
+            };
+            assignee: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            } | null;
+        } & {
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            description: string | null;
+            workspaceId: string;
+            status: import("@prisma/client").$Enums.TaskStatus;
+            title: string;
+            order: number;
+            customStatus: string | null;
+            identifier: string;
+            priority: import("@prisma/client").$Enums.TaskPriority;
+            dueDate: Date | null;
+            labels: string[];
+            estimate: number | null;
+            isArchived: boolean;
+            deletedAt: Date | null;
+            triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
+            externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
+            projectId: string;
+            cycleId: string | null;
+            creatorId: string;
+            assigneeId: string | null;
+            requesterDivisionId: string | null;
+            assignedDivisionId: string | null;
+            parentId: string | null;
+        })[];
+        sourceRelations: ({
+            targetTask: {
+                id: string;
+                status: import("@prisma/client").$Enums.TaskStatus;
+                title: string;
+                customStatus: string | null;
+                identifier: string;
+                priority: import("@prisma/client").$Enums.TaskPriority;
+                labels: string[];
+                assignee: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                } | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            type: string;
+            sourceTaskId: string;
+            targetTaskId: string;
+        })[];
+        targetRelations: ({
+            sourceTask: {
+                id: string;
+                status: import("@prisma/client").$Enums.TaskStatus;
+                title: string;
+                customStatus: string | null;
+                identifier: string;
+                priority: import("@prisma/client").$Enums.TaskPriority;
+                labels: string[];
+                assignee: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                } | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            type: string;
+            sourceTaskId: string;
+            targetTaskId: string;
+        })[];
+        attachments: {
+            id: string;
+            createdAt: Date;
+            taskId: string | null;
+            filename: string;
+            originalName: string;
+            mimeType: string;
+            size: number;
+            url: string;
+            uploaderId: string;
+        }[];
+        reactions: ({
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            userId: string;
+            taskId: string;
+            emoji: string;
+        })[];
+        subscribers: ({
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            userId: string;
+            taskId: string;
+        })[];
+    } & {
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        description: string | null;
+        workspaceId: string;
+        status: import("@prisma/client").$Enums.TaskStatus;
+        title: string;
+        order: number;
+        customStatus: string | null;
+        identifier: string;
+        priority: import("@prisma/client").$Enums.TaskPriority;
+        dueDate: Date | null;
+        labels: string[];
+        estimate: number | null;
+        isArchived: boolean;
+        deletedAt: Date | null;
+        triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
+        externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
+        projectId: string;
+        cycleId: string | null;
+        creatorId: string;
+        assigneeId: string | null;
+        requesterDivisionId: string | null;
+        assignedDivisionId: string | null;
+        parentId: string | null;
+    }>;
+    updateTriageStatus(taskId: string, userId: string, body: {
+        action: 'APPROVE' | 'REJECT' | 'RESUBMIT';
+        priority?: TaskPriority;
+        estimate?: number;
+        cycleId?: string | null;
+        status?: TaskStatus;
+        comment?: string;
+    }): Promise<{
+        project: {
+            id: string;
+            name: string;
+            key: string;
+            color: string | null;
+        };
+        cycle: {
+            number: number;
+            id: string;
+            name: string | null;
+            status: string;
+        } | null;
+        comments: ({
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+            parent: {
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                id: string;
+                content: string;
+            } | null;
+            reactions: ({
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+            } & {
+                id: string;
+                createdAt: Date;
+                userId: string;
+                emoji: string;
+                commentId: string;
+            })[];
+            replies: ({
+                user: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                };
+                reactions: ({
+                    user: {
+                        id: string;
+                        email: string;
+                        name: string;
+                        avatarUrl: string | null;
+                    };
+                } & {
+                    id: string;
+                    createdAt: Date;
+                    userId: string;
+                    emoji: string;
+                    commentId: string;
+                })[];
+            } & {
+                id: string;
+                createdAt: Date;
+                updatedAt: Date;
+                userId: string;
+                content: string;
+                taskId: string;
+                parentId: string | null;
+            })[];
+        } & {
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            userId: string;
+            content: string;
+            taskId: string;
+            parentId: string | null;
+        })[];
+        activities: ({
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            userId: string;
+            type: string;
+            taskId: string;
+            fromValue: string | null;
+            toValue: string | null;
+            details: string | null;
+        })[];
+        creator: {
+            id: string;
+            email: string;
+            name: string;
+            avatarUrl: string | null;
+        };
+        assignee: {
+            id: string;
+            email: string;
+            name: string;
+            avatarUrl: string | null;
+        } | null;
+        requesterDivision: {
+            id: string;
+            name: string;
+            slug: string;
+            isTechnical: boolean;
+        } | null;
+        assignedDivision: {
+            id: string;
+            name: string;
+            slug: string;
+            isTechnical: boolean;
+        } | null;
+        parent: {
+            id: string;
+            status: import("@prisma/client").$Enums.TaskStatus;
+            title: string;
+            customStatus: string | null;
+            identifier: string;
+            priority: import("@prisma/client").$Enums.TaskPriority;
+        } | null;
+        subTasks: ({
+            project: {
+                id: string;
+                name: string;
+                key: string;
+                color: string | null;
+            };
+            assignee: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            } | null;
+        } & {
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            description: string | null;
+            workspaceId: string;
+            status: import("@prisma/client").$Enums.TaskStatus;
+            title: string;
+            order: number;
+            customStatus: string | null;
+            identifier: string;
+            priority: import("@prisma/client").$Enums.TaskPriority;
+            dueDate: Date | null;
+            labels: string[];
+            estimate: number | null;
+            isArchived: boolean;
+            deletedAt: Date | null;
+            triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
+            externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
+            projectId: string;
+            cycleId: string | null;
+            creatorId: string;
+            assigneeId: string | null;
+            requesterDivisionId: string | null;
+            assignedDivisionId: string | null;
+            parentId: string | null;
+        })[];
+        sourceRelations: ({
+            targetTask: {
+                id: string;
+                status: import("@prisma/client").$Enums.TaskStatus;
+                title: string;
+                customStatus: string | null;
+                identifier: string;
+                priority: import("@prisma/client").$Enums.TaskPriority;
+                labels: string[];
+                assignee: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                } | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            type: string;
+            sourceTaskId: string;
+            targetTaskId: string;
+        })[];
+        targetRelations: ({
+            sourceTask: {
+                id: string;
+                status: import("@prisma/client").$Enums.TaskStatus;
+                title: string;
+                customStatus: string | null;
+                identifier: string;
+                priority: import("@prisma/client").$Enums.TaskPriority;
+                labels: string[];
+                assignee: {
+                    id: string;
+                    email: string;
+                    name: string;
+                    avatarUrl: string | null;
+                } | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            type: string;
+            sourceTaskId: string;
+            targetTaskId: string;
+        })[];
+        attachments: {
+            id: string;
+            createdAt: Date;
+            taskId: string | null;
+            filename: string;
+            originalName: string;
+            mimeType: string;
+            size: number;
+            url: string;
+            uploaderId: string;
+        }[];
+        reactions: ({
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            userId: string;
+            taskId: string;
+            emoji: string;
+        })[];
+        subscribers: ({
+            user: {
+                id: string;
+                email: string;
+                name: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            userId: string;
+            taskId: string;
+        })[];
+    } & {
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        description: string | null;
+        workspaceId: string;
+        status: import("@prisma/client").$Enums.TaskStatus;
+        title: string;
+        order: number;
+        customStatus: string | null;
+        identifier: string;
+        priority: import("@prisma/client").$Enums.TaskPriority;
+        dueDate: Date | null;
+        labels: string[];
+        estimate: number | null;
+        isArchived: boolean;
+        deletedAt: Date | null;
+        triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
+        externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
+        projectId: string;
+        cycleId: string | null;
+        creatorId: string;
+        assigneeId: string | null;
+        requesterDivisionId: string | null;
+        assignedDivisionId: string | null;
+        parentId: string | null;
+    }>;
     getTaskById(id: string): Promise<{
         project: {
             id: string;
@@ -378,10 +1265,22 @@ export declare class TasksController {
             name: string;
             avatarUrl: string | null;
         } | null;
+        requesterDivision: {
+            id: string;
+            name: string;
+            slug: string;
+            isTechnical: boolean;
+        } | null;
+        assignedDivision: {
+            id: string;
+            name: string;
+            slug: string;
+            isTechnical: boolean;
+        } | null;
         parent: {
             id: string;
-            title: string;
             status: import("@prisma/client").$Enums.TaskStatus;
+            title: string;
             customStatus: string | null;
             identifier: string;
             priority: import("@prisma/client").$Enums.TaskPriority;
@@ -405,8 +1304,8 @@ export declare class TasksController {
             updatedAt: Date;
             description: string | null;
             workspaceId: string;
-            title: string;
             status: import("@prisma/client").$Enums.TaskStatus;
+            title: string;
             order: number;
             customStatus: string | null;
             identifier: string;
@@ -416,17 +1315,21 @@ export declare class TasksController {
             estimate: number | null;
             isArchived: boolean;
             deletedAt: Date | null;
+            triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
+            externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
             projectId: string;
             cycleId: string | null;
             creatorId: string;
             assigneeId: string | null;
+            requesterDivisionId: string | null;
+            assignedDivisionId: string | null;
             parentId: string | null;
         })[];
         sourceRelations: ({
             targetTask: {
                 id: string;
-                title: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
+                title: string;
                 customStatus: string | null;
                 identifier: string;
                 priority: import("@prisma/client").$Enums.TaskPriority;
@@ -448,8 +1351,8 @@ export declare class TasksController {
         targetRelations: ({
             sourceTask: {
                 id: string;
-                title: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
+                title: string;
                 customStatus: string | null;
                 identifier: string;
                 priority: import("@prisma/client").$Enums.TaskPriority;
@@ -471,12 +1374,12 @@ export declare class TasksController {
         attachments: {
             id: string;
             createdAt: Date;
-            url: string;
             taskId: string | null;
             filename: string;
             originalName: string;
             mimeType: string;
             size: number;
+            url: string;
             uploaderId: string;
         }[];
         reactions: ({
@@ -512,8 +1415,8 @@ export declare class TasksController {
         updatedAt: Date;
         description: string | null;
         workspaceId: string;
-        title: string;
         status: import("@prisma/client").$Enums.TaskStatus;
+        title: string;
         order: number;
         customStatus: string | null;
         identifier: string;
@@ -523,10 +1426,14 @@ export declare class TasksController {
         estimate: number | null;
         isArchived: boolean;
         deletedAt: Date | null;
+        triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
+        externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
         projectId: string;
         cycleId: string | null;
         creatorId: string;
         assigneeId: string | null;
+        requesterDivisionId: string | null;
+        assignedDivisionId: string | null;
         parentId: string | null;
     }>;
     createTask(userId: string, body: {
@@ -655,10 +1562,22 @@ export declare class TasksController {
             name: string;
             avatarUrl: string | null;
         } | null;
+        requesterDivision: {
+            id: string;
+            name: string;
+            slug: string;
+            isTechnical: boolean;
+        } | null;
+        assignedDivision: {
+            id: string;
+            name: string;
+            slug: string;
+            isTechnical: boolean;
+        } | null;
         parent: {
             id: string;
-            title: string;
             status: import("@prisma/client").$Enums.TaskStatus;
+            title: string;
             customStatus: string | null;
             identifier: string;
             priority: import("@prisma/client").$Enums.TaskPriority;
@@ -682,8 +1601,8 @@ export declare class TasksController {
             updatedAt: Date;
             description: string | null;
             workspaceId: string;
-            title: string;
             status: import("@prisma/client").$Enums.TaskStatus;
+            title: string;
             order: number;
             customStatus: string | null;
             identifier: string;
@@ -693,17 +1612,21 @@ export declare class TasksController {
             estimate: number | null;
             isArchived: boolean;
             deletedAt: Date | null;
+            triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
+            externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
             projectId: string;
             cycleId: string | null;
             creatorId: string;
             assigneeId: string | null;
+            requesterDivisionId: string | null;
+            assignedDivisionId: string | null;
             parentId: string | null;
         })[];
         sourceRelations: ({
             targetTask: {
                 id: string;
-                title: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
+                title: string;
                 customStatus: string | null;
                 identifier: string;
                 priority: import("@prisma/client").$Enums.TaskPriority;
@@ -725,8 +1648,8 @@ export declare class TasksController {
         targetRelations: ({
             sourceTask: {
                 id: string;
-                title: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
+                title: string;
                 customStatus: string | null;
                 identifier: string;
                 priority: import("@prisma/client").$Enums.TaskPriority;
@@ -748,12 +1671,12 @@ export declare class TasksController {
         attachments: {
             id: string;
             createdAt: Date;
-            url: string;
             taskId: string | null;
             filename: string;
             originalName: string;
             mimeType: string;
             size: number;
+            url: string;
             uploaderId: string;
         }[];
         reactions: ({
@@ -789,8 +1712,8 @@ export declare class TasksController {
         updatedAt: Date;
         description: string | null;
         workspaceId: string;
-        title: string;
         status: import("@prisma/client").$Enums.TaskStatus;
+        title: string;
         order: number;
         customStatus: string | null;
         identifier: string;
@@ -800,10 +1723,14 @@ export declare class TasksController {
         estimate: number | null;
         isArchived: boolean;
         deletedAt: Date | null;
+        triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
+        externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
         projectId: string;
         cycleId: string | null;
         creatorId: string;
         assigneeId: string | null;
+        requesterDivisionId: string | null;
+        assignedDivisionId: string | null;
         parentId: string | null;
     }>;
     updateTask(id: string, userId: string, body: {
@@ -933,10 +1860,22 @@ export declare class TasksController {
             name: string;
             avatarUrl: string | null;
         } | null;
+        requesterDivision: {
+            id: string;
+            name: string;
+            slug: string;
+            isTechnical: boolean;
+        } | null;
+        assignedDivision: {
+            id: string;
+            name: string;
+            slug: string;
+            isTechnical: boolean;
+        } | null;
         parent: {
             id: string;
-            title: string;
             status: import("@prisma/client").$Enums.TaskStatus;
+            title: string;
             customStatus: string | null;
             identifier: string;
             priority: import("@prisma/client").$Enums.TaskPriority;
@@ -960,8 +1899,8 @@ export declare class TasksController {
             updatedAt: Date;
             description: string | null;
             workspaceId: string;
-            title: string;
             status: import("@prisma/client").$Enums.TaskStatus;
+            title: string;
             order: number;
             customStatus: string | null;
             identifier: string;
@@ -971,17 +1910,21 @@ export declare class TasksController {
             estimate: number | null;
             isArchived: boolean;
             deletedAt: Date | null;
+            triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
+            externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
             projectId: string;
             cycleId: string | null;
             creatorId: string;
             assigneeId: string | null;
+            requesterDivisionId: string | null;
+            assignedDivisionId: string | null;
             parentId: string | null;
         })[];
         sourceRelations: ({
             targetTask: {
                 id: string;
-                title: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
+                title: string;
                 customStatus: string | null;
                 identifier: string;
                 priority: import("@prisma/client").$Enums.TaskPriority;
@@ -1003,8 +1946,8 @@ export declare class TasksController {
         targetRelations: ({
             sourceTask: {
                 id: string;
-                title: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
+                title: string;
                 customStatus: string | null;
                 identifier: string;
                 priority: import("@prisma/client").$Enums.TaskPriority;
@@ -1026,12 +1969,12 @@ export declare class TasksController {
         attachments: {
             id: string;
             createdAt: Date;
-            url: string;
             taskId: string | null;
             filename: string;
             originalName: string;
             mimeType: string;
             size: number;
+            url: string;
             uploaderId: string;
         }[];
         reactions: ({
@@ -1067,8 +2010,8 @@ export declare class TasksController {
         updatedAt: Date;
         description: string | null;
         workspaceId: string;
-        title: string;
         status: import("@prisma/client").$Enums.TaskStatus;
+        title: string;
         order: number;
         customStatus: string | null;
         identifier: string;
@@ -1078,10 +2021,14 @@ export declare class TasksController {
         estimate: number | null;
         isArchived: boolean;
         deletedAt: Date | null;
+        triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
+        externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
         projectId: string;
         cycleId: string | null;
         creatorId: string;
         assigneeId: string | null;
+        requesterDivisionId: string | null;
+        assignedDivisionId: string | null;
         parentId: string | null;
     }) | null>;
     createSubTask(parentId: string, userId: string, body: {
@@ -1206,10 +2153,22 @@ export declare class TasksController {
             name: string;
             avatarUrl: string | null;
         } | null;
+        requesterDivision: {
+            id: string;
+            name: string;
+            slug: string;
+            isTechnical: boolean;
+        } | null;
+        assignedDivision: {
+            id: string;
+            name: string;
+            slug: string;
+            isTechnical: boolean;
+        } | null;
         parent: {
             id: string;
-            title: string;
             status: import("@prisma/client").$Enums.TaskStatus;
+            title: string;
             customStatus: string | null;
             identifier: string;
             priority: import("@prisma/client").$Enums.TaskPriority;
@@ -1233,8 +2192,8 @@ export declare class TasksController {
             updatedAt: Date;
             description: string | null;
             workspaceId: string;
-            title: string;
             status: import("@prisma/client").$Enums.TaskStatus;
+            title: string;
             order: number;
             customStatus: string | null;
             identifier: string;
@@ -1244,17 +2203,21 @@ export declare class TasksController {
             estimate: number | null;
             isArchived: boolean;
             deletedAt: Date | null;
+            triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
+            externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
             projectId: string;
             cycleId: string | null;
             creatorId: string;
             assigneeId: string | null;
+            requesterDivisionId: string | null;
+            assignedDivisionId: string | null;
             parentId: string | null;
         })[];
         sourceRelations: ({
             targetTask: {
                 id: string;
-                title: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
+                title: string;
                 customStatus: string | null;
                 identifier: string;
                 priority: import("@prisma/client").$Enums.TaskPriority;
@@ -1276,8 +2239,8 @@ export declare class TasksController {
         targetRelations: ({
             sourceTask: {
                 id: string;
-                title: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
+                title: string;
                 customStatus: string | null;
                 identifier: string;
                 priority: import("@prisma/client").$Enums.TaskPriority;
@@ -1299,12 +2262,12 @@ export declare class TasksController {
         attachments: {
             id: string;
             createdAt: Date;
-            url: string;
             taskId: string | null;
             filename: string;
             originalName: string;
             mimeType: string;
             size: number;
+            url: string;
             uploaderId: string;
         }[];
         reactions: ({
@@ -1340,8 +2303,8 @@ export declare class TasksController {
         updatedAt: Date;
         description: string | null;
         workspaceId: string;
-        title: string;
         status: import("@prisma/client").$Enums.TaskStatus;
+        title: string;
         order: number;
         customStatus: string | null;
         identifier: string;
@@ -1351,10 +2314,14 @@ export declare class TasksController {
         estimate: number | null;
         isArchived: boolean;
         deletedAt: Date | null;
+        triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
+        externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
         projectId: string;
         cycleId: string | null;
         creatorId: string;
         assigneeId: string | null;
+        requesterDivisionId: string | null;
+        assignedDivisionId: string | null;
         parentId: string | null;
     }>;
     linkSubTask(parentId: string, userId: string, body: {
@@ -1471,10 +2438,22 @@ export declare class TasksController {
             name: string;
             avatarUrl: string | null;
         } | null;
+        requesterDivision: {
+            id: string;
+            name: string;
+            slug: string;
+            isTechnical: boolean;
+        } | null;
+        assignedDivision: {
+            id: string;
+            name: string;
+            slug: string;
+            isTechnical: boolean;
+        } | null;
         parent: {
             id: string;
-            title: string;
             status: import("@prisma/client").$Enums.TaskStatus;
+            title: string;
             customStatus: string | null;
             identifier: string;
             priority: import("@prisma/client").$Enums.TaskPriority;
@@ -1498,8 +2477,8 @@ export declare class TasksController {
             updatedAt: Date;
             description: string | null;
             workspaceId: string;
-            title: string;
             status: import("@prisma/client").$Enums.TaskStatus;
+            title: string;
             order: number;
             customStatus: string | null;
             identifier: string;
@@ -1509,17 +2488,21 @@ export declare class TasksController {
             estimate: number | null;
             isArchived: boolean;
             deletedAt: Date | null;
+            triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
+            externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
             projectId: string;
             cycleId: string | null;
             creatorId: string;
             assigneeId: string | null;
+            requesterDivisionId: string | null;
+            assignedDivisionId: string | null;
             parentId: string | null;
         })[];
         sourceRelations: ({
             targetTask: {
                 id: string;
-                title: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
+                title: string;
                 customStatus: string | null;
                 identifier: string;
                 priority: import("@prisma/client").$Enums.TaskPriority;
@@ -1541,8 +2524,8 @@ export declare class TasksController {
         targetRelations: ({
             sourceTask: {
                 id: string;
-                title: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
+                title: string;
                 customStatus: string | null;
                 identifier: string;
                 priority: import("@prisma/client").$Enums.TaskPriority;
@@ -1564,12 +2547,12 @@ export declare class TasksController {
         attachments: {
             id: string;
             createdAt: Date;
-            url: string;
             taskId: string | null;
             filename: string;
             originalName: string;
             mimeType: string;
             size: number;
+            url: string;
             uploaderId: string;
         }[];
         reactions: ({
@@ -1605,8 +2588,8 @@ export declare class TasksController {
         updatedAt: Date;
         description: string | null;
         workspaceId: string;
-        title: string;
         status: import("@prisma/client").$Enums.TaskStatus;
+        title: string;
         order: number;
         customStatus: string | null;
         identifier: string;
@@ -1616,10 +2599,14 @@ export declare class TasksController {
         estimate: number | null;
         isArchived: boolean;
         deletedAt: Date | null;
+        triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
+        externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
         projectId: string;
         cycleId: string | null;
         creatorId: string;
         assigneeId: string | null;
+        requesterDivisionId: string | null;
+        assignedDivisionId: string | null;
         parentId: string | null;
     }>;
     unlinkSubTask(parentId: string, subTaskId: string, userId: string): Promise<{
@@ -1734,10 +2721,22 @@ export declare class TasksController {
             name: string;
             avatarUrl: string | null;
         } | null;
+        requesterDivision: {
+            id: string;
+            name: string;
+            slug: string;
+            isTechnical: boolean;
+        } | null;
+        assignedDivision: {
+            id: string;
+            name: string;
+            slug: string;
+            isTechnical: boolean;
+        } | null;
         parent: {
             id: string;
-            title: string;
             status: import("@prisma/client").$Enums.TaskStatus;
+            title: string;
             customStatus: string | null;
             identifier: string;
             priority: import("@prisma/client").$Enums.TaskPriority;
@@ -1761,8 +2760,8 @@ export declare class TasksController {
             updatedAt: Date;
             description: string | null;
             workspaceId: string;
-            title: string;
             status: import("@prisma/client").$Enums.TaskStatus;
+            title: string;
             order: number;
             customStatus: string | null;
             identifier: string;
@@ -1772,17 +2771,21 @@ export declare class TasksController {
             estimate: number | null;
             isArchived: boolean;
             deletedAt: Date | null;
+            triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
+            externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
             projectId: string;
             cycleId: string | null;
             creatorId: string;
             assigneeId: string | null;
+            requesterDivisionId: string | null;
+            assignedDivisionId: string | null;
             parentId: string | null;
         })[];
         sourceRelations: ({
             targetTask: {
                 id: string;
-                title: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
+                title: string;
                 customStatus: string | null;
                 identifier: string;
                 priority: import("@prisma/client").$Enums.TaskPriority;
@@ -1804,8 +2807,8 @@ export declare class TasksController {
         targetRelations: ({
             sourceTask: {
                 id: string;
-                title: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
+                title: string;
                 customStatus: string | null;
                 identifier: string;
                 priority: import("@prisma/client").$Enums.TaskPriority;
@@ -1827,12 +2830,12 @@ export declare class TasksController {
         attachments: {
             id: string;
             createdAt: Date;
-            url: string;
             taskId: string | null;
             filename: string;
             originalName: string;
             mimeType: string;
             size: number;
+            url: string;
             uploaderId: string;
         }[];
         reactions: ({
@@ -1868,8 +2871,8 @@ export declare class TasksController {
         updatedAt: Date;
         description: string | null;
         workspaceId: string;
-        title: string;
         status: import("@prisma/client").$Enums.TaskStatus;
+        title: string;
         order: number;
         customStatus: string | null;
         identifier: string;
@@ -1879,10 +2882,14 @@ export declare class TasksController {
         estimate: number | null;
         isArchived: boolean;
         deletedAt: Date | null;
+        triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
+        externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
         projectId: string;
         cycleId: string | null;
         creatorId: string;
         assigneeId: string | null;
+        requesterDivisionId: string | null;
+        assignedDivisionId: string | null;
         parentId: string | null;
     }>;
     addRelation(taskId: string, userId: string, body: {
@@ -2000,10 +3007,22 @@ export declare class TasksController {
             name: string;
             avatarUrl: string | null;
         } | null;
+        requesterDivision: {
+            id: string;
+            name: string;
+            slug: string;
+            isTechnical: boolean;
+        } | null;
+        assignedDivision: {
+            id: string;
+            name: string;
+            slug: string;
+            isTechnical: boolean;
+        } | null;
         parent: {
             id: string;
-            title: string;
             status: import("@prisma/client").$Enums.TaskStatus;
+            title: string;
             customStatus: string | null;
             identifier: string;
             priority: import("@prisma/client").$Enums.TaskPriority;
@@ -2027,8 +3046,8 @@ export declare class TasksController {
             updatedAt: Date;
             description: string | null;
             workspaceId: string;
-            title: string;
             status: import("@prisma/client").$Enums.TaskStatus;
+            title: string;
             order: number;
             customStatus: string | null;
             identifier: string;
@@ -2038,17 +3057,21 @@ export declare class TasksController {
             estimate: number | null;
             isArchived: boolean;
             deletedAt: Date | null;
+            triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
+            externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
             projectId: string;
             cycleId: string | null;
             creatorId: string;
             assigneeId: string | null;
+            requesterDivisionId: string | null;
+            assignedDivisionId: string | null;
             parentId: string | null;
         })[];
         sourceRelations: ({
             targetTask: {
                 id: string;
-                title: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
+                title: string;
                 customStatus: string | null;
                 identifier: string;
                 priority: import("@prisma/client").$Enums.TaskPriority;
@@ -2070,8 +3093,8 @@ export declare class TasksController {
         targetRelations: ({
             sourceTask: {
                 id: string;
-                title: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
+                title: string;
                 customStatus: string | null;
                 identifier: string;
                 priority: import("@prisma/client").$Enums.TaskPriority;
@@ -2093,12 +3116,12 @@ export declare class TasksController {
         attachments: {
             id: string;
             createdAt: Date;
-            url: string;
             taskId: string | null;
             filename: string;
             originalName: string;
             mimeType: string;
             size: number;
+            url: string;
             uploaderId: string;
         }[];
         reactions: ({
@@ -2134,8 +3157,8 @@ export declare class TasksController {
         updatedAt: Date;
         description: string | null;
         workspaceId: string;
-        title: string;
         status: import("@prisma/client").$Enums.TaskStatus;
+        title: string;
         order: number;
         customStatus: string | null;
         identifier: string;
@@ -2145,10 +3168,14 @@ export declare class TasksController {
         estimate: number | null;
         isArchived: boolean;
         deletedAt: Date | null;
+        triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
+        externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
         projectId: string;
         cycleId: string | null;
         creatorId: string;
         assigneeId: string | null;
+        requesterDivisionId: string | null;
+        assignedDivisionId: string | null;
         parentId: string | null;
     }>;
     deleteRelation(taskId: string, relationId: string, userId: string): Promise<{
@@ -2263,10 +3290,22 @@ export declare class TasksController {
             name: string;
             avatarUrl: string | null;
         } | null;
+        requesterDivision: {
+            id: string;
+            name: string;
+            slug: string;
+            isTechnical: boolean;
+        } | null;
+        assignedDivision: {
+            id: string;
+            name: string;
+            slug: string;
+            isTechnical: boolean;
+        } | null;
         parent: {
             id: string;
-            title: string;
             status: import("@prisma/client").$Enums.TaskStatus;
+            title: string;
             customStatus: string | null;
             identifier: string;
             priority: import("@prisma/client").$Enums.TaskPriority;
@@ -2290,8 +3329,8 @@ export declare class TasksController {
             updatedAt: Date;
             description: string | null;
             workspaceId: string;
-            title: string;
             status: import("@prisma/client").$Enums.TaskStatus;
+            title: string;
             order: number;
             customStatus: string | null;
             identifier: string;
@@ -2301,17 +3340,21 @@ export declare class TasksController {
             estimate: number | null;
             isArchived: boolean;
             deletedAt: Date | null;
+            triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
+            externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
             projectId: string;
             cycleId: string | null;
             creatorId: string;
             assigneeId: string | null;
+            requesterDivisionId: string | null;
+            assignedDivisionId: string | null;
             parentId: string | null;
         })[];
         sourceRelations: ({
             targetTask: {
                 id: string;
-                title: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
+                title: string;
                 customStatus: string | null;
                 identifier: string;
                 priority: import("@prisma/client").$Enums.TaskPriority;
@@ -2333,8 +3376,8 @@ export declare class TasksController {
         targetRelations: ({
             sourceTask: {
                 id: string;
-                title: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
+                title: string;
                 customStatus: string | null;
                 identifier: string;
                 priority: import("@prisma/client").$Enums.TaskPriority;
@@ -2356,12 +3399,12 @@ export declare class TasksController {
         attachments: {
             id: string;
             createdAt: Date;
-            url: string;
             taskId: string | null;
             filename: string;
             originalName: string;
             mimeType: string;
             size: number;
+            url: string;
             uploaderId: string;
         }[];
         reactions: ({
@@ -2397,8 +3440,8 @@ export declare class TasksController {
         updatedAt: Date;
         description: string | null;
         workspaceId: string;
-        title: string;
         status: import("@prisma/client").$Enums.TaskStatus;
+        title: string;
         order: number;
         customStatus: string | null;
         identifier: string;
@@ -2408,10 +3451,14 @@ export declare class TasksController {
         estimate: number | null;
         isArchived: boolean;
         deletedAt: Date | null;
+        triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
+        externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
         projectId: string;
         cycleId: string | null;
         creatorId: string;
         assigneeId: string | null;
+        requesterDivisionId: string | null;
+        assignedDivisionId: string | null;
         parentId: string | null;
     }>;
     moveTask(id: string, userId: string, body: {
@@ -2531,10 +3578,22 @@ export declare class TasksController {
             name: string;
             avatarUrl: string | null;
         } | null;
+        requesterDivision: {
+            id: string;
+            name: string;
+            slug: string;
+            isTechnical: boolean;
+        } | null;
+        assignedDivision: {
+            id: string;
+            name: string;
+            slug: string;
+            isTechnical: boolean;
+        } | null;
         parent: {
             id: string;
-            title: string;
             status: import("@prisma/client").$Enums.TaskStatus;
+            title: string;
             customStatus: string | null;
             identifier: string;
             priority: import("@prisma/client").$Enums.TaskPriority;
@@ -2558,8 +3617,8 @@ export declare class TasksController {
             updatedAt: Date;
             description: string | null;
             workspaceId: string;
-            title: string;
             status: import("@prisma/client").$Enums.TaskStatus;
+            title: string;
             order: number;
             customStatus: string | null;
             identifier: string;
@@ -2569,17 +3628,21 @@ export declare class TasksController {
             estimate: number | null;
             isArchived: boolean;
             deletedAt: Date | null;
+            triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
+            externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
             projectId: string;
             cycleId: string | null;
             creatorId: string;
             assigneeId: string | null;
+            requesterDivisionId: string | null;
+            assignedDivisionId: string | null;
             parentId: string | null;
         })[];
         sourceRelations: ({
             targetTask: {
                 id: string;
-                title: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
+                title: string;
                 customStatus: string | null;
                 identifier: string;
                 priority: import("@prisma/client").$Enums.TaskPriority;
@@ -2601,8 +3664,8 @@ export declare class TasksController {
         targetRelations: ({
             sourceTask: {
                 id: string;
-                title: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
+                title: string;
                 customStatus: string | null;
                 identifier: string;
                 priority: import("@prisma/client").$Enums.TaskPriority;
@@ -2624,12 +3687,12 @@ export declare class TasksController {
         attachments: {
             id: string;
             createdAt: Date;
-            url: string;
             taskId: string | null;
             filename: string;
             originalName: string;
             mimeType: string;
             size: number;
+            url: string;
             uploaderId: string;
         }[];
         reactions: ({
@@ -2665,8 +3728,8 @@ export declare class TasksController {
         updatedAt: Date;
         description: string | null;
         workspaceId: string;
-        title: string;
         status: import("@prisma/client").$Enums.TaskStatus;
+        title: string;
         order: number;
         customStatus: string | null;
         identifier: string;
@@ -2676,10 +3739,14 @@ export declare class TasksController {
         estimate: number | null;
         isArchived: boolean;
         deletedAt: Date | null;
+        triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
+        externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
         projectId: string;
         cycleId: string | null;
         creatorId: string;
         assigneeId: string | null;
+        requesterDivisionId: string | null;
+        assignedDivisionId: string | null;
         parentId: string | null;
     }) | null>;
     logActivity(taskId: string, userId: string, body: {
@@ -2816,10 +3883,22 @@ export declare class TasksController {
             name: string;
             avatarUrl: string | null;
         } | null;
+        requesterDivision: {
+            id: string;
+            name: string;
+            slug: string;
+            isTechnical: boolean;
+        } | null;
+        assignedDivision: {
+            id: string;
+            name: string;
+            slug: string;
+            isTechnical: boolean;
+        } | null;
         parent: {
             id: string;
-            title: string;
             status: import("@prisma/client").$Enums.TaskStatus;
+            title: string;
             customStatus: string | null;
             identifier: string;
             priority: import("@prisma/client").$Enums.TaskPriority;
@@ -2843,8 +3922,8 @@ export declare class TasksController {
             updatedAt: Date;
             description: string | null;
             workspaceId: string;
-            title: string;
             status: import("@prisma/client").$Enums.TaskStatus;
+            title: string;
             order: number;
             customStatus: string | null;
             identifier: string;
@@ -2854,17 +3933,21 @@ export declare class TasksController {
             estimate: number | null;
             isArchived: boolean;
             deletedAt: Date | null;
+            triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
+            externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
             projectId: string;
             cycleId: string | null;
             creatorId: string;
             assigneeId: string | null;
+            requesterDivisionId: string | null;
+            assignedDivisionId: string | null;
             parentId: string | null;
         })[];
         sourceRelations: ({
             targetTask: {
                 id: string;
-                title: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
+                title: string;
                 customStatus: string | null;
                 identifier: string;
                 priority: import("@prisma/client").$Enums.TaskPriority;
@@ -2886,8 +3969,8 @@ export declare class TasksController {
         targetRelations: ({
             sourceTask: {
                 id: string;
-                title: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
+                title: string;
                 customStatus: string | null;
                 identifier: string;
                 priority: import("@prisma/client").$Enums.TaskPriority;
@@ -2909,12 +3992,12 @@ export declare class TasksController {
         attachments: {
             id: string;
             createdAt: Date;
-            url: string;
             taskId: string | null;
             filename: string;
             originalName: string;
             mimeType: string;
             size: number;
+            url: string;
             uploaderId: string;
         }[];
         reactions: ({
@@ -2950,8 +4033,8 @@ export declare class TasksController {
         updatedAt: Date;
         description: string | null;
         workspaceId: string;
-        title: string;
         status: import("@prisma/client").$Enums.TaskStatus;
+        title: string;
         order: number;
         customStatus: string | null;
         identifier: string;
@@ -2961,10 +4044,14 @@ export declare class TasksController {
         estimate: number | null;
         isArchived: boolean;
         deletedAt: Date | null;
+        triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
+        externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
         projectId: string;
         cycleId: string | null;
         creatorId: string;
         assigneeId: string | null;
+        requesterDivisionId: string | null;
+        assignedDivisionId: string | null;
         parentId: string | null;
     }>;
     restoreTask(id: string, userId: string): Promise<{
@@ -3079,10 +4166,22 @@ export declare class TasksController {
             name: string;
             avatarUrl: string | null;
         } | null;
+        requesterDivision: {
+            id: string;
+            name: string;
+            slug: string;
+            isTechnical: boolean;
+        } | null;
+        assignedDivision: {
+            id: string;
+            name: string;
+            slug: string;
+            isTechnical: boolean;
+        } | null;
         parent: {
             id: string;
-            title: string;
             status: import("@prisma/client").$Enums.TaskStatus;
+            title: string;
             customStatus: string | null;
             identifier: string;
             priority: import("@prisma/client").$Enums.TaskPriority;
@@ -3106,8 +4205,8 @@ export declare class TasksController {
             updatedAt: Date;
             description: string | null;
             workspaceId: string;
-            title: string;
             status: import("@prisma/client").$Enums.TaskStatus;
+            title: string;
             order: number;
             customStatus: string | null;
             identifier: string;
@@ -3117,17 +4216,21 @@ export declare class TasksController {
             estimate: number | null;
             isArchived: boolean;
             deletedAt: Date | null;
+            triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
+            externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
             projectId: string;
             cycleId: string | null;
             creatorId: string;
             assigneeId: string | null;
+            requesterDivisionId: string | null;
+            assignedDivisionId: string | null;
             parentId: string | null;
         })[];
         sourceRelations: ({
             targetTask: {
                 id: string;
-                title: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
+                title: string;
                 customStatus: string | null;
                 identifier: string;
                 priority: import("@prisma/client").$Enums.TaskPriority;
@@ -3149,8 +4252,8 @@ export declare class TasksController {
         targetRelations: ({
             sourceTask: {
                 id: string;
-                title: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
+                title: string;
                 customStatus: string | null;
                 identifier: string;
                 priority: import("@prisma/client").$Enums.TaskPriority;
@@ -3172,12 +4275,12 @@ export declare class TasksController {
         attachments: {
             id: string;
             createdAt: Date;
-            url: string;
             taskId: string | null;
             filename: string;
             originalName: string;
             mimeType: string;
             size: number;
+            url: string;
             uploaderId: string;
         }[];
         reactions: ({
@@ -3213,8 +4316,8 @@ export declare class TasksController {
         updatedAt: Date;
         description: string | null;
         workspaceId: string;
-        title: string;
         status: import("@prisma/client").$Enums.TaskStatus;
+        title: string;
         order: number;
         customStatus: string | null;
         identifier: string;
@@ -3224,10 +4327,14 @@ export declare class TasksController {
         estimate: number | null;
         isArchived: boolean;
         deletedAt: Date | null;
+        triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
+        externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
         projectId: string;
         cycleId: string | null;
         creatorId: string;
         assigneeId: string | null;
+        requesterDivisionId: string | null;
+        assignedDivisionId: string | null;
         parentId: string | null;
     }>;
     permanentDeleteTask(id: string, userId: string): Promise<{
@@ -3236,8 +4343,8 @@ export declare class TasksController {
         updatedAt: Date;
         description: string | null;
         workspaceId: string;
-        title: string;
         status: import("@prisma/client").$Enums.TaskStatus;
+        title: string;
         order: number;
         customStatus: string | null;
         identifier: string;
@@ -3247,10 +4354,14 @@ export declare class TasksController {
         estimate: number | null;
         isArchived: boolean;
         deletedAt: Date | null;
+        triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
+        externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
         projectId: string;
         cycleId: string | null;
         creatorId: string;
         assigneeId: string | null;
+        requesterDivisionId: string | null;
+        assignedDivisionId: string | null;
         parentId: string | null;
     }>;
     addComment(taskId: string, userId: string, body: {
