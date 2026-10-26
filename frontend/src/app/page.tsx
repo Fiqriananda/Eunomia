@@ -598,33 +598,38 @@ function Dashboard() {
       />
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 pb-14 md:pb-0">
-        {/* Top Navigation */}
-        <Navbar
-          viewMode={viewMode}
-          onViewModeChange={setViewMode}
-          onOpenInbox={() => setSidebarTab('inbox')}
-          unreadInboxCount={unreadInboxCount}
-          onOpenMobileNav={() => setIsMobileNavOpen(true)}
-          onOpenCreateTask={() => {
-            if (workspace?.role === 'STAKEHOLDER') {
-              setIsIntakeModalOpen(true);
-            } else {
-              setCreateDefaultPriority('NO_PRIORITY');
-              setCreateDefaultStatus('TODO');
-              setIsCreateOpen(true);
-            }
-          }}
-          onOpenCommandMenu={() => setIsCommandOpen(true)}
-          onOpenInviteModal={() => setIsInviteOpen(true)}
-          onOpenWorkspaceSettings={() => router.push('/settings/workspace')}
-          onOpenTeam={() => setSidebarTab('team')}
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-        />
+      <div className="flex-1 flex flex-col min-w-0 pb-14 md:pb-0 h-screen overflow-hidden">
+        {/* Top Navigation - hidden on inbox to allow Linear-style full height split view */}
+        {sidebarTab !== 'inbox' && (
+          <Navbar
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+            onOpenInbox={() => setSidebarTab('inbox')}
+            unreadInboxCount={unreadInboxCount}
+            onOpenMobileNav={() => setIsMobileNavOpen(true)}
+            onOpenCreateTask={() => {
+              if (workspace?.role === 'STAKEHOLDER') {
+                setIsIntakeModalOpen(true);
+              } else {
+                setCreateDefaultPriority('NO_PRIORITY');
+                setCreateDefaultStatus('TODO');
+                setIsCreateOpen(true);
+              }
+            }}
+            onOpenCommandMenu={() => setIsCommandOpen(true)}
+            onOpenInviteModal={() => setIsInviteOpen(true)}
+            onOpenWorkspaceSettings={() => router.push('/settings/workspace')}
+            onOpenTeam={() => setSidebarTab('team')}
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+          />
+        )}
 
         {sidebarTab === 'inbox' ? (
-          <InboxView onUnreadCountChange={setUnreadInboxCount} />
+          <InboxView
+            onUnreadCountChange={setUnreadInboxCount}
+            onOpenMobileNav={() => setIsMobileNavOpen(true)}
+          />
         ) : sidebarTab === 'cycles' && workspace && workspace.cyclesEnabled !== false ? (
           <CyclesView
             workspace={workspace}
