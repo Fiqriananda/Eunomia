@@ -31,35 +31,57 @@ export class NotificationsService implements OnModuleInit {
 
   private initializeFirebase() {
     try {
-      const configuredPath =
-        this.configService.get<string>('FIREBASE_CREDENTIALS_PATH') ||
-        './eunomia-20e00-firebase-adminsdk-fbsvc-c0ebff3423.json';
+      let serviceAccount: any = null;
 
-      const candidatePaths = [
-        path.isAbsolute(configuredPath)
-          ? configuredPath
-          : path.resolve(process.cwd(), configuredPath),
-        path.resolve(process.cwd(), 'eunomia-20e00-firebase-adminsdk-fbsvc-c0ebff3423.json'),
-        path.resolve(process.cwd(), 'backend', 'eunomia-20e00-firebase-adminsdk-fbsvc-c0ebff3423.json'),
-      ];
+      const rawJson =
+        this.configService.get<string>('FIREBASE_CREDENTIALS_JSON') ||
+        this.configService.get<string>('FIREBASE_SERVICE_ACCOUNT_JSON');
 
-      let credentialsPath: string | null = null;
-      for (const p of candidatePaths) {
-        if (fs.existsSync(p)) {
-          credentialsPath = p;
-          break;
+      if (rawJson && rawJson.trim()) {
+        try {
+          serviceAccount = JSON.parse(rawJson.trim());
+        } catch {
+          try {
+            serviceAccount = JSON.parse(
+              Buffer.from(rawJson.trim(), 'base64').toString('utf8'),
+            );
+          } catch (err: any) {
+            this.logger.error('Failed to parse FIREBASE_CREDENTIALS_JSON environment variable');
+          }
         }
       }
 
-      if (!credentialsPath) {
-        this.logger.warn(
-          `Firebase service account file not found in candidates: ${candidatePaths.join(', ')}. Push notifications will be bypassed.`,
-        );
-        return;
-      }
+      if (!serviceAccount) {
+        const configuredPath =
+          this.configService.get<string>('FIREBASE_CREDENTIALS_PATH') ||
+          './eunomia-20e00-firebase-adminsdk-fbsvc-c0ebff3423.json';
 
-      const fileContent = fs.readFileSync(credentialsPath, 'utf8');
-      const serviceAccount = JSON.parse(fileContent);
+        const candidatePaths = [
+          path.isAbsolute(configuredPath)
+            ? configuredPath
+            : path.resolve(process.cwd(), configuredPath),
+          path.resolve(process.cwd(), 'eunomia-20e00-firebase-adminsdk-fbsvc-c0ebff3423.json'),
+          path.resolve(process.cwd(), 'backend', 'eunomia-20e00-firebase-adminsdk-fbsvc-c0ebff3423.json'),
+        ];
+
+        let credentialsPath: string | null = null;
+        for (const p of candidatePaths) {
+          if (fs.existsSync(p)) {
+            credentialsPath = p;
+            break;
+          }
+        }
+
+        if (!credentialsPath) {
+          this.logger.warn(
+            `Firebase service account not found in env or file paths: ${candidatePaths.join(', ')}. Push notifications will be bypassed.`,
+          );
+          return;
+        }
+
+        const fileContent = fs.readFileSync(credentialsPath, 'utf8');
+        serviceAccount = JSON.parse(fileContent);
+      }
 
       const existingApps = getApps();
       if (existingApps.length > 0) {
