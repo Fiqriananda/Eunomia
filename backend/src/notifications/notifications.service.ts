@@ -214,7 +214,7 @@ export class NotificationsService implements OnModuleInit {
         android: {
           priority: 'high',
           notification: {
-            channelId: 'eunomia_default_channel',
+            channelId: 'high_importance_channel',
             sound: 'default',
             clickAction: 'FLUTTER_NOTIFICATION_CLICK',
           },
