@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma/prisma.service.js';
 import { TaskStatus, TaskPriority, TriageStatus, WorkspaceRole } from '@prisma/client';
 import { EmailService } from '../email/email.service.js';
 import { EventsGateway } from '../events/events.gateway.js';
+import { NotificationsService } from '../notifications/notifications.service.js';
 
 const taskIncludeConfig = {
   project: {
@@ -141,6 +142,7 @@ export class TasksService {
     private prisma: PrismaService,
     private emailService: EmailService,
     private eventsGateway: EventsGateway,
+    private notificationsService: NotificationsService,
   ) {}
 
   private formatStatusName(status: string | null | undefined, customStatus: string | null | undefined): string {
@@ -245,6 +247,18 @@ export class TasksService {
           })
           .catch((err) => console.error('Failed to send task update email:', err));
       }
+
+      // 4. Send Mobile FCM Push Notification
+      this.notificationsService
+        .notifyTaskUpdated({
+          taskId: task.id,
+          identifier: task.identifier,
+          taskTitle: task.title,
+          actorName,
+          changesText,
+          recipientUserIds: targetSubscribers.map((s) => s.userId),
+        })
+        .catch((err) => console.error('Failed to send task update push notification:', err));
     } catch (err) {
       console.error('Failed to notify task subscribers:', err);
     }
@@ -481,6 +495,17 @@ export class TasksService {
           })
           .catch((err) => console.error('Failed to send assignment email:', err));
       }
+
+      // Send Mobile FCM Push Notification for assignment
+      this.notificationsService
+        .notifyTaskAssigned({
+          taskId: newTask.id,
+          identifier: newTask.identifier,
+          taskTitle: newTask.title,
+          actorName: creator?.name || 'A team member',
+          assigneeId: data.assigneeId,
+        })
+        .catch((err) => console.error('Failed to send task assignment push notification:', err));
     }
 
     // Auto-subscribe creator
@@ -689,6 +714,17 @@ export class TasksService {
                 })
                 .catch((err) => console.error('Failed to send assignment email:', err));
             }
+
+            // Send Mobile FCM Push Notification for assignment
+            this.notificationsService
+              .notifyTaskAssigned({
+                taskId: id,
+                identifier: currentTask.identifier,
+                taskTitle: currentTask.title,
+                actorName: actor?.name || 'A team member',
+                assigneeId: data.assigneeId,
+              })
+              .catch((err) => console.error('Failed to send task assignment push notification:', err));
           }
         } else {
           await this.prisma.taskActivity.create({
@@ -1060,6 +1096,18 @@ export class TasksService {
           replyContent: content,
         })
         .catch((err) => console.error('Failed to send comment reply email:', err));
+
+      // Send Mobile FCM Push Notification for comment reply
+      this.notificationsService
+        .notifyCommentAdded({
+          taskId: task.id,
+          identifier: task.identifier,
+          actorName: comment.user.name,
+          content,
+          recipientUserIds: [parentComment.userId],
+          type: 'COMMENT_REPLY',
+        })
+        .catch((err) => console.error('Failed to send comment reply push notification:', err));
     }
 
     // 2. Detect @mentions for team members
@@ -1109,6 +1157,20 @@ export class TasksService {
             .catch((err) => console.error('Failed to send mention email:', err));
         }
       }
+    }
+
+    // Send Mobile FCM Push Notification for mentioned team members
+    if (mentionedUserIds.size > 0) {
+      this.notificationsService
+        .notifyCommentAdded({
+          taskId: task.id,
+          identifier: task.identifier,
+          actorName: comment.user.name,
+          content,
+          recipientUserIds: Array.from(mentionedUserIds),
+          type: 'MENTIONED',
+        })
+        .catch((err) => console.error('Failed to send mention push notification:', err));
     }
 
     // 3. Notify all other subscribers to this task by email about the comment/reply

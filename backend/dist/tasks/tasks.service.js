@@ -12,6 +12,7 @@ import { PrismaService } from '../prisma/prisma.service.js';
 import { TaskStatus, TaskPriority, WorkspaceRole } from '@prisma/client';
 import { EmailService } from '../email/email.service.js';
 import { EventsGateway } from '../events/events.gateway.js';
+import { NotificationsService } from '../notifications/notifications.service.js';
 const taskIncludeConfig = {
     project: {
         select: { id: true, name: true, key: true, color: true },
@@ -146,10 +147,12 @@ let TasksService = class TasksService {
     prisma;
     emailService;
     eventsGateway;
-    constructor(prisma, emailService, eventsGateway) {
+    notificationsService;
+    constructor(prisma, emailService, eventsGateway, notificationsService) {
         this.prisma = prisma;
         this.emailService = emailService;
         this.eventsGateway = eventsGateway;
+        this.notificationsService = notificationsService;
     }
     formatStatusName(status, customStatus) {
         if (customStatus) {
@@ -237,6 +240,16 @@ let TasksService = class TasksService {
                 })
                     .catch((err) => console.error('Failed to send task update email:', err));
             }
+            this.notificationsService
+                .notifyTaskUpdated({
+                taskId: task.id,
+                identifier: task.identifier,
+                taskTitle: task.title,
+                actorName,
+                changesText,
+                recipientUserIds: targetSubscribers.map((s) => s.userId),
+            })
+                .catch((err) => console.error('Failed to send task update push notification:', err));
         }
         catch (err) {
             console.error('Failed to notify task subscribers:', err);
@@ -416,6 +429,15 @@ let TasksService = class TasksService {
                 })
                     .catch((err) => console.error('Failed to send assignment email:', err));
             }
+            this.notificationsService
+                .notifyTaskAssigned({
+                taskId: newTask.id,
+                identifier: newTask.identifier,
+                taskTitle: newTask.title,
+                actorName: creator?.name || 'A team member',
+                assigneeId: data.assigneeId,
+            })
+                .catch((err) => console.error('Failed to send task assignment push notification:', err));
         }
         await this.prisma.taskSubscription.upsert({
             where: { taskId_userId: { taskId: newTask.id, userId } },
@@ -570,6 +592,15 @@ let TasksService = class TasksService {
                             })
                                 .catch((err) => console.error('Failed to send assignment email:', err));
                         }
+                        this.notificationsService
+                            .notifyTaskAssigned({
+                            taskId: id,
+                            identifier: currentTask.identifier,
+                            taskTitle: currentTask.title,
+                            actorName: actor?.name || 'A team member',
+                            assigneeId: data.assigneeId,
+                        })
+                            .catch((err) => console.error('Failed to send task assignment push notification:', err));
                     }
                 }
                 else {
@@ -866,6 +897,16 @@ let TasksService = class TasksService {
                 replyContent: content,
             })
                 .catch((err) => console.error('Failed to send comment reply email:', err));
+            this.notificationsService
+                .notifyCommentAdded({
+                taskId: task.id,
+                identifier: task.identifier,
+                actorName: comment.user.name,
+                content,
+                recipientUserIds: [parentComment.userId],
+                type: 'COMMENT_REPLY',
+            })
+                .catch((err) => console.error('Failed to send comment reply push notification:', err));
         }
         const lowerContent = content.toLowerCase();
         const members = task.workspace?.members || [];
@@ -904,6 +945,18 @@ let TasksService = class TasksService {
                         .catch((err) => console.error('Failed to send mention email:', err));
                 }
             }
+        }
+        if (mentionedUserIds.size > 0) {
+            this.notificationsService
+                .notifyCommentAdded({
+                taskId: task.id,
+                identifier: task.identifier,
+                actorName: comment.user.name,
+                content,
+                recipientUserIds: Array.from(mentionedUserIds),
+                type: 'MENTIONED',
+            })
+                .catch((err) => console.error('Failed to send mention push notification:', err));
         }
         const excludeIds = [
             parentComment?.userId,
@@ -1580,7 +1633,8 @@ TasksService = __decorate([
     Injectable(),
     __metadata("design:paramtypes", [PrismaService,
         EmailService,
-        EventsGateway])
+        EventsGateway,
+        NotificationsService])
 ], TasksService);
 export { TasksService };
 //# sourceMappingURL=tasks.service.js.map

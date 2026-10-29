@@ -407,6 +407,88 @@ Menandai semua notifikasi telah dibaca (clear unread badge).
 
 ---
 
+### 3.12. `POST /mobile/device-token`
+Mendaftarkan atau memperbarui FCM device token dari perangkat mobile untuk menerima push notification Google Firebase Cloud Messaging.
+
+- **Auth**: Wajib (`Bearer <token>`)
+- **Request Body**:
+```json
+{
+  "token": "dK5a...your_fcm_token_from_mobile...",
+  "platform": "android",
+  "deviceModel": "Google Pixel 8"
+}
+```
+- **Response `200 OK`**:
+```json
+{
+  "id": "uuid",
+  "token": "dK5a...",
+  "platform": "android",
+  "deviceModel": "Google Pixel 8",
+  "userId": "uuid",
+  "createdAt": "2026-10-29T02:00:00.000Z",
+  "updatedAt": "2026-10-29T02:00:00.000Z"
+}
+```
+
+---
+
+### 3.13. `DELETE /mobile/device-token`
+Menghapus FCM device token perangkat (misal saat user logout dari mobile).
+
+- **Auth**: Wajib (`Bearer <token>`)
+- **Request Body**:
+```json
+{
+  "token": "dK5a...token_to_remove..."
+}
+```
+- **Response `200 OK`**:
+```json
+{
+  "success": true
+}
+```
+
+---
+
+### 3.14. `POST /mobile/notifications/test`
+Mengirim uji coba push notification FCM ke semua perangkat terdaftar milik user yang sedang login.
+
+- **Auth**: Wajib (`Bearer <token>`)
+- **Request Body** (Opsional):
+```json
+{
+  "title": "Test Push Notification",
+  "body": "Firebase Cloud Messaging is active!"
+}
+```
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "message": "Test push notification dispatched"
+}
+```
+
+---
+
+### 3.15. `GET /mobile/notifications/status`
+Mengecek kesiapan Firebase Cloud Messaging service dan jumlah device token terdaftar untuk user yang sedang login.
+
+- **Auth**: Wajib (`Bearer <token>`)
+- **Response `200 OK`**:
+```json
+{
+  "serviceReady": true,
+  "registeredDevicesCount": 1,
+  "deviceTokens": ["dK5a..."]
+}
+```
+
+---
+
 ## 🔐 4. Autentikasi (`/auth/*`)
 
 ---

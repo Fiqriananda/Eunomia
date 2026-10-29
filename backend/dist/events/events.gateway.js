@@ -24,7 +24,7 @@ let EventsGateway = EventsGateway_1 = class EventsGateway {
         const wsId = typeof payload === 'string' ? payload : payload?.workspaceId;
         if (wsId) {
             const room = `workspace_${wsId}`;
-            client.join(room);
+            void client.join(room);
             this.logger.log(`Client ${client.id} joined room ${room}`);
             return { event: 'joined_workspace', data: wsId };
         }
@@ -33,7 +33,7 @@ let EventsGateway = EventsGateway_1 = class EventsGateway {
         const wsId = typeof payload === 'string' ? payload : payload?.workspaceId;
         if (wsId) {
             const room = `workspace_${wsId}`;
-            client.leave(room);
+            void client.leave(room);
             this.logger.log(`Client ${client.id} left room ${room}`);
             return { event: 'left_workspace', data: wsId };
         }
@@ -42,7 +42,7 @@ let EventsGateway = EventsGateway_1 = class EventsGateway {
         const uId = typeof payload === 'string' ? payload : payload?.userId;
         if (uId) {
             const room = `user_${uId}`;
-            client.join(room);
+            void client.join(room);
             this.logger.log(`Client ${client.id} joined personal room ${room}`);
             return { event: 'joined_user', data: uId };
         }
@@ -51,7 +51,7 @@ let EventsGateway = EventsGateway_1 = class EventsGateway {
         const tId = typeof payload === 'string' ? payload : payload?.taskId;
         if (tId) {
             const room = `task_${tId}`;
-            client.join(room);
+            void client.join(room);
             this.logger.log(`Client ${client.id} joined task room ${room}`);
             return { event: 'joined_task', data: tId };
         }
@@ -60,7 +60,7 @@ let EventsGateway = EventsGateway_1 = class EventsGateway {
         const tId = typeof payload === 'string' ? payload : payload?.taskId;
         if (tId) {
             const room = `task_${tId}`;
-            client.leave(room);
+            void client.leave(room);
             this.logger.log(`Client ${client.id} left task room ${room}`);
             return { event: 'left_task', data: tId };
         }

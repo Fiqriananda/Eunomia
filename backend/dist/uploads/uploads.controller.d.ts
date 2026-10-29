@@ -5,34 +5,34 @@ export declare class UploadsController {
     uploadFile(file: Express.Multer.File, userId: string, taskId?: string): Promise<{
         id: string;
         createdAt: Date;
+        url: string;
         taskId: string | null;
         filename: string;
         originalName: string;
         mimeType: string;
         size: number;
-        url: string;
         uploaderId: string;
     }>;
     linkToTask(attachmentId: string, taskId: string): Promise<{
         id: string;
         createdAt: Date;
+        url: string;
         taskId: string | null;
         filename: string;
         originalName: string;
         mimeType: string;
         size: number;
-        url: string;
         uploaderId: string;
     }>;
     deleteFile(id: string): Promise<{
         id: string;
         createdAt: Date;
+        url: string;
         taskId: string | null;
         filename: string;
         originalName: string;
         mimeType: string;
         size: number;
-        url: string;
         uploaderId: string;
     }>;
 }

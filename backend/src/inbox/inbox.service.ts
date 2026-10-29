@@ -1,9 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { NotificationsService } from '../notifications/notifications.service.js';
 
 @Injectable()
 export class InboxService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private notificationsService: NotificationsService,
+  ) {}
 
   async getNotifications(userId: string, unreadOnly = false) {
     const where: any = { userId };
@@ -150,7 +154,7 @@ export class InboxService {
       return null;
     }
 
-    return this.prisma.inboxNotification.create({
+    const created = await this.prisma.inboxNotification.create({
       data: {
         userId: data.userId,
         actorId: data.actorId,
@@ -160,5 +164,18 @@ export class InboxService {
         body: data.body,
       },
     });
+
+    this.notificationsService
+      .sendToUser(data.userId, {
+        title: data.title,
+        body: data.body || data.title,
+        data: {
+          type: data.type,
+          taskId: data.taskId,
+        },
+      })
+      .catch((err) => console.error('Failed to send push notification from InboxService:', err));
+
+    return created;
   }
 }

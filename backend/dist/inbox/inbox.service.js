@@ -9,10 +9,13 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { NotificationsService } from '../notifications/notifications.service.js';
 let InboxService = class InboxService {
     prisma;
-    constructor(prisma) {
+    notificationsService;
+    constructor(prisma, notificationsService) {
         this.prisma = prisma;
+        this.notificationsService = notificationsService;
     }
     async getNotifications(userId, unreadOnly = false) {
         const where = { userId };
@@ -141,7 +144,7 @@ let InboxService = class InboxService {
         if (data.userId === data.actorId) {
             return null;
         }
-        return this.prisma.inboxNotification.create({
+        const created = await this.prisma.inboxNotification.create({
             data: {
                 userId: data.userId,
                 actorId: data.actorId,
@@ -151,11 +154,23 @@ let InboxService = class InboxService {
                 body: data.body,
             },
         });
+        this.notificationsService
+            .sendToUser(data.userId, {
+            title: data.title,
+            body: data.body || data.title,
+            data: {
+                type: data.type,
+                taskId: data.taskId,
+            },
+        })
+            .catch((err) => console.error('Failed to send push notification from InboxService:', err));
+        return created;
     }
 };
 InboxService = __decorate([
     Injectable(),
-    __metadata("design:paramtypes", [PrismaService])
+    __metadata("design:paramtypes", [PrismaService,
+        NotificationsService])
 ], InboxService);
 export { InboxService };
 //# sourceMappingURL=inbox.service.js.map

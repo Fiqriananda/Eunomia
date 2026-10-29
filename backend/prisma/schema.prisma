@@ -63,6 +63,7 @@ model User {
   commentReactions CommentReaction[]
   taskSubscriptions TaskSubscription[] @relation("UserTaskSubscriptions")
   divisionMemberships DivisionMember[] @relation("UserDivisionMemberships")
+  deviceTokens     DeviceToken[]     @relation("UserDeviceTokens")
 }
 
 model Workspace {
@@ -393,5 +394,18 @@ model DivisionMember {
 
   @@unique([divisionId, userId])
   @@index([divisionId])
+  @@index([userId])
+}
+
+model DeviceToken {
+  id          String   @id @default(uuid())
+  token       String   @unique
+  platform    String?  @default("android")
+  deviceModel String?
+  userId      String
+  user        User     @relation("UserDeviceTokens", fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
   @@index([userId])
 }

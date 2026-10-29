@@ -59,6 +59,8 @@ import {
   MobileUserHoverCardDto,
 } from './dto/mobile-profile.dto.js';
 import { MobileAdminPerformanceResponseDto } from './dto/mobile-performance.dto.js';
+import { NotificationsService } from '../notifications/notifications.service.js';
+import { RegisterDeviceTokenDto } from '../notifications/dto/device-token.dto.js';
 
 @Injectable()
 export class MobileService {
@@ -70,6 +72,7 @@ export class MobileService {
     private readonly projectsService: ProjectsService,
     private readonly cyclesService: CyclesService,
     private readonly authService: AuthService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   private async getEffectiveWorkspaceId(userId: string, workspaceId?: string): Promise<string> {
@@ -255,7 +258,7 @@ export class MobileService {
       completedThisWeekCount,
       unreadNotificationsCount,
       assignedTasksRaw,
-      urgentTasksRaw,
+      _urgentTasksRaw,
       projectsRaw,
       statusGroupRaw,
     ] = await Promise.all([
@@ -1042,6 +1045,36 @@ export class MobileService {
 
   async markAllNotificationsRead(userId: string) {
     return this.inboxService.markAllAsRead(userId);
+  }
+
+  async registerDeviceToken(userId: string, dto: RegisterDeviceTokenDto) {
+    return this.notificationsService.registerDeviceToken(userId, dto);
+  }
+
+  async unregisterDeviceToken(userId: string, token: string) {
+    return this.notificationsService.unregisterDeviceToken(userId, token);
+  }
+
+  async sendTestNotification(userId: string, title?: string, body?: string) {
+    await this.notificationsService.sendToUser(userId, {
+      title: title || 'Eunomia Mobile Test',
+      body: body || 'Firebase Cloud Messaging push notification is active and working!',
+      data: {
+        type: 'TEST_PUSH',
+        timestamp: new Date().toISOString(),
+      },
+    });
+    return { success: true, message: 'Test push notification dispatched' };
+  }
+
+  async getNotificationStatus(userId: string) {
+    const isReady = this.notificationsService.isReady();
+    const tokens = await this.notificationsService.getUserDeviceTokens(userId);
+    return {
+      serviceReady: isReady,
+      registeredDevicesCount: tokens.length,
+      deviceTokens: tokens,
+    };
   }
 
   // 11. Trash

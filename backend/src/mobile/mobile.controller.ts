@@ -79,6 +79,11 @@ import {
   MobileUserHoverCardDto,
 } from './dto/mobile-profile.dto.js';
 import { MobileAdminPerformanceResponseDto } from './dto/mobile-performance.dto.js';
+import {
+  RegisterDeviceTokenDto,
+  UnregisterDeviceTokenDto,
+  SendTestNotificationDto,
+} from '../notifications/dto/device-token.dto.js';
 
 @ApiTags('Mobile')
 @Controller('mobile')
@@ -797,6 +802,99 @@ export class MobileController {
   async markAllNotificationsRead(@CurrentUser('id') userId: string) {
     return this.mobileService.markAllNotificationsRead(userId);
   }
+
+  @Post('device-token')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Register FCM device token for mobile push notifications',
+    description: 'Registers or updates the FCM push token for the current user device.',
+  })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Device token registered successfully' })
+  async registerDeviceToken(
+    @CurrentUser('id') userId: string,
+    @Body() body: RegisterDeviceTokenDto,
+  ) {
+    return this.mobileService.registerDeviceToken(userId, body);
+  }
+
+  @Post('notifications/register-token')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Register FCM device token alias',
+    description: 'Alias endpoint to register FCM push token.',
+  })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Device token registered successfully' })
+  async registerNotificationToken(
+    @CurrentUser('id') userId: string,
+    @Body() body: RegisterDeviceTokenDto,
+  ) {
+    return this.mobileService.registerDeviceToken(userId, body);
+  }
+
+  @Delete('device-token')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Unregister FCM device token',
+    description: 'Removes the device token on mobile sign-out.',
+  })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Device token removed successfully' })
+  async unregisterDeviceToken(
+    @CurrentUser('id') userId: string,
+    @Body() body: UnregisterDeviceTokenDto,
+  ) {
+    return this.mobileService.unregisterDeviceToken(userId, body.token);
+  }
+
+  @Post('notifications/unregister-token')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Unregister FCM device token alias',
+    description: 'Alias endpoint to remove device token.',
+  })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Device token removed successfully' })
+  async unregisterNotificationToken(
+    @CurrentUser('id') userId: string,
+    @Body() body: UnregisterDeviceTokenDto,
+  ) {
+    return this.mobileService.unregisterDeviceToken(userId, body.token);
+  }
+
+  @Get('notifications/status')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: 'Get push notification service status',
+    description: 'Check Firebase Cloud Messaging readiness and active devices for current user.',
+  })
+  @ApiResponse({ status: HttpStatus.OK, description: 'FCM push notification status' })
+  async getNotificationStatus(@CurrentUser('id') userId: string) {
+    return this.mobileService.getNotificationStatus(userId);
+  }
+
+  @Post('notifications/test')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Trigger test push notification',
+    description: 'Sends a test FCM push notification to all devices registered to the current user.',
+  })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Test push notification dispatched' })
+  async testPushNotification(
+    @CurrentUser('id') userId: string,
+    @Body() body: SendTestNotificationDto,
+  ) {
+    return this.mobileService.sendTestNotification(userId, body.title, body.body);
+  }
+
 
   // ==========================================
   // 11. TRASH & RESTORE

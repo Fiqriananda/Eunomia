@@ -79,8 +79,8 @@ export declare class CyclesService {
             updatedAt: Date;
             description: string | null;
             workspaceId: string;
-            status: import("@prisma/client").$Enums.TaskStatus;
             title: string;
+            status: import("@prisma/client").$Enums.TaskStatus;
             order: number;
             customStatus: string | null;
             identifier: string;

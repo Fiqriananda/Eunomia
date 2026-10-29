@@ -2,11 +2,13 @@ import { PrismaService } from '../prisma/prisma.service.js';
 import { TaskStatus, TaskPriority, TriageStatus } from '@prisma/client';
 import { EmailService } from '../email/email.service.js';
 import { EventsGateway } from '../events/events.gateway.js';
+import { NotificationsService } from '../notifications/notifications.service.js';
 export declare class TasksService {
     private prisma;
     private emailService;
     private eventsGateway;
-    constructor(prisma: PrismaService, emailService: EmailService, eventsGateway: EventsGateway);
+    private notificationsService;
+    constructor(prisma: PrismaService, emailService: EmailService, eventsGateway: EventsGateway, notificationsService: NotificationsService);
     private formatStatusName;
     notifySubscribersOfTaskUpdate(taskId: string, actorId: string | undefined, changes: Array<{
         field: string;
@@ -153,8 +155,8 @@ export declare class TasksService {
         } | null;
         parent: {
             id: string;
-            status: import("@prisma/client").$Enums.TaskStatus;
             title: string;
+            status: import("@prisma/client").$Enums.TaskStatus;
             customStatus: string | null;
             identifier: string;
             priority: import("@prisma/client").$Enums.TaskPriority;
@@ -178,8 +180,8 @@ export declare class TasksService {
             updatedAt: Date;
             description: string | null;
             workspaceId: string;
-            status: import("@prisma/client").$Enums.TaskStatus;
             title: string;
+            status: import("@prisma/client").$Enums.TaskStatus;
             order: number;
             customStatus: string | null;
             identifier: string;
@@ -202,8 +204,8 @@ export declare class TasksService {
         sourceRelations: ({
             targetTask: {
                 id: string;
-                status: import("@prisma/client").$Enums.TaskStatus;
                 title: string;
+                status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
                 identifier: string;
                 priority: import("@prisma/client").$Enums.TaskPriority;
@@ -225,8 +227,8 @@ export declare class TasksService {
         targetRelations: ({
             sourceTask: {
                 id: string;
-                status: import("@prisma/client").$Enums.TaskStatus;
                 title: string;
+                status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
                 identifier: string;
                 priority: import("@prisma/client").$Enums.TaskPriority;
@@ -248,12 +250,12 @@ export declare class TasksService {
         attachments: {
             id: string;
             createdAt: Date;
+            url: string;
             taskId: string | null;
             filename: string;
             originalName: string;
             mimeType: string;
             size: number;
-            url: string;
             uploaderId: string;
         }[];
         reactions: ({
@@ -289,8 +291,8 @@ export declare class TasksService {
         updatedAt: Date;
         description: string | null;
         workspaceId: string;
-        status: import("@prisma/client").$Enums.TaskStatus;
         title: string;
+        status: import("@prisma/client").$Enums.TaskStatus;
         order: number;
         customStatus: string | null;
         identifier: string;
@@ -436,8 +438,8 @@ export declare class TasksService {
         } | null;
         parent: {
             id: string;
-            status: import("@prisma/client").$Enums.TaskStatus;
             title: string;
+            status: import("@prisma/client").$Enums.TaskStatus;
             customStatus: string | null;
             identifier: string;
             priority: import("@prisma/client").$Enums.TaskPriority;
@@ -461,8 +463,8 @@ export declare class TasksService {
             updatedAt: Date;
             description: string | null;
             workspaceId: string;
-            status: import("@prisma/client").$Enums.TaskStatus;
             title: string;
+            status: import("@prisma/client").$Enums.TaskStatus;
             order: number;
             customStatus: string | null;
             identifier: string;
@@ -485,8 +487,8 @@ export declare class TasksService {
         sourceRelations: ({
             targetTask: {
                 id: string;
-                status: import("@prisma/client").$Enums.TaskStatus;
                 title: string;
+                status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
                 identifier: string;
                 priority: import("@prisma/client").$Enums.TaskPriority;
@@ -508,8 +510,8 @@ export declare class TasksService {
         targetRelations: ({
             sourceTask: {
                 id: string;
-                status: import("@prisma/client").$Enums.TaskStatus;
                 title: string;
+                status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
                 identifier: string;
                 priority: import("@prisma/client").$Enums.TaskPriority;
@@ -531,12 +533,12 @@ export declare class TasksService {
         attachments: {
             id: string;
             createdAt: Date;
+            url: string;
             taskId: string | null;
             filename: string;
             originalName: string;
             mimeType: string;
             size: number;
-            url: string;
             uploaderId: string;
         }[];
         reactions: ({
@@ -572,8 +574,8 @@ export declare class TasksService {
         updatedAt: Date;
         description: string | null;
         workspaceId: string;
-        status: import("@prisma/client").$Enums.TaskStatus;
         title: string;
+        status: import("@prisma/client").$Enums.TaskStatus;
         order: number;
         customStatus: string | null;
         identifier: string;
@@ -737,8 +739,8 @@ export declare class TasksService {
         } | null;
         parent: {
             id: string;
-            status: import("@prisma/client").$Enums.TaskStatus;
             title: string;
+            status: import("@prisma/client").$Enums.TaskStatus;
             customStatus: string | null;
             identifier: string;
             priority: import("@prisma/client").$Enums.TaskPriority;
@@ -762,8 +764,8 @@ export declare class TasksService {
             updatedAt: Date;
             description: string | null;
             workspaceId: string;
-            status: import("@prisma/client").$Enums.TaskStatus;
             title: string;
+            status: import("@prisma/client").$Enums.TaskStatus;
             order: number;
             customStatus: string | null;
             identifier: string;
@@ -786,8 +788,8 @@ export declare class TasksService {
         sourceRelations: ({
             targetTask: {
                 id: string;
-                status: import("@prisma/client").$Enums.TaskStatus;
                 title: string;
+                status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
                 identifier: string;
                 priority: import("@prisma/client").$Enums.TaskPriority;
@@ -809,8 +811,8 @@ export declare class TasksService {
         targetRelations: ({
             sourceTask: {
                 id: string;
-                status: import("@prisma/client").$Enums.TaskStatus;
                 title: string;
+                status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
                 identifier: string;
                 priority: import("@prisma/client").$Enums.TaskPriority;
@@ -832,12 +834,12 @@ export declare class TasksService {
         attachments: {
             id: string;
             createdAt: Date;
+            url: string;
             taskId: string | null;
             filename: string;
             originalName: string;
             mimeType: string;
             size: number;
-            url: string;
             uploaderId: string;
         }[];
         reactions: ({
@@ -873,8 +875,8 @@ export declare class TasksService {
         updatedAt: Date;
         description: string | null;
         workspaceId: string;
-        status: import("@prisma/client").$Enums.TaskStatus;
         title: string;
+        status: import("@prisma/client").$Enums.TaskStatus;
         order: number;
         customStatus: string | null;
         identifier: string;
@@ -1035,8 +1037,8 @@ export declare class TasksService {
         } | null;
         parent: {
             id: string;
-            status: import("@prisma/client").$Enums.TaskStatus;
             title: string;
+            status: import("@prisma/client").$Enums.TaskStatus;
             customStatus: string | null;
             identifier: string;
             priority: import("@prisma/client").$Enums.TaskPriority;
@@ -1060,8 +1062,8 @@ export declare class TasksService {
             updatedAt: Date;
             description: string | null;
             workspaceId: string;
-            status: import("@prisma/client").$Enums.TaskStatus;
             title: string;
+            status: import("@prisma/client").$Enums.TaskStatus;
             order: number;
             customStatus: string | null;
             identifier: string;
@@ -1084,8 +1086,8 @@ export declare class TasksService {
         sourceRelations: ({
             targetTask: {
                 id: string;
-                status: import("@prisma/client").$Enums.TaskStatus;
                 title: string;
+                status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
                 identifier: string;
                 priority: import("@prisma/client").$Enums.TaskPriority;
@@ -1107,8 +1109,8 @@ export declare class TasksService {
         targetRelations: ({
             sourceTask: {
                 id: string;
-                status: import("@prisma/client").$Enums.TaskStatus;
                 title: string;
+                status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
                 identifier: string;
                 priority: import("@prisma/client").$Enums.TaskPriority;
@@ -1130,12 +1132,12 @@ export declare class TasksService {
         attachments: {
             id: string;
             createdAt: Date;
+            url: string;
             taskId: string | null;
             filename: string;
             originalName: string;
             mimeType: string;
             size: number;
-            url: string;
             uploaderId: string;
         }[];
         reactions: ({
@@ -1171,8 +1173,8 @@ export declare class TasksService {
         updatedAt: Date;
         description: string | null;
         workspaceId: string;
-        status: import("@prisma/client").$Enums.TaskStatus;
         title: string;
+        status: import("@prisma/client").$Enums.TaskStatus;
         order: number;
         customStatus: string | null;
         identifier: string;
@@ -1323,8 +1325,8 @@ export declare class TasksService {
         } | null;
         parent: {
             id: string;
-            status: import("@prisma/client").$Enums.TaskStatus;
             title: string;
+            status: import("@prisma/client").$Enums.TaskStatus;
             customStatus: string | null;
             identifier: string;
             priority: import("@prisma/client").$Enums.TaskPriority;
@@ -1348,8 +1350,8 @@ export declare class TasksService {
             updatedAt: Date;
             description: string | null;
             workspaceId: string;
-            status: import("@prisma/client").$Enums.TaskStatus;
             title: string;
+            status: import("@prisma/client").$Enums.TaskStatus;
             order: number;
             customStatus: string | null;
             identifier: string;
@@ -1372,8 +1374,8 @@ export declare class TasksService {
         sourceRelations: ({
             targetTask: {
                 id: string;
-                status: import("@prisma/client").$Enums.TaskStatus;
                 title: string;
+                status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
                 identifier: string;
                 priority: import("@prisma/client").$Enums.TaskPriority;
@@ -1395,8 +1397,8 @@ export declare class TasksService {
         targetRelations: ({
             sourceTask: {
                 id: string;
-                status: import("@prisma/client").$Enums.TaskStatus;
                 title: string;
+                status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
                 identifier: string;
                 priority: import("@prisma/client").$Enums.TaskPriority;
@@ -1418,12 +1420,12 @@ export declare class TasksService {
         attachments: {
             id: string;
             createdAt: Date;
+            url: string;
             taskId: string | null;
             filename: string;
             originalName: string;
             mimeType: string;
             size: number;
-            url: string;
             uploaderId: string;
         }[];
         reactions: ({
@@ -1459,8 +1461,8 @@ export declare class TasksService {
         updatedAt: Date;
         description: string | null;
         workspaceId: string;
-        status: import("@prisma/client").$Enums.TaskStatus;
         title: string;
+        status: import("@prisma/client").$Enums.TaskStatus;
         order: number;
         customStatus: string | null;
         identifier: string;
@@ -1628,8 +1630,8 @@ export declare class TasksService {
         } | null;
         parent: {
             id: string;
-            status: import("@prisma/client").$Enums.TaskStatus;
             title: string;
+            status: import("@prisma/client").$Enums.TaskStatus;
             customStatus: string | null;
             identifier: string;
             priority: import("@prisma/client").$Enums.TaskPriority;
@@ -1653,8 +1655,8 @@ export declare class TasksService {
             updatedAt: Date;
             description: string | null;
             workspaceId: string;
-            status: import("@prisma/client").$Enums.TaskStatus;
             title: string;
+            status: import("@prisma/client").$Enums.TaskStatus;
             order: number;
             customStatus: string | null;
             identifier: string;
@@ -1677,8 +1679,8 @@ export declare class TasksService {
         sourceRelations: ({
             targetTask: {
                 id: string;
-                status: import("@prisma/client").$Enums.TaskStatus;
                 title: string;
+                status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
                 identifier: string;
                 priority: import("@prisma/client").$Enums.TaskPriority;
@@ -1700,8 +1702,8 @@ export declare class TasksService {
         targetRelations: ({
             sourceTask: {
                 id: string;
-                status: import("@prisma/client").$Enums.TaskStatus;
                 title: string;
+                status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
                 identifier: string;
                 priority: import("@prisma/client").$Enums.TaskPriority;
@@ -1723,12 +1725,12 @@ export declare class TasksService {
         attachments: {
             id: string;
             createdAt: Date;
+            url: string;
             taskId: string | null;
             filename: string;
             originalName: string;
             mimeType: string;
             size: number;
-            url: string;
             uploaderId: string;
         }[];
         reactions: ({
@@ -1764,8 +1766,8 @@ export declare class TasksService {
         updatedAt: Date;
         description: string | null;
         workspaceId: string;
-        status: import("@prisma/client").$Enums.TaskStatus;
         title: string;
+        status: import("@prisma/client").$Enums.TaskStatus;
         order: number;
         customStatus: string | null;
         identifier: string;
@@ -1911,8 +1913,8 @@ export declare class TasksService {
         } | null;
         parent: {
             id: string;
-            status: import("@prisma/client").$Enums.TaskStatus;
             title: string;
+            status: import("@prisma/client").$Enums.TaskStatus;
             customStatus: string | null;
             identifier: string;
             priority: import("@prisma/client").$Enums.TaskPriority;
@@ -1936,8 +1938,8 @@ export declare class TasksService {
             updatedAt: Date;
             description: string | null;
             workspaceId: string;
-            status: import("@prisma/client").$Enums.TaskStatus;
             title: string;
+            status: import("@prisma/client").$Enums.TaskStatus;
             order: number;
             customStatus: string | null;
             identifier: string;
@@ -1960,8 +1962,8 @@ export declare class TasksService {
         sourceRelations: ({
             targetTask: {
                 id: string;
-                status: import("@prisma/client").$Enums.TaskStatus;
                 title: string;
+                status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
                 identifier: string;
                 priority: import("@prisma/client").$Enums.TaskPriority;
@@ -1983,8 +1985,8 @@ export declare class TasksService {
         targetRelations: ({
             sourceTask: {
                 id: string;
-                status: import("@prisma/client").$Enums.TaskStatus;
                 title: string;
+                status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
                 identifier: string;
                 priority: import("@prisma/client").$Enums.TaskPriority;
@@ -2006,12 +2008,12 @@ export declare class TasksService {
         attachments: {
             id: string;
             createdAt: Date;
+            url: string;
             taskId: string | null;
             filename: string;
             originalName: string;
             mimeType: string;
             size: number;
-            url: string;
             uploaderId: string;
         }[];
         reactions: ({
@@ -2047,8 +2049,8 @@ export declare class TasksService {
         updatedAt: Date;
         description: string | null;
         workspaceId: string;
-        status: import("@prisma/client").$Enums.TaskStatus;
         title: string;
+        status: import("@prisma/client").$Enums.TaskStatus;
         order: number;
         customStatus: string | null;
         identifier: string;
@@ -2074,8 +2076,8 @@ export declare class TasksService {
         updatedAt: Date;
         description: string | null;
         workspaceId: string;
-        status: import("@prisma/client").$Enums.TaskStatus;
         title: string;
+        status: import("@prisma/client").$Enums.TaskStatus;
         order: number;
         customStatus: string | null;
         identifier: string;
@@ -2282,8 +2284,8 @@ export declare class TasksService {
         } | null;
         parent: {
             id: string;
-            status: import("@prisma/client").$Enums.TaskStatus;
             title: string;
+            status: import("@prisma/client").$Enums.TaskStatus;
             customStatus: string | null;
             identifier: string;
             priority: import("@prisma/client").$Enums.TaskPriority;
@@ -2307,8 +2309,8 @@ export declare class TasksService {
             updatedAt: Date;
             description: string | null;
             workspaceId: string;
-            status: import("@prisma/client").$Enums.TaskStatus;
             title: string;
+            status: import("@prisma/client").$Enums.TaskStatus;
             order: number;
             customStatus: string | null;
             identifier: string;
@@ -2331,8 +2333,8 @@ export declare class TasksService {
         sourceRelations: ({
             targetTask: {
                 id: string;
-                status: import("@prisma/client").$Enums.TaskStatus;
                 title: string;
+                status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
                 identifier: string;
                 priority: import("@prisma/client").$Enums.TaskPriority;
@@ -2354,8 +2356,8 @@ export declare class TasksService {
         targetRelations: ({
             sourceTask: {
                 id: string;
-                status: import("@prisma/client").$Enums.TaskStatus;
                 title: string;
+                status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
                 identifier: string;
                 priority: import("@prisma/client").$Enums.TaskPriority;
@@ -2377,12 +2379,12 @@ export declare class TasksService {
         attachments: {
             id: string;
             createdAt: Date;
+            url: string;
             taskId: string | null;
             filename: string;
             originalName: string;
             mimeType: string;
             size: number;
-            url: string;
             uploaderId: string;
         }[];
         reactions: ({
@@ -2418,8 +2420,8 @@ export declare class TasksService {
         updatedAt: Date;
         description: string | null;
         workspaceId: string;
-        status: import("@prisma/client").$Enums.TaskStatus;
         title: string;
+        status: import("@prisma/client").$Enums.TaskStatus;
         order: number;
         customStatus: string | null;
         identifier: string;
@@ -2565,8 +2567,8 @@ export declare class TasksService {
         } | null;
         parent: {
             id: string;
-            status: import("@prisma/client").$Enums.TaskStatus;
             title: string;
+            status: import("@prisma/client").$Enums.TaskStatus;
             customStatus: string | null;
             identifier: string;
             priority: import("@prisma/client").$Enums.TaskPriority;
@@ -2590,8 +2592,8 @@ export declare class TasksService {
             updatedAt: Date;
             description: string | null;
             workspaceId: string;
-            status: import("@prisma/client").$Enums.TaskStatus;
             title: string;
+            status: import("@prisma/client").$Enums.TaskStatus;
             order: number;
             customStatus: string | null;
             identifier: string;
@@ -2614,8 +2616,8 @@ export declare class TasksService {
         sourceRelations: ({
             targetTask: {
                 id: string;
-                status: import("@prisma/client").$Enums.TaskStatus;
                 title: string;
+                status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
                 identifier: string;
                 priority: import("@prisma/client").$Enums.TaskPriority;
@@ -2637,8 +2639,8 @@ export declare class TasksService {
         targetRelations: ({
             sourceTask: {
                 id: string;
-                status: import("@prisma/client").$Enums.TaskStatus;
                 title: string;
+                status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
                 identifier: string;
                 priority: import("@prisma/client").$Enums.TaskPriority;
@@ -2660,12 +2662,12 @@ export declare class TasksService {
         attachments: {
             id: string;
             createdAt: Date;
+            url: string;
             taskId: string | null;
             filename: string;
             originalName: string;
             mimeType: string;
             size: number;
-            url: string;
             uploaderId: string;
         }[];
         reactions: ({
@@ -2701,8 +2703,8 @@ export declare class TasksService {
         updatedAt: Date;
         description: string | null;
         workspaceId: string;
-        status: import("@prisma/client").$Enums.TaskStatus;
         title: string;
+        status: import("@prisma/client").$Enums.TaskStatus;
         order: number;
         customStatus: string | null;
         identifier: string;
@@ -2848,8 +2850,8 @@ export declare class TasksService {
         } | null;
         parent: {
             id: string;
-            status: import("@prisma/client").$Enums.TaskStatus;
             title: string;
+            status: import("@prisma/client").$Enums.TaskStatus;
             customStatus: string | null;
             identifier: string;
             priority: import("@prisma/client").$Enums.TaskPriority;
@@ -2873,8 +2875,8 @@ export declare class TasksService {
             updatedAt: Date;
             description: string | null;
             workspaceId: string;
-            status: import("@prisma/client").$Enums.TaskStatus;
             title: string;
+            status: import("@prisma/client").$Enums.TaskStatus;
             order: number;
             customStatus: string | null;
             identifier: string;
@@ -2897,8 +2899,8 @@ export declare class TasksService {
         sourceRelations: ({
             targetTask: {
                 id: string;
-                status: import("@prisma/client").$Enums.TaskStatus;
                 title: string;
+                status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
                 identifier: string;
                 priority: import("@prisma/client").$Enums.TaskPriority;
@@ -2920,8 +2922,8 @@ export declare class TasksService {
         targetRelations: ({
             sourceTask: {
                 id: string;
-                status: import("@prisma/client").$Enums.TaskStatus;
                 title: string;
+                status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
                 identifier: string;
                 priority: import("@prisma/client").$Enums.TaskPriority;
@@ -2943,12 +2945,12 @@ export declare class TasksService {
         attachments: {
             id: string;
             createdAt: Date;
+            url: string;
             taskId: string | null;
             filename: string;
             originalName: string;
             mimeType: string;
             size: number;
-            url: string;
             uploaderId: string;
         }[];
         reactions: ({
@@ -2984,8 +2986,8 @@ export declare class TasksService {
         updatedAt: Date;
         description: string | null;
         workspaceId: string;
-        status: import("@prisma/client").$Enums.TaskStatus;
         title: string;
+        status: import("@prisma/client").$Enums.TaskStatus;
         order: number;
         customStatus: string | null;
         identifier: string;
@@ -3134,8 +3136,8 @@ export declare class TasksService {
         } | null;
         parent: {
             id: string;
-            status: import("@prisma/client").$Enums.TaskStatus;
             title: string;
+            status: import("@prisma/client").$Enums.TaskStatus;
             customStatus: string | null;
             identifier: string;
             priority: import("@prisma/client").$Enums.TaskPriority;
@@ -3159,8 +3161,8 @@ export declare class TasksService {
             updatedAt: Date;
             description: string | null;
             workspaceId: string;
-            status: import("@prisma/client").$Enums.TaskStatus;
             title: string;
+            status: import("@prisma/client").$Enums.TaskStatus;
             order: number;
             customStatus: string | null;
             identifier: string;
@@ -3183,8 +3185,8 @@ export declare class TasksService {
         sourceRelations: ({
             targetTask: {
                 id: string;
-                status: import("@prisma/client").$Enums.TaskStatus;
                 title: string;
+                status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
                 identifier: string;
                 priority: import("@prisma/client").$Enums.TaskPriority;
@@ -3206,8 +3208,8 @@ export declare class TasksService {
         targetRelations: ({
             sourceTask: {
                 id: string;
-                status: import("@prisma/client").$Enums.TaskStatus;
                 title: string;
+                status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
                 identifier: string;
                 priority: import("@prisma/client").$Enums.TaskPriority;
@@ -3229,12 +3231,12 @@ export declare class TasksService {
         attachments: {
             id: string;
             createdAt: Date;
+            url: string;
             taskId: string | null;
             filename: string;
             originalName: string;
             mimeType: string;
             size: number;
-            url: string;
             uploaderId: string;
         }[];
         reactions: ({
@@ -3270,8 +3272,8 @@ export declare class TasksService {
         updatedAt: Date;
         description: string | null;
         workspaceId: string;
-        status: import("@prisma/client").$Enums.TaskStatus;
         title: string;
+        status: import("@prisma/client").$Enums.TaskStatus;
         order: number;
         customStatus: string | null;
         identifier: string;
@@ -3417,8 +3419,8 @@ export declare class TasksService {
         } | null;
         parent: {
             id: string;
-            status: import("@prisma/client").$Enums.TaskStatus;
             title: string;
+            status: import("@prisma/client").$Enums.TaskStatus;
             customStatus: string | null;
             identifier: string;
             priority: import("@prisma/client").$Enums.TaskPriority;
@@ -3442,8 +3444,8 @@ export declare class TasksService {
             updatedAt: Date;
             description: string | null;
             workspaceId: string;
-            status: import("@prisma/client").$Enums.TaskStatus;
             title: string;
+            status: import("@prisma/client").$Enums.TaskStatus;
             order: number;
             customStatus: string | null;
             identifier: string;
@@ -3466,8 +3468,8 @@ export declare class TasksService {
         sourceRelations: ({
             targetTask: {
                 id: string;
-                status: import("@prisma/client").$Enums.TaskStatus;
                 title: string;
+                status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
                 identifier: string;
                 priority: import("@prisma/client").$Enums.TaskPriority;
@@ -3489,8 +3491,8 @@ export declare class TasksService {
         targetRelations: ({
             sourceTask: {
                 id: string;
-                status: import("@prisma/client").$Enums.TaskStatus;
                 title: string;
+                status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
                 identifier: string;
                 priority: import("@prisma/client").$Enums.TaskPriority;
@@ -3512,12 +3514,12 @@ export declare class TasksService {
         attachments: {
             id: string;
             createdAt: Date;
+            url: string;
             taskId: string | null;
             filename: string;
             originalName: string;
             mimeType: string;
             size: number;
-            url: string;
             uploaderId: string;
         }[];
         reactions: ({
@@ -3553,8 +3555,8 @@ export declare class TasksService {
         updatedAt: Date;
         description: string | null;
         workspaceId: string;
-        status: import("@prisma/client").$Enums.TaskStatus;
         title: string;
+        status: import("@prisma/client").$Enums.TaskStatus;
         order: number;
         customStatus: string | null;
         identifier: string;
@@ -3797,8 +3799,8 @@ export declare class TasksService {
         } | null;
         parent: {
             id: string;
-            status: import("@prisma/client").$Enums.TaskStatus;
             title: string;
+            status: import("@prisma/client").$Enums.TaskStatus;
             customStatus: string | null;
             identifier: string;
             priority: import("@prisma/client").$Enums.TaskPriority;
@@ -3822,8 +3824,8 @@ export declare class TasksService {
             updatedAt: Date;
             description: string | null;
             workspaceId: string;
-            status: import("@prisma/client").$Enums.TaskStatus;
             title: string;
+            status: import("@prisma/client").$Enums.TaskStatus;
             order: number;
             customStatus: string | null;
             identifier: string;
@@ -3846,8 +3848,8 @@ export declare class TasksService {
         sourceRelations: ({
             targetTask: {
                 id: string;
-                status: import("@prisma/client").$Enums.TaskStatus;
                 title: string;
+                status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
                 identifier: string;
                 priority: import("@prisma/client").$Enums.TaskPriority;
@@ -3869,8 +3871,8 @@ export declare class TasksService {
         targetRelations: ({
             sourceTask: {
                 id: string;
-                status: import("@prisma/client").$Enums.TaskStatus;
                 title: string;
+                status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
                 identifier: string;
                 priority: import("@prisma/client").$Enums.TaskPriority;
@@ -3892,12 +3894,12 @@ export declare class TasksService {
         attachments: {
             id: string;
             createdAt: Date;
+            url: string;
             taskId: string | null;
             filename: string;
             originalName: string;
             mimeType: string;
             size: number;
-            url: string;
             uploaderId: string;
         }[];
         reactions: ({
@@ -3933,8 +3935,8 @@ export declare class TasksService {
         updatedAt: Date;
         description: string | null;
         workspaceId: string;
-        status: import("@prisma/client").$Enums.TaskStatus;
         title: string;
+        status: import("@prisma/client").$Enums.TaskStatus;
         order: number;
         customStatus: string | null;
         identifier: string;
@@ -4080,8 +4082,8 @@ export declare class TasksService {
         } | null;
         parent: {
             id: string;
-            status: import("@prisma/client").$Enums.TaskStatus;
             title: string;
+            status: import("@prisma/client").$Enums.TaskStatus;
             customStatus: string | null;
             identifier: string;
             priority: import("@prisma/client").$Enums.TaskPriority;
@@ -4105,8 +4107,8 @@ export declare class TasksService {
             updatedAt: Date;
             description: string | null;
             workspaceId: string;
-            status: import("@prisma/client").$Enums.TaskStatus;
             title: string;
+            status: import("@prisma/client").$Enums.TaskStatus;
             order: number;
             customStatus: string | null;
             identifier: string;
@@ -4129,8 +4131,8 @@ export declare class TasksService {
         sourceRelations: ({
             targetTask: {
                 id: string;
-                status: import("@prisma/client").$Enums.TaskStatus;
                 title: string;
+                status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
                 identifier: string;
                 priority: import("@prisma/client").$Enums.TaskPriority;
@@ -4152,8 +4154,8 @@ export declare class TasksService {
         targetRelations: ({
             sourceTask: {
                 id: string;
-                status: import("@prisma/client").$Enums.TaskStatus;
                 title: string;
+                status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
                 identifier: string;
                 priority: import("@prisma/client").$Enums.TaskPriority;
@@ -4175,12 +4177,12 @@ export declare class TasksService {
         attachments: {
             id: string;
             createdAt: Date;
+            url: string;
             taskId: string | null;
             filename: string;
             originalName: string;
             mimeType: string;
             size: number;
-            url: string;
             uploaderId: string;
         }[];
         reactions: ({
@@ -4216,8 +4218,8 @@ export declare class TasksService {
         updatedAt: Date;
         description: string | null;
         workspaceId: string;
-        status: import("@prisma/client").$Enums.TaskStatus;
         title: string;
+        status: import("@prisma/client").$Enums.TaskStatus;
         order: number;
         customStatus: string | null;
         identifier: string;
@@ -4369,8 +4371,8 @@ export declare class TasksService {
         } | null;
         parent: {
             id: string;
-            status: import("@prisma/client").$Enums.TaskStatus;
             title: string;
+            status: import("@prisma/client").$Enums.TaskStatus;
             customStatus: string | null;
             identifier: string;
             priority: import("@prisma/client").$Enums.TaskPriority;
@@ -4394,8 +4396,8 @@ export declare class TasksService {
             updatedAt: Date;
             description: string | null;
             workspaceId: string;
-            status: import("@prisma/client").$Enums.TaskStatus;
             title: string;
+            status: import("@prisma/client").$Enums.TaskStatus;
             order: number;
             customStatus: string | null;
             identifier: string;
@@ -4418,8 +4420,8 @@ export declare class TasksService {
         sourceRelations: ({
             targetTask: {
                 id: string;
-                status: import("@prisma/client").$Enums.TaskStatus;
                 title: string;
+                status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
                 identifier: string;
                 priority: import("@prisma/client").$Enums.TaskPriority;
@@ -4441,8 +4443,8 @@ export declare class TasksService {
         targetRelations: ({
             sourceTask: {
                 id: string;
-                status: import("@prisma/client").$Enums.TaskStatus;
                 title: string;
+                status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
                 identifier: string;
                 priority: import("@prisma/client").$Enums.TaskPriority;
@@ -4464,12 +4466,12 @@ export declare class TasksService {
         attachments: {
             id: string;
             createdAt: Date;
+            url: string;
             taskId: string | null;
             filename: string;
             originalName: string;
             mimeType: string;
             size: number;
-            url: string;
             uploaderId: string;
         }[];
         reactions: ({
@@ -4505,8 +4507,8 @@ export declare class TasksService {
         updatedAt: Date;
         description: string | null;
         workspaceId: string;
-        status: import("@prisma/client").$Enums.TaskStatus;
         title: string;
+        status: import("@prisma/client").$Enums.TaskStatus;
         order: number;
         customStatus: string | null;
         identifier: string;

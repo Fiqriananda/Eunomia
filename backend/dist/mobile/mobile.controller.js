@@ -27,6 +27,7 @@ import { MobileTrashListResponseDto } from './dto/mobile-trash.dto.js';
 import { MobileSearchQueryDto, MobileSearchResultDto, } from './dto/mobile-search.dto.js';
 import { MobileProfileResponseDto, MobileUpdateProfileDto, MobileChangePasswordDto, MobileUserHoverCardDto, } from './dto/mobile-profile.dto.js';
 import { MobileAdminPerformanceResponseDto } from './dto/mobile-performance.dto.js';
+import { RegisterDeviceTokenDto, UnregisterDeviceTokenDto, SendTestNotificationDto, } from '../notifications/dto/device-token.dto.js';
 let MobileController = class MobileController {
     mobileService;
     constructor(mobileService) {
@@ -148,6 +149,24 @@ let MobileController = class MobileController {
     }
     async markAllNotificationsRead(userId) {
         return this.mobileService.markAllNotificationsRead(userId);
+    }
+    async registerDeviceToken(userId, body) {
+        return this.mobileService.registerDeviceToken(userId, body);
+    }
+    async registerNotificationToken(userId, body) {
+        return this.mobileService.registerDeviceToken(userId, body);
+    }
+    async unregisterDeviceToken(userId, body) {
+        return this.mobileService.unregisterDeviceToken(userId, body.token);
+    }
+    async unregisterNotificationToken(userId, body) {
+        return this.mobileService.unregisterDeviceToken(userId, body.token);
+    }
+    async getNotificationStatus(userId) {
+        return this.mobileService.getNotificationStatus(userId);
+    }
+    async testPushNotification(userId, body) {
+        return this.mobileService.sendTestNotification(userId, body.title, body.body);
     }
     async getTrash(userId, workspaceId) {
         return this.mobileService.getTrash(userId, workspaceId);
@@ -865,6 +884,100 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], MobileController.prototype, "markAllNotificationsRead", null);
+__decorate([
+    Post('device-token'),
+    UseGuards(JwtAuthGuard),
+    ApiBearerAuth('JWT-auth'),
+    HttpCode(HttpStatus.OK),
+    ApiOperation({
+        summary: 'Register FCM device token for mobile push notifications',
+        description: 'Registers or updates the FCM push token for the current user device.',
+    }),
+    ApiResponse({ status: HttpStatus.OK, description: 'Device token registered successfully' }),
+    __param(0, CurrentUser('id')),
+    __param(1, Body()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, RegisterDeviceTokenDto]),
+    __metadata("design:returntype", Promise)
+], MobileController.prototype, "registerDeviceToken", null);
+__decorate([
+    Post('notifications/register-token'),
+    UseGuards(JwtAuthGuard),
+    ApiBearerAuth('JWT-auth'),
+    HttpCode(HttpStatus.OK),
+    ApiOperation({
+        summary: 'Register FCM device token alias',
+        description: 'Alias endpoint to register FCM push token.',
+    }),
+    ApiResponse({ status: HttpStatus.OK, description: 'Device token registered successfully' }),
+    __param(0, CurrentUser('id')),
+    __param(1, Body()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, RegisterDeviceTokenDto]),
+    __metadata("design:returntype", Promise)
+], MobileController.prototype, "registerNotificationToken", null);
+__decorate([
+    Delete('device-token'),
+    UseGuards(JwtAuthGuard),
+    ApiBearerAuth('JWT-auth'),
+    HttpCode(HttpStatus.OK),
+    ApiOperation({
+        summary: 'Unregister FCM device token',
+        description: 'Removes the device token on mobile sign-out.',
+    }),
+    ApiResponse({ status: HttpStatus.OK, description: 'Device token removed successfully' }),
+    __param(0, CurrentUser('id')),
+    __param(1, Body()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, UnregisterDeviceTokenDto]),
+    __metadata("design:returntype", Promise)
+], MobileController.prototype, "unregisterDeviceToken", null);
+__decorate([
+    Post('notifications/unregister-token'),
+    UseGuards(JwtAuthGuard),
+    ApiBearerAuth('JWT-auth'),
+    HttpCode(HttpStatus.OK),
+    ApiOperation({
+        summary: 'Unregister FCM device token alias',
+        description: 'Alias endpoint to remove device token.',
+    }),
+    ApiResponse({ status: HttpStatus.OK, description: 'Device token removed successfully' }),
+    __param(0, CurrentUser('id')),
+    __param(1, Body()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, UnregisterDeviceTokenDto]),
+    __metadata("design:returntype", Promise)
+], MobileController.prototype, "unregisterNotificationToken", null);
+__decorate([
+    Get('notifications/status'),
+    UseGuards(JwtAuthGuard),
+    ApiBearerAuth('JWT-auth'),
+    ApiOperation({
+        summary: 'Get push notification service status',
+        description: 'Check Firebase Cloud Messaging readiness and active devices for current user.',
+    }),
+    ApiResponse({ status: HttpStatus.OK, description: 'FCM push notification status' }),
+    __param(0, CurrentUser('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], MobileController.prototype, "getNotificationStatus", null);
+__decorate([
+    Post('notifications/test'),
+    UseGuards(JwtAuthGuard),
+    ApiBearerAuth('JWT-auth'),
+    HttpCode(HttpStatus.OK),
+    ApiOperation({
+        summary: 'Trigger test push notification',
+        description: 'Sends a test FCM push notification to all devices registered to the current user.',
+    }),
+    ApiResponse({ status: HttpStatus.OK, description: 'Test push notification dispatched' }),
+    __param(0, CurrentUser('id')),
+    __param(1, Body()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, SendTestNotificationDto]),
+    __metadata("design:returntype", Promise)
+], MobileController.prototype, "testPushNotification", null);
 __decorate([
     Get('trash'),
     UseGuards(JwtAuthGuard),

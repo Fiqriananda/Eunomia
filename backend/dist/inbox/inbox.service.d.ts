@@ -1,7 +1,9 @@
 import { PrismaService } from '../prisma/prisma.service.js';
+import { NotificationsService } from '../notifications/notifications.service.js';
 export declare class InboxService {
     private prisma;
-    constructor(prisma: PrismaService);
+    private notificationsService;
+    constructor(prisma: PrismaService, notificationsService: NotificationsService);
     getNotifications(userId: string, unreadOnly?: boolean): Promise<{
         notifications: ({
             workspace: {
@@ -17,8 +19,8 @@ export declare class InboxService {
                     color: string | null;
                 };
                 id: string;
-                status: import("@prisma/client").$Enums.TaskStatus;
                 title: string;
+                status: import("@prisma/client").$Enums.TaskStatus;
                 identifier: string;
                 priority: import("@prisma/client").$Enums.TaskPriority;
             } | null;
@@ -53,8 +55,8 @@ export declare class InboxService {
     markAsRead(id: string, userId: string): Promise<{
         task: {
             id: string;
-            status: import("@prisma/client").$Enums.TaskStatus;
             title: string;
+            status: import("@prisma/client").$Enums.TaskStatus;
             identifier: string;
         } | null;
         actor: {

@@ -17,6 +17,7 @@ import { CyclesService } from '../cycles/cycles.service.js';
 import { AuthService } from '../auth/auth.service.js';
 import { TaskStatus, TaskPriority, WorkspaceRole } from '@prisma/client';
 import { MobileTaskFilter, } from './dto/mobile-tasks.dto.js';
+import { NotificationsService } from '../notifications/notifications.service.js';
 let MobileService = class MobileService {
     prisma;
     tasksService;
@@ -25,7 +26,8 @@ let MobileService = class MobileService {
     projectsService;
     cyclesService;
     authService;
-    constructor(prisma, tasksService, inboxService, workspacesService, projectsService, cyclesService, authService) {
+    notificationsService;
+    constructor(prisma, tasksService, inboxService, workspacesService, projectsService, cyclesService, authService, notificationsService) {
         this.prisma = prisma;
         this.tasksService = tasksService;
         this.inboxService = inboxService;
@@ -33,6 +35,7 @@ let MobileService = class MobileService {
         this.projectsService = projectsService;
         this.cyclesService = cyclesService;
         this.authService = authService;
+        this.notificationsService = notificationsService;
     }
     async getEffectiveWorkspaceId(userId, workspaceId) {
         if (workspaceId)
@@ -196,7 +199,7 @@ let MobileService = class MobileService {
         const now = new Date();
         const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
         const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
-        const [assignedCount, inProgressCount, dueSoonCount, urgentCount, completedThisWeekCount, unreadNotificationsCount, assignedTasksRaw, urgentTasksRaw, projectsRaw, statusGroupRaw,] = await Promise.all([
+        const [assignedCount, inProgressCount, dueSoonCount, urgentCount, completedThisWeekCount, unreadNotificationsCount, assignedTasksRaw, _urgentTasksRaw, projectsRaw, statusGroupRaw,] = await Promise.all([
             this.prisma.task.count({
                 where: { workspaceId: wsId, assigneeId: userId, isArchived: false, status: { not: TaskStatus.DONE } },
             }),
@@ -895,6 +898,32 @@ let MobileService = class MobileService {
     async markAllNotificationsRead(userId) {
         return this.inboxService.markAllAsRead(userId);
     }
+    async registerDeviceToken(userId, dto) {
+        return this.notificationsService.registerDeviceToken(userId, dto);
+    }
+    async unregisterDeviceToken(userId, token) {
+        return this.notificationsService.unregisterDeviceToken(userId, token);
+    }
+    async sendTestNotification(userId, title, body) {
+        await this.notificationsService.sendToUser(userId, {
+            title: title || 'Eunomia Mobile Test',
+            body: body || 'Firebase Cloud Messaging push notification is active and working!',
+            data: {
+                type: 'TEST_PUSH',
+                timestamp: new Date().toISOString(),
+            },
+        });
+        return { success: true, message: 'Test push notification dispatched' };
+    }
+    async getNotificationStatus(userId) {
+        const isReady = this.notificationsService.isReady();
+        const tokens = await this.notificationsService.getUserDeviceTokens(userId);
+        return {
+            serviceReady: isReady,
+            registeredDevicesCount: tokens.length,
+            deviceTokens: tokens,
+        };
+    }
     async getTrash(userId, workspaceIdParam) {
         const workspaceId = await this.getEffectiveWorkspaceId(userId, workspaceIdParam);
         const tasks = await this.prisma.task.findMany({
@@ -1284,7 +1313,8 @@ MobileService = __decorate([
         WorkspacesService,
         ProjectsService,
         CyclesService,
-        AuthService])
+        AuthService,
+        NotificationsService])
 ], MobileService);
 export { MobileService };
 //# sourceMappingURL=mobile.service.js.map

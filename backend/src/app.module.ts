@@ -13,6 +13,7 @@ import { EmailModule } from './email/email.module.js';
 import { MobileModule } from './mobile/mobile.module.js';
 import { EventsModule } from './events/events.module.js';
 import { CyclesModule } from './cycles/cycles.module.js';
+import { NotificationsModule } from './notifications/notifications.module.js';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { CyclesModule } from './cycles/cycles.module.js';
     UploadsModule,
     InboxModule,
     EmailModule,
+    NotificationsModule,
     MobileModule,
     EventsModule,
     CyclesModule,

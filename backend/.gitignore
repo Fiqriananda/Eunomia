@@ -26,3 +26,8 @@ npm-debug.log*
 .DS_Store
 .idea/
 .vscode/
+
+# Firebase Service Account Credentials
+*-firebase-adminsdk-*.json
+*firebase-adminsdk*.json
+service-account*.json
