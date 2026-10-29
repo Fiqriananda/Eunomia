@@ -18,11 +18,11 @@ export declare class CyclesService {
             tasks: number;
         };
         number: number;
+        description: string | null;
         id: string;
-        name: string | null;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
+        name: string | null;
         workspaceId: string;
         status: string;
         startDate: Date;
@@ -40,11 +40,11 @@ export declare class CyclesService {
             completionPercentage: number;
         };
         number: number;
+        description: string | null;
         id: string;
-        name: string | null;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
+        name: string | null;
         workspaceId: string;
         status: string;
         startDate: Date;
@@ -74,17 +74,18 @@ export declare class CyclesService {
                 avatarUrl: string | null;
             } | null;
         } & {
+            description: string | null;
+            title: string;
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            description: string | null;
+            priority: import("@prisma/client").$Enums.TaskPriority;
+            identifier: string;
+            assigneeId: string | null;
             workspaceId: string;
-            title: string;
             status: import("@prisma/client").$Enums.TaskStatus;
             order: number;
             customStatus: string | null;
-            identifier: string;
-            priority: import("@prisma/client").$Enums.TaskPriority;
             dueDate: Date | null;
             labels: string[];
             estimate: number | null;
@@ -95,17 +96,16 @@ export declare class CyclesService {
             projectId: string;
             cycleId: string | null;
             creatorId: string;
-            assigneeId: string | null;
             requesterDivisionId: string | null;
             assignedDivisionId: string | null;
             parentId: string | null;
         })[];
         number: number;
+        description: string | null;
         id: string;
-        name: string | null;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
+        name: string | null;
         workspaceId: string;
         status: string;
         startDate: Date;
@@ -114,11 +114,11 @@ export declare class CyclesService {
     private getCycleStats;
     createCycle(data: CreateCycleDto): Promise<{
         number: number;
+        description: string | null;
         id: string;
-        name: string | null;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
+        name: string | null;
         workspaceId: string;
         status: string;
         startDate: Date;
@@ -126,11 +126,11 @@ export declare class CyclesService {
     }>;
     updateCycle(id: string, data: UpdateCycleDto): Promise<{
         number: number;
+        description: string | null;
         id: string;
-        name: string | null;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
+        name: string | null;
         workspaceId: string;
         status: string;
         startDate: Date;

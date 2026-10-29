@@ -39,20 +39,20 @@ export declare class MobileService {
     getWorkspaces(userId: string): Promise<MobileWorkspaceListResponseDto>;
     createWorkspace(userId: string, dto: MobileCreateWorkspaceDto): Promise<{
         projects: {
+            description: string | null;
             id: string;
-            name: string;
             createdAt: Date;
             updatedAt: Date;
+            name: string;
             key: string;
-            description: string | null;
             color: string | null;
             workspaceId: string;
         }[];
     } & {
         id: string;
-        name: string;
         createdAt: Date;
         updatedAt: Date;
+        name: string;
         slug: string;
         logoUrl: string | null;
         columnOrder: string[];
@@ -69,51 +69,51 @@ export declare class MobileService {
             };
             invitedBy: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
+            token: string;
             id: string;
-            email: string;
             createdAt: Date;
             updatedAt: Date;
+            email: string;
             role: import("@prisma/client").$Enums.WorkspaceRole;
             workspaceId: string;
-            token: string;
             status: import("@prisma/client").$Enums.InvitationStatus;
             invitedById: string;
         };
     }>;
     getProjects(userId: string, workspaceIdParam?: string): Promise<MobileProjectDto[]>;
     createProject(userId: string, dto: MobileCreateProjectDto): Promise<{
+        description: string | null;
         id: string;
-        name: string;
         createdAt: Date;
         updatedAt: Date;
+        name: string;
         key: string;
-        description: string | null;
         color: string | null;
         workspaceId: string;
     }>;
     getProjectDetail(userId: string, projectId: string): Promise<MobileProjectDetailDto>;
     updateProject(projectId: string, dto: MobileUpdateProjectDto): Promise<{
+        description: string | null;
         id: string;
-        name: string;
         createdAt: Date;
         updatedAt: Date;
+        name: string;
         key: string;
-        description: string | null;
         color: string | null;
         workspaceId: string;
     }>;
     deleteProject(projectId: string): Promise<{
+        description: string | null;
         id: string;
-        name: string;
         createdAt: Date;
         updatedAt: Date;
+        name: string;
         key: string;
-        description: string | null;
         color: string | null;
         workspaceId: string;
     }>;
@@ -121,11 +121,11 @@ export declare class MobileService {
     getCurrentCycle(userId: string, workspaceIdParam?: string): Promise<MobileCycleDetailDto | null>;
     createCycle(userId: string, dto: MobileCreateCycleDto): Promise<{
         number: number;
+        description: string | null;
         id: string;
-        name: string | null;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
+        name: string | null;
         workspaceId: string;
         status: string;
         startDate: Date;
@@ -133,11 +133,11 @@ export declare class MobileService {
     }>;
     updateCycle(cycleId: string, dto: MobileUpdateCycleDto): Promise<{
         number: number;
+        description: string | null;
         id: string;
-        name: string | null;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
+        name: string | null;
         workspaceId: string;
         status: string;
         startDate: Date;
@@ -161,15 +161,15 @@ export declare class MobileService {
         comments: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
             parent: {
                 user: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 };
                 id: string;
@@ -178,68 +178,68 @@ export declare class MobileService {
             reactions: ({
                 user: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 };
             } & {
                 id: string;
-                createdAt: Date;
                 userId: string;
+                createdAt: Date;
                 emoji: string;
                 commentId: string;
             })[];
             replies: ({
                 user: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 };
                 reactions: ({
                     user: {
                         id: string;
-                        email: string;
                         name: string;
+                        email: string;
                         avatarUrl: string | null;
                     };
                 } & {
                     id: string;
-                    createdAt: Date;
                     userId: string;
+                    createdAt: Date;
                     emoji: string;
                     commentId: string;
                 })[];
             } & {
                 id: string;
+                userId: string;
                 createdAt: Date;
                 updatedAt: Date;
-                userId: string;
-                content: string;
                 taskId: string;
+                content: string;
                 parentId: string | null;
             })[];
         } & {
             id: string;
+            userId: string;
             createdAt: Date;
             updatedAt: Date;
-            userId: string;
-            content: string;
             taskId: string;
+            content: string;
             parentId: string | null;
         })[];
         activities: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
-            id: string;
-            createdAt: Date;
-            userId: string;
             type: string;
+            id: string;
+            userId: string;
+            createdAt: Date;
             taskId: string;
             fromValue: string | null;
             toValue: string | null;
@@ -247,14 +247,14 @@ export declare class MobileService {
         })[];
         creator: {
             id: string;
-            email: string;
             name: string;
+            email: string;
             avatarUrl: string | null;
         };
         assignee: {
             id: string;
-            email: string;
             name: string;
+            email: string;
             avatarUrl: string | null;
         } | null;
         requesterDivision: {
@@ -270,12 +270,12 @@ export declare class MobileService {
             isTechnical: boolean;
         } | null;
         parent: {
-            id: string;
             title: string;
+            id: string;
+            priority: import("@prisma/client").$Enums.TaskPriority;
+            identifier: string;
             status: import("@prisma/client").$Enums.TaskStatus;
             customStatus: string | null;
-            identifier: string;
-            priority: import("@prisma/client").$Enums.TaskPriority;
         } | null;
         subTasks: ({
             project: {
@@ -286,22 +286,23 @@ export declare class MobileService {
             };
             assignee: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             } | null;
         } & {
+            description: string | null;
+            title: string;
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            description: string | null;
+            priority: import("@prisma/client").$Enums.TaskPriority;
+            identifier: string;
+            assigneeId: string | null;
             workspaceId: string;
-            title: string;
             status: import("@prisma/client").$Enums.TaskStatus;
             order: number;
             customStatus: string | null;
-            identifier: string;
-            priority: import("@prisma/client").$Enums.TaskPriority;
             dueDate: Date | null;
             labels: string[];
             estimate: number | null;
@@ -312,62 +313,61 @@ export declare class MobileService {
             projectId: string;
             cycleId: string | null;
             creatorId: string;
-            assigneeId: string | null;
             requesterDivisionId: string | null;
             assignedDivisionId: string | null;
             parentId: string | null;
         })[];
         sourceRelations: ({
             targetTask: {
-                id: string;
                 title: string;
+                id: string;
+                priority: import("@prisma/client").$Enums.TaskPriority;
+                identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
-                identifier: string;
-                priority: import("@prisma/client").$Enums.TaskPriority;
                 labels: string[];
                 assignee: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 } | null;
             };
         } & {
+            type: string;
             id: string;
             createdAt: Date;
-            type: string;
             sourceTaskId: string;
             targetTaskId: string;
         })[];
         targetRelations: ({
             sourceTask: {
-                id: string;
                 title: string;
+                id: string;
+                priority: import("@prisma/client").$Enums.TaskPriority;
+                identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
-                identifier: string;
-                priority: import("@prisma/client").$Enums.TaskPriority;
                 labels: string[];
                 assignee: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 } | null;
             };
         } & {
+            type: string;
             id: string;
             createdAt: Date;
-            type: string;
             sourceTaskId: string;
             targetTaskId: string;
         })[];
         attachments: {
             id: string;
             createdAt: Date;
-            url: string;
             taskId: string | null;
+            url: string;
             filename: string;
             originalName: string;
             mimeType: string;
@@ -377,42 +377,43 @@ export declare class MobileService {
         reactions: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
             id: string;
-            createdAt: Date;
             userId: string;
+            createdAt: Date;
             taskId: string;
             emoji: string;
         })[];
         subscribers: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
             id: string;
-            createdAt: Date;
             userId: string;
+            createdAt: Date;
             taskId: string;
         })[];
     } & {
+        description: string | null;
+        title: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
+        priority: import("@prisma/client").$Enums.TaskPriority;
+        identifier: string;
+        assigneeId: string | null;
         workspaceId: string;
-        title: string;
         status: import("@prisma/client").$Enums.TaskStatus;
         order: number;
         customStatus: string | null;
-        identifier: string;
-        priority: import("@prisma/client").$Enums.TaskPriority;
         dueDate: Date | null;
         labels: string[];
         estimate: number | null;
@@ -423,7 +424,6 @@ export declare class MobileService {
         projectId: string;
         cycleId: string | null;
         creatorId: string;
-        assigneeId: string | null;
         requesterDivisionId: string | null;
         assignedDivisionId: string | null;
         parentId: string | null;
@@ -444,15 +444,15 @@ export declare class MobileService {
         comments: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
             parent: {
                 user: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 };
                 id: string;
@@ -461,68 +461,68 @@ export declare class MobileService {
             reactions: ({
                 user: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 };
             } & {
                 id: string;
-                createdAt: Date;
                 userId: string;
+                createdAt: Date;
                 emoji: string;
                 commentId: string;
             })[];
             replies: ({
                 user: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 };
                 reactions: ({
                     user: {
                         id: string;
-                        email: string;
                         name: string;
+                        email: string;
                         avatarUrl: string | null;
                     };
                 } & {
                     id: string;
-                    createdAt: Date;
                     userId: string;
+                    createdAt: Date;
                     emoji: string;
                     commentId: string;
                 })[];
             } & {
                 id: string;
+                userId: string;
                 createdAt: Date;
                 updatedAt: Date;
-                userId: string;
-                content: string;
                 taskId: string;
+                content: string;
                 parentId: string | null;
             })[];
         } & {
             id: string;
+            userId: string;
             createdAt: Date;
             updatedAt: Date;
-            userId: string;
-            content: string;
             taskId: string;
+            content: string;
             parentId: string | null;
         })[];
         activities: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
-            id: string;
-            createdAt: Date;
-            userId: string;
             type: string;
+            id: string;
+            userId: string;
+            createdAt: Date;
             taskId: string;
             fromValue: string | null;
             toValue: string | null;
@@ -530,14 +530,14 @@ export declare class MobileService {
         })[];
         creator: {
             id: string;
-            email: string;
             name: string;
+            email: string;
             avatarUrl: string | null;
         };
         assignee: {
             id: string;
-            email: string;
             name: string;
+            email: string;
             avatarUrl: string | null;
         } | null;
         requesterDivision: {
@@ -553,12 +553,12 @@ export declare class MobileService {
             isTechnical: boolean;
         } | null;
         parent: {
-            id: string;
             title: string;
+            id: string;
+            priority: import("@prisma/client").$Enums.TaskPriority;
+            identifier: string;
             status: import("@prisma/client").$Enums.TaskStatus;
             customStatus: string | null;
-            identifier: string;
-            priority: import("@prisma/client").$Enums.TaskPriority;
         } | null;
         subTasks: ({
             project: {
@@ -569,22 +569,23 @@ export declare class MobileService {
             };
             assignee: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             } | null;
         } & {
+            description: string | null;
+            title: string;
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            description: string | null;
+            priority: import("@prisma/client").$Enums.TaskPriority;
+            identifier: string;
+            assigneeId: string | null;
             workspaceId: string;
-            title: string;
             status: import("@prisma/client").$Enums.TaskStatus;
             order: number;
             customStatus: string | null;
-            identifier: string;
-            priority: import("@prisma/client").$Enums.TaskPriority;
             dueDate: Date | null;
             labels: string[];
             estimate: number | null;
@@ -595,62 +596,61 @@ export declare class MobileService {
             projectId: string;
             cycleId: string | null;
             creatorId: string;
-            assigneeId: string | null;
             requesterDivisionId: string | null;
             assignedDivisionId: string | null;
             parentId: string | null;
         })[];
         sourceRelations: ({
             targetTask: {
-                id: string;
                 title: string;
+                id: string;
+                priority: import("@prisma/client").$Enums.TaskPriority;
+                identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
-                identifier: string;
-                priority: import("@prisma/client").$Enums.TaskPriority;
                 labels: string[];
                 assignee: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 } | null;
             };
         } & {
+            type: string;
             id: string;
             createdAt: Date;
-            type: string;
             sourceTaskId: string;
             targetTaskId: string;
         })[];
         targetRelations: ({
             sourceTask: {
-                id: string;
                 title: string;
+                id: string;
+                priority: import("@prisma/client").$Enums.TaskPriority;
+                identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
-                identifier: string;
-                priority: import("@prisma/client").$Enums.TaskPriority;
                 labels: string[];
                 assignee: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 } | null;
             };
         } & {
+            type: string;
             id: string;
             createdAt: Date;
-            type: string;
             sourceTaskId: string;
             targetTaskId: string;
         })[];
         attachments: {
             id: string;
             createdAt: Date;
-            url: string;
             taskId: string | null;
+            url: string;
             filename: string;
             originalName: string;
             mimeType: string;
@@ -660,42 +660,43 @@ export declare class MobileService {
         reactions: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
             id: string;
-            createdAt: Date;
             userId: string;
+            createdAt: Date;
             taskId: string;
             emoji: string;
         })[];
         subscribers: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
             id: string;
-            createdAt: Date;
             userId: string;
+            createdAt: Date;
             taskId: string;
         })[];
     } & {
+        description: string | null;
+        title: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
+        priority: import("@prisma/client").$Enums.TaskPriority;
+        identifier: string;
+        assigneeId: string | null;
         workspaceId: string;
-        title: string;
         status: import("@prisma/client").$Enums.TaskStatus;
         order: number;
         customStatus: string | null;
-        identifier: string;
-        priority: import("@prisma/client").$Enums.TaskPriority;
         dueDate: Date | null;
         labels: string[];
         estimate: number | null;
@@ -706,7 +707,6 @@ export declare class MobileService {
         projectId: string;
         cycleId: string | null;
         creatorId: string;
-        assigneeId: string | null;
         requesterDivisionId: string | null;
         assignedDivisionId: string | null;
         parentId: string | null;
@@ -727,15 +727,15 @@ export declare class MobileService {
         comments: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
             parent: {
                 user: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 };
                 id: string;
@@ -744,68 +744,68 @@ export declare class MobileService {
             reactions: ({
                 user: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 };
             } & {
                 id: string;
-                createdAt: Date;
                 userId: string;
+                createdAt: Date;
                 emoji: string;
                 commentId: string;
             })[];
             replies: ({
                 user: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 };
                 reactions: ({
                     user: {
                         id: string;
-                        email: string;
                         name: string;
+                        email: string;
                         avatarUrl: string | null;
                     };
                 } & {
                     id: string;
-                    createdAt: Date;
                     userId: string;
+                    createdAt: Date;
                     emoji: string;
                     commentId: string;
                 })[];
             } & {
                 id: string;
+                userId: string;
                 createdAt: Date;
                 updatedAt: Date;
-                userId: string;
-                content: string;
                 taskId: string;
+                content: string;
                 parentId: string | null;
             })[];
         } & {
             id: string;
+            userId: string;
             createdAt: Date;
             updatedAt: Date;
-            userId: string;
-            content: string;
             taskId: string;
+            content: string;
             parentId: string | null;
         })[];
         activities: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
-            id: string;
-            createdAt: Date;
-            userId: string;
             type: string;
+            id: string;
+            userId: string;
+            createdAt: Date;
             taskId: string;
             fromValue: string | null;
             toValue: string | null;
@@ -813,14 +813,14 @@ export declare class MobileService {
         })[];
         creator: {
             id: string;
-            email: string;
             name: string;
+            email: string;
             avatarUrl: string | null;
         };
         assignee: {
             id: string;
-            email: string;
             name: string;
+            email: string;
             avatarUrl: string | null;
         } | null;
         requesterDivision: {
@@ -836,12 +836,12 @@ export declare class MobileService {
             isTechnical: boolean;
         } | null;
         parent: {
-            id: string;
             title: string;
+            id: string;
+            priority: import("@prisma/client").$Enums.TaskPriority;
+            identifier: string;
             status: import("@prisma/client").$Enums.TaskStatus;
             customStatus: string | null;
-            identifier: string;
-            priority: import("@prisma/client").$Enums.TaskPriority;
         } | null;
         subTasks: ({
             project: {
@@ -852,22 +852,23 @@ export declare class MobileService {
             };
             assignee: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             } | null;
         } & {
+            description: string | null;
+            title: string;
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            description: string | null;
+            priority: import("@prisma/client").$Enums.TaskPriority;
+            identifier: string;
+            assigneeId: string | null;
             workspaceId: string;
-            title: string;
             status: import("@prisma/client").$Enums.TaskStatus;
             order: number;
             customStatus: string | null;
-            identifier: string;
-            priority: import("@prisma/client").$Enums.TaskPriority;
             dueDate: Date | null;
             labels: string[];
             estimate: number | null;
@@ -878,62 +879,61 @@ export declare class MobileService {
             projectId: string;
             cycleId: string | null;
             creatorId: string;
-            assigneeId: string | null;
             requesterDivisionId: string | null;
             assignedDivisionId: string | null;
             parentId: string | null;
         })[];
         sourceRelations: ({
             targetTask: {
-                id: string;
                 title: string;
+                id: string;
+                priority: import("@prisma/client").$Enums.TaskPriority;
+                identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
-                identifier: string;
-                priority: import("@prisma/client").$Enums.TaskPriority;
                 labels: string[];
                 assignee: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 } | null;
             };
         } & {
+            type: string;
             id: string;
             createdAt: Date;
-            type: string;
             sourceTaskId: string;
             targetTaskId: string;
         })[];
         targetRelations: ({
             sourceTask: {
-                id: string;
                 title: string;
+                id: string;
+                priority: import("@prisma/client").$Enums.TaskPriority;
+                identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
-                identifier: string;
-                priority: import("@prisma/client").$Enums.TaskPriority;
                 labels: string[];
                 assignee: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 } | null;
             };
         } & {
+            type: string;
             id: string;
             createdAt: Date;
-            type: string;
             sourceTaskId: string;
             targetTaskId: string;
         })[];
         attachments: {
             id: string;
             createdAt: Date;
-            url: string;
             taskId: string | null;
+            url: string;
             filename: string;
             originalName: string;
             mimeType: string;
@@ -943,42 +943,43 @@ export declare class MobileService {
         reactions: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
             id: string;
-            createdAt: Date;
             userId: string;
+            createdAt: Date;
             taskId: string;
             emoji: string;
         })[];
         subscribers: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
             id: string;
-            createdAt: Date;
             userId: string;
+            createdAt: Date;
             taskId: string;
         })[];
     } & {
+        description: string | null;
+        title: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
+        priority: import("@prisma/client").$Enums.TaskPriority;
+        identifier: string;
+        assigneeId: string | null;
         workspaceId: string;
-        title: string;
         status: import("@prisma/client").$Enums.TaskStatus;
         order: number;
         customStatus: string | null;
-        identifier: string;
-        priority: import("@prisma/client").$Enums.TaskPriority;
         dueDate: Date | null;
         labels: string[];
         estimate: number | null;
@@ -989,7 +990,6 @@ export declare class MobileService {
         projectId: string;
         cycleId: string | null;
         creatorId: string;
-        assigneeId: string | null;
         requesterDivisionId: string | null;
         assignedDivisionId: string | null;
         parentId: string | null;
@@ -1010,15 +1010,15 @@ export declare class MobileService {
         comments: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
             parent: {
                 user: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 };
                 id: string;
@@ -1027,68 +1027,68 @@ export declare class MobileService {
             reactions: ({
                 user: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 };
             } & {
                 id: string;
-                createdAt: Date;
                 userId: string;
+                createdAt: Date;
                 emoji: string;
                 commentId: string;
             })[];
             replies: ({
                 user: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 };
                 reactions: ({
                     user: {
                         id: string;
-                        email: string;
                         name: string;
+                        email: string;
                         avatarUrl: string | null;
                     };
                 } & {
                     id: string;
-                    createdAt: Date;
                     userId: string;
+                    createdAt: Date;
                     emoji: string;
                     commentId: string;
                 })[];
             } & {
                 id: string;
+                userId: string;
                 createdAt: Date;
                 updatedAt: Date;
-                userId: string;
-                content: string;
                 taskId: string;
+                content: string;
                 parentId: string | null;
             })[];
         } & {
             id: string;
+            userId: string;
             createdAt: Date;
             updatedAt: Date;
-            userId: string;
-            content: string;
             taskId: string;
+            content: string;
             parentId: string | null;
         })[];
         activities: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
-            id: string;
-            createdAt: Date;
-            userId: string;
             type: string;
+            id: string;
+            userId: string;
+            createdAt: Date;
             taskId: string;
             fromValue: string | null;
             toValue: string | null;
@@ -1096,14 +1096,14 @@ export declare class MobileService {
         })[];
         creator: {
             id: string;
-            email: string;
             name: string;
+            email: string;
             avatarUrl: string | null;
         };
         assignee: {
             id: string;
-            email: string;
             name: string;
+            email: string;
             avatarUrl: string | null;
         } | null;
         requesterDivision: {
@@ -1119,12 +1119,12 @@ export declare class MobileService {
             isTechnical: boolean;
         } | null;
         parent: {
-            id: string;
             title: string;
+            id: string;
+            priority: import("@prisma/client").$Enums.TaskPriority;
+            identifier: string;
             status: import("@prisma/client").$Enums.TaskStatus;
             customStatus: string | null;
-            identifier: string;
-            priority: import("@prisma/client").$Enums.TaskPriority;
         } | null;
         subTasks: ({
             project: {
@@ -1135,22 +1135,23 @@ export declare class MobileService {
             };
             assignee: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             } | null;
         } & {
+            description: string | null;
+            title: string;
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            description: string | null;
+            priority: import("@prisma/client").$Enums.TaskPriority;
+            identifier: string;
+            assigneeId: string | null;
             workspaceId: string;
-            title: string;
             status: import("@prisma/client").$Enums.TaskStatus;
             order: number;
             customStatus: string | null;
-            identifier: string;
-            priority: import("@prisma/client").$Enums.TaskPriority;
             dueDate: Date | null;
             labels: string[];
             estimate: number | null;
@@ -1161,62 +1162,61 @@ export declare class MobileService {
             projectId: string;
             cycleId: string | null;
             creatorId: string;
-            assigneeId: string | null;
             requesterDivisionId: string | null;
             assignedDivisionId: string | null;
             parentId: string | null;
         })[];
         sourceRelations: ({
             targetTask: {
-                id: string;
                 title: string;
+                id: string;
+                priority: import("@prisma/client").$Enums.TaskPriority;
+                identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
-                identifier: string;
-                priority: import("@prisma/client").$Enums.TaskPriority;
                 labels: string[];
                 assignee: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 } | null;
             };
         } & {
+            type: string;
             id: string;
             createdAt: Date;
-            type: string;
             sourceTaskId: string;
             targetTaskId: string;
         })[];
         targetRelations: ({
             sourceTask: {
-                id: string;
                 title: string;
+                id: string;
+                priority: import("@prisma/client").$Enums.TaskPriority;
+                identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
-                identifier: string;
-                priority: import("@prisma/client").$Enums.TaskPriority;
                 labels: string[];
                 assignee: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 } | null;
             };
         } & {
+            type: string;
             id: string;
             createdAt: Date;
-            type: string;
             sourceTaskId: string;
             targetTaskId: string;
         })[];
         attachments: {
             id: string;
             createdAt: Date;
-            url: string;
             taskId: string | null;
+            url: string;
             filename: string;
             originalName: string;
             mimeType: string;
@@ -1226,42 +1226,43 @@ export declare class MobileService {
         reactions: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
             id: string;
-            createdAt: Date;
             userId: string;
+            createdAt: Date;
             taskId: string;
             emoji: string;
         })[];
         subscribers: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
             id: string;
-            createdAt: Date;
             userId: string;
+            createdAt: Date;
             taskId: string;
         })[];
     } & {
+        description: string | null;
+        title: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
+        priority: import("@prisma/client").$Enums.TaskPriority;
+        identifier: string;
+        assigneeId: string | null;
         workspaceId: string;
-        title: string;
         status: import("@prisma/client").$Enums.TaskStatus;
         order: number;
         customStatus: string | null;
-        identifier: string;
-        priority: import("@prisma/client").$Enums.TaskPriority;
         dueDate: Date | null;
         labels: string[];
         estimate: number | null;
@@ -1272,7 +1273,6 @@ export declare class MobileService {
         projectId: string;
         cycleId: string | null;
         creatorId: string;
-        assigneeId: string | null;
         requesterDivisionId: string | null;
         assignedDivisionId: string | null;
         parentId: string | null;
@@ -1293,15 +1293,15 @@ export declare class MobileService {
         comments: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
             parent: {
                 user: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 };
                 id: string;
@@ -1310,68 +1310,68 @@ export declare class MobileService {
             reactions: ({
                 user: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 };
             } & {
                 id: string;
-                createdAt: Date;
                 userId: string;
+                createdAt: Date;
                 emoji: string;
                 commentId: string;
             })[];
             replies: ({
                 user: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 };
                 reactions: ({
                     user: {
                         id: string;
-                        email: string;
                         name: string;
+                        email: string;
                         avatarUrl: string | null;
                     };
                 } & {
                     id: string;
-                    createdAt: Date;
                     userId: string;
+                    createdAt: Date;
                     emoji: string;
                     commentId: string;
                 })[];
             } & {
                 id: string;
+                userId: string;
                 createdAt: Date;
                 updatedAt: Date;
-                userId: string;
-                content: string;
                 taskId: string;
+                content: string;
                 parentId: string | null;
             })[];
         } & {
             id: string;
+            userId: string;
             createdAt: Date;
             updatedAt: Date;
-            userId: string;
-            content: string;
             taskId: string;
+            content: string;
             parentId: string | null;
         })[];
         activities: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
-            id: string;
-            createdAt: Date;
-            userId: string;
             type: string;
+            id: string;
+            userId: string;
+            createdAt: Date;
             taskId: string;
             fromValue: string | null;
             toValue: string | null;
@@ -1379,14 +1379,14 @@ export declare class MobileService {
         })[];
         creator: {
             id: string;
-            email: string;
             name: string;
+            email: string;
             avatarUrl: string | null;
         };
         assignee: {
             id: string;
-            email: string;
             name: string;
+            email: string;
             avatarUrl: string | null;
         } | null;
         requesterDivision: {
@@ -1402,12 +1402,12 @@ export declare class MobileService {
             isTechnical: boolean;
         } | null;
         parent: {
-            id: string;
             title: string;
+            id: string;
+            priority: import("@prisma/client").$Enums.TaskPriority;
+            identifier: string;
             status: import("@prisma/client").$Enums.TaskStatus;
             customStatus: string | null;
-            identifier: string;
-            priority: import("@prisma/client").$Enums.TaskPriority;
         } | null;
         subTasks: ({
             project: {
@@ -1418,22 +1418,23 @@ export declare class MobileService {
             };
             assignee: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             } | null;
         } & {
+            description: string | null;
+            title: string;
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            description: string | null;
+            priority: import("@prisma/client").$Enums.TaskPriority;
+            identifier: string;
+            assigneeId: string | null;
             workspaceId: string;
-            title: string;
             status: import("@prisma/client").$Enums.TaskStatus;
             order: number;
             customStatus: string | null;
-            identifier: string;
-            priority: import("@prisma/client").$Enums.TaskPriority;
             dueDate: Date | null;
             labels: string[];
             estimate: number | null;
@@ -1444,62 +1445,61 @@ export declare class MobileService {
             projectId: string;
             cycleId: string | null;
             creatorId: string;
-            assigneeId: string | null;
             requesterDivisionId: string | null;
             assignedDivisionId: string | null;
             parentId: string | null;
         })[];
         sourceRelations: ({
             targetTask: {
-                id: string;
                 title: string;
+                id: string;
+                priority: import("@prisma/client").$Enums.TaskPriority;
+                identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
-                identifier: string;
-                priority: import("@prisma/client").$Enums.TaskPriority;
                 labels: string[];
                 assignee: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 } | null;
             };
         } & {
+            type: string;
             id: string;
             createdAt: Date;
-            type: string;
             sourceTaskId: string;
             targetTaskId: string;
         })[];
         targetRelations: ({
             sourceTask: {
-                id: string;
                 title: string;
+                id: string;
+                priority: import("@prisma/client").$Enums.TaskPriority;
+                identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
-                identifier: string;
-                priority: import("@prisma/client").$Enums.TaskPriority;
                 labels: string[];
                 assignee: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 } | null;
             };
         } & {
+            type: string;
             id: string;
             createdAt: Date;
-            type: string;
             sourceTaskId: string;
             targetTaskId: string;
         })[];
         attachments: {
             id: string;
             createdAt: Date;
-            url: string;
             taskId: string | null;
+            url: string;
             filename: string;
             originalName: string;
             mimeType: string;
@@ -1509,42 +1509,43 @@ export declare class MobileService {
         reactions: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
             id: string;
-            createdAt: Date;
             userId: string;
+            createdAt: Date;
             taskId: string;
             emoji: string;
         })[];
         subscribers: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
             id: string;
-            createdAt: Date;
             userId: string;
+            createdAt: Date;
             taskId: string;
         })[];
     } & {
+        description: string | null;
+        title: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
+        priority: import("@prisma/client").$Enums.TaskPriority;
+        identifier: string;
+        assigneeId: string | null;
         workspaceId: string;
-        title: string;
         status: import("@prisma/client").$Enums.TaskStatus;
         order: number;
         customStatus: string | null;
-        identifier: string;
-        priority: import("@prisma/client").$Enums.TaskPriority;
         dueDate: Date | null;
         labels: string[];
         estimate: number | null;
@@ -1555,7 +1556,6 @@ export declare class MobileService {
         projectId: string;
         cycleId: string | null;
         creatorId: string;
-        assigneeId: string | null;
         requesterDivisionId: string | null;
         assignedDivisionId: string | null;
         parentId: string | null;
@@ -1576,15 +1576,15 @@ export declare class MobileService {
         comments: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
             parent: {
                 user: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 };
                 id: string;
@@ -1593,68 +1593,68 @@ export declare class MobileService {
             reactions: ({
                 user: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 };
             } & {
                 id: string;
-                createdAt: Date;
                 userId: string;
+                createdAt: Date;
                 emoji: string;
                 commentId: string;
             })[];
             replies: ({
                 user: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 };
                 reactions: ({
                     user: {
                         id: string;
-                        email: string;
                         name: string;
+                        email: string;
                         avatarUrl: string | null;
                     };
                 } & {
                     id: string;
-                    createdAt: Date;
                     userId: string;
+                    createdAt: Date;
                     emoji: string;
                     commentId: string;
                 })[];
             } & {
                 id: string;
+                userId: string;
                 createdAt: Date;
                 updatedAt: Date;
-                userId: string;
-                content: string;
                 taskId: string;
+                content: string;
                 parentId: string | null;
             })[];
         } & {
             id: string;
+            userId: string;
             createdAt: Date;
             updatedAt: Date;
-            userId: string;
-            content: string;
             taskId: string;
+            content: string;
             parentId: string | null;
         })[];
         activities: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
-            id: string;
-            createdAt: Date;
-            userId: string;
             type: string;
+            id: string;
+            userId: string;
+            createdAt: Date;
             taskId: string;
             fromValue: string | null;
             toValue: string | null;
@@ -1662,14 +1662,14 @@ export declare class MobileService {
         })[];
         creator: {
             id: string;
-            email: string;
             name: string;
+            email: string;
             avatarUrl: string | null;
         };
         assignee: {
             id: string;
-            email: string;
             name: string;
+            email: string;
             avatarUrl: string | null;
         } | null;
         requesterDivision: {
@@ -1685,12 +1685,12 @@ export declare class MobileService {
             isTechnical: boolean;
         } | null;
         parent: {
-            id: string;
             title: string;
+            id: string;
+            priority: import("@prisma/client").$Enums.TaskPriority;
+            identifier: string;
             status: import("@prisma/client").$Enums.TaskStatus;
             customStatus: string | null;
-            identifier: string;
-            priority: import("@prisma/client").$Enums.TaskPriority;
         } | null;
         subTasks: ({
             project: {
@@ -1701,22 +1701,23 @@ export declare class MobileService {
             };
             assignee: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             } | null;
         } & {
+            description: string | null;
+            title: string;
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            description: string | null;
+            priority: import("@prisma/client").$Enums.TaskPriority;
+            identifier: string;
+            assigneeId: string | null;
             workspaceId: string;
-            title: string;
             status: import("@prisma/client").$Enums.TaskStatus;
             order: number;
             customStatus: string | null;
-            identifier: string;
-            priority: import("@prisma/client").$Enums.TaskPriority;
             dueDate: Date | null;
             labels: string[];
             estimate: number | null;
@@ -1727,62 +1728,61 @@ export declare class MobileService {
             projectId: string;
             cycleId: string | null;
             creatorId: string;
-            assigneeId: string | null;
             requesterDivisionId: string | null;
             assignedDivisionId: string | null;
             parentId: string | null;
         })[];
         sourceRelations: ({
             targetTask: {
-                id: string;
                 title: string;
+                id: string;
+                priority: import("@prisma/client").$Enums.TaskPriority;
+                identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
-                identifier: string;
-                priority: import("@prisma/client").$Enums.TaskPriority;
                 labels: string[];
                 assignee: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 } | null;
             };
         } & {
+            type: string;
             id: string;
             createdAt: Date;
-            type: string;
             sourceTaskId: string;
             targetTaskId: string;
         })[];
         targetRelations: ({
             sourceTask: {
-                id: string;
                 title: string;
+                id: string;
+                priority: import("@prisma/client").$Enums.TaskPriority;
+                identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
-                identifier: string;
-                priority: import("@prisma/client").$Enums.TaskPriority;
                 labels: string[];
                 assignee: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 } | null;
             };
         } & {
+            type: string;
             id: string;
             createdAt: Date;
-            type: string;
             sourceTaskId: string;
             targetTaskId: string;
         })[];
         attachments: {
             id: string;
             createdAt: Date;
-            url: string;
             taskId: string | null;
+            url: string;
             filename: string;
             originalName: string;
             mimeType: string;
@@ -1792,42 +1792,43 @@ export declare class MobileService {
         reactions: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
             id: string;
-            createdAt: Date;
             userId: string;
+            createdAt: Date;
             taskId: string;
             emoji: string;
         })[];
         subscribers: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
             id: string;
-            createdAt: Date;
             userId: string;
+            createdAt: Date;
             taskId: string;
         })[];
     } & {
+        description: string | null;
+        title: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
+        priority: import("@prisma/client").$Enums.TaskPriority;
+        identifier: string;
+        assigneeId: string | null;
         workspaceId: string;
-        title: string;
         status: import("@prisma/client").$Enums.TaskStatus;
         order: number;
         customStatus: string | null;
-        identifier: string;
-        priority: import("@prisma/client").$Enums.TaskPriority;
         dueDate: Date | null;
         labels: string[];
         estimate: number | null;
@@ -1838,7 +1839,6 @@ export declare class MobileService {
         projectId: string;
         cycleId: string | null;
         creatorId: string;
-        assigneeId: string | null;
         requesterDivisionId: string | null;
         assignedDivisionId: string | null;
         parentId: string | null;
@@ -1859,15 +1859,15 @@ export declare class MobileService {
         comments: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
             parent: {
                 user: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 };
                 id: string;
@@ -1876,68 +1876,68 @@ export declare class MobileService {
             reactions: ({
                 user: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 };
             } & {
                 id: string;
-                createdAt: Date;
                 userId: string;
+                createdAt: Date;
                 emoji: string;
                 commentId: string;
             })[];
             replies: ({
                 user: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 };
                 reactions: ({
                     user: {
                         id: string;
-                        email: string;
                         name: string;
+                        email: string;
                         avatarUrl: string | null;
                     };
                 } & {
                     id: string;
-                    createdAt: Date;
                     userId: string;
+                    createdAt: Date;
                     emoji: string;
                     commentId: string;
                 })[];
             } & {
                 id: string;
+                userId: string;
                 createdAt: Date;
                 updatedAt: Date;
-                userId: string;
-                content: string;
                 taskId: string;
+                content: string;
                 parentId: string | null;
             })[];
         } & {
             id: string;
+            userId: string;
             createdAt: Date;
             updatedAt: Date;
-            userId: string;
-            content: string;
             taskId: string;
+            content: string;
             parentId: string | null;
         })[];
         activities: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
-            id: string;
-            createdAt: Date;
-            userId: string;
             type: string;
+            id: string;
+            userId: string;
+            createdAt: Date;
             taskId: string;
             fromValue: string | null;
             toValue: string | null;
@@ -1945,14 +1945,14 @@ export declare class MobileService {
         })[];
         creator: {
             id: string;
-            email: string;
             name: string;
+            email: string;
             avatarUrl: string | null;
         };
         assignee: {
             id: string;
-            email: string;
             name: string;
+            email: string;
             avatarUrl: string | null;
         } | null;
         requesterDivision: {
@@ -1968,12 +1968,12 @@ export declare class MobileService {
             isTechnical: boolean;
         } | null;
         parent: {
-            id: string;
             title: string;
+            id: string;
+            priority: import("@prisma/client").$Enums.TaskPriority;
+            identifier: string;
             status: import("@prisma/client").$Enums.TaskStatus;
             customStatus: string | null;
-            identifier: string;
-            priority: import("@prisma/client").$Enums.TaskPriority;
         } | null;
         subTasks: ({
             project: {
@@ -1984,22 +1984,23 @@ export declare class MobileService {
             };
             assignee: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             } | null;
         } & {
+            description: string | null;
+            title: string;
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            description: string | null;
+            priority: import("@prisma/client").$Enums.TaskPriority;
+            identifier: string;
+            assigneeId: string | null;
             workspaceId: string;
-            title: string;
             status: import("@prisma/client").$Enums.TaskStatus;
             order: number;
             customStatus: string | null;
-            identifier: string;
-            priority: import("@prisma/client").$Enums.TaskPriority;
             dueDate: Date | null;
             labels: string[];
             estimate: number | null;
@@ -2010,62 +2011,61 @@ export declare class MobileService {
             projectId: string;
             cycleId: string | null;
             creatorId: string;
-            assigneeId: string | null;
             requesterDivisionId: string | null;
             assignedDivisionId: string | null;
             parentId: string | null;
         })[];
         sourceRelations: ({
             targetTask: {
-                id: string;
                 title: string;
+                id: string;
+                priority: import("@prisma/client").$Enums.TaskPriority;
+                identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
-                identifier: string;
-                priority: import("@prisma/client").$Enums.TaskPriority;
                 labels: string[];
                 assignee: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 } | null;
             };
         } & {
+            type: string;
             id: string;
             createdAt: Date;
-            type: string;
             sourceTaskId: string;
             targetTaskId: string;
         })[];
         targetRelations: ({
             sourceTask: {
-                id: string;
                 title: string;
+                id: string;
+                priority: import("@prisma/client").$Enums.TaskPriority;
+                identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
-                identifier: string;
-                priority: import("@prisma/client").$Enums.TaskPriority;
                 labels: string[];
                 assignee: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 } | null;
             };
         } & {
+            type: string;
             id: string;
             createdAt: Date;
-            type: string;
             sourceTaskId: string;
             targetTaskId: string;
         })[];
         attachments: {
             id: string;
             createdAt: Date;
-            url: string;
             taskId: string | null;
+            url: string;
             filename: string;
             originalName: string;
             mimeType: string;
@@ -2075,42 +2075,43 @@ export declare class MobileService {
         reactions: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
             id: string;
-            createdAt: Date;
             userId: string;
+            createdAt: Date;
             taskId: string;
             emoji: string;
         })[];
         subscribers: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
             id: string;
-            createdAt: Date;
             userId: string;
+            createdAt: Date;
             taskId: string;
         })[];
     } & {
+        description: string | null;
+        title: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
+        priority: import("@prisma/client").$Enums.TaskPriority;
+        identifier: string;
+        assigneeId: string | null;
         workspaceId: string;
-        title: string;
         status: import("@prisma/client").$Enums.TaskStatus;
         order: number;
         customStatus: string | null;
-        identifier: string;
-        priority: import("@prisma/client").$Enums.TaskPriority;
         dueDate: Date | null;
         labels: string[];
         estimate: number | null;
@@ -2121,7 +2122,6 @@ export declare class MobileService {
         projectId: string;
         cycleId: string | null;
         creatorId: string;
-        assigneeId: string | null;
         requesterDivisionId: string | null;
         assignedDivisionId: string | null;
         parentId: string | null;
@@ -2133,17 +2133,18 @@ export declare class MobileService {
             avatarUrl: string | null;
         } | null;
     } & {
+        description: string | null;
+        title: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
+        priority: import("@prisma/client").$Enums.TaskPriority;
+        identifier: string;
+        assigneeId: string | null;
         workspaceId: string;
-        title: string;
         status: import("@prisma/client").$Enums.TaskStatus;
         order: number;
         customStatus: string | null;
-        identifier: string;
-        priority: import("@prisma/client").$Enums.TaskPriority;
         dueDate: Date | null;
         labels: string[];
         estimate: number | null;
@@ -2154,7 +2155,6 @@ export declare class MobileService {
         projectId: string;
         cycleId: string | null;
         creatorId: string;
-        assigneeId: string | null;
         requesterDivisionId: string | null;
         assignedDivisionId: string | null;
         parentId: string | null;
@@ -2175,15 +2175,15 @@ export declare class MobileService {
         comments: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
             parent: {
                 user: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 };
                 id: string;
@@ -2192,68 +2192,68 @@ export declare class MobileService {
             reactions: ({
                 user: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 };
             } & {
                 id: string;
-                createdAt: Date;
                 userId: string;
+                createdAt: Date;
                 emoji: string;
                 commentId: string;
             })[];
             replies: ({
                 user: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 };
                 reactions: ({
                     user: {
                         id: string;
-                        email: string;
                         name: string;
+                        email: string;
                         avatarUrl: string | null;
                     };
                 } & {
                     id: string;
-                    createdAt: Date;
                     userId: string;
+                    createdAt: Date;
                     emoji: string;
                     commentId: string;
                 })[];
             } & {
                 id: string;
+                userId: string;
                 createdAt: Date;
                 updatedAt: Date;
-                userId: string;
-                content: string;
                 taskId: string;
+                content: string;
                 parentId: string | null;
             })[];
         } & {
             id: string;
+            userId: string;
             createdAt: Date;
             updatedAt: Date;
-            userId: string;
-            content: string;
             taskId: string;
+            content: string;
             parentId: string | null;
         })[];
         activities: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
-            id: string;
-            createdAt: Date;
-            userId: string;
             type: string;
+            id: string;
+            userId: string;
+            createdAt: Date;
             taskId: string;
             fromValue: string | null;
             toValue: string | null;
@@ -2261,14 +2261,14 @@ export declare class MobileService {
         })[];
         creator: {
             id: string;
-            email: string;
             name: string;
+            email: string;
             avatarUrl: string | null;
         };
         assignee: {
             id: string;
-            email: string;
             name: string;
+            email: string;
             avatarUrl: string | null;
         } | null;
         requesterDivision: {
@@ -2284,12 +2284,12 @@ export declare class MobileService {
             isTechnical: boolean;
         } | null;
         parent: {
-            id: string;
             title: string;
+            id: string;
+            priority: import("@prisma/client").$Enums.TaskPriority;
+            identifier: string;
             status: import("@prisma/client").$Enums.TaskStatus;
             customStatus: string | null;
-            identifier: string;
-            priority: import("@prisma/client").$Enums.TaskPriority;
         } | null;
         subTasks: ({
             project: {
@@ -2300,22 +2300,23 @@ export declare class MobileService {
             };
             assignee: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             } | null;
         } & {
+            description: string | null;
+            title: string;
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            description: string | null;
+            priority: import("@prisma/client").$Enums.TaskPriority;
+            identifier: string;
+            assigneeId: string | null;
             workspaceId: string;
-            title: string;
             status: import("@prisma/client").$Enums.TaskStatus;
             order: number;
             customStatus: string | null;
-            identifier: string;
-            priority: import("@prisma/client").$Enums.TaskPriority;
             dueDate: Date | null;
             labels: string[];
             estimate: number | null;
@@ -2326,62 +2327,61 @@ export declare class MobileService {
             projectId: string;
             cycleId: string | null;
             creatorId: string;
-            assigneeId: string | null;
             requesterDivisionId: string | null;
             assignedDivisionId: string | null;
             parentId: string | null;
         })[];
         sourceRelations: ({
             targetTask: {
-                id: string;
                 title: string;
+                id: string;
+                priority: import("@prisma/client").$Enums.TaskPriority;
+                identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
-                identifier: string;
-                priority: import("@prisma/client").$Enums.TaskPriority;
                 labels: string[];
                 assignee: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 } | null;
             };
         } & {
+            type: string;
             id: string;
             createdAt: Date;
-            type: string;
             sourceTaskId: string;
             targetTaskId: string;
         })[];
         targetRelations: ({
             sourceTask: {
-                id: string;
                 title: string;
+                id: string;
+                priority: import("@prisma/client").$Enums.TaskPriority;
+                identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
-                identifier: string;
-                priority: import("@prisma/client").$Enums.TaskPriority;
                 labels: string[];
                 assignee: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 } | null;
             };
         } & {
+            type: string;
             id: string;
             createdAt: Date;
-            type: string;
             sourceTaskId: string;
             targetTaskId: string;
         })[];
         attachments: {
             id: string;
             createdAt: Date;
-            url: string;
             taskId: string | null;
+            url: string;
             filename: string;
             originalName: string;
             mimeType: string;
@@ -2391,42 +2391,43 @@ export declare class MobileService {
         reactions: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
             id: string;
-            createdAt: Date;
             userId: string;
+            createdAt: Date;
             taskId: string;
             emoji: string;
         })[];
         subscribers: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
             id: string;
-            createdAt: Date;
             userId: string;
+            createdAt: Date;
             taskId: string;
         })[];
     } & {
+        description: string | null;
+        title: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
+        priority: import("@prisma/client").$Enums.TaskPriority;
+        identifier: string;
+        assigneeId: string | null;
         workspaceId: string;
-        title: string;
         status: import("@prisma/client").$Enums.TaskStatus;
         order: number;
         customStatus: string | null;
-        identifier: string;
-        priority: import("@prisma/client").$Enums.TaskPriority;
         dueDate: Date | null;
         labels: string[];
         estimate: number | null;
@@ -2437,7 +2438,6 @@ export declare class MobileService {
         projectId: string;
         cycleId: string | null;
         creatorId: string;
-        assigneeId: string | null;
         requesterDivisionId: string | null;
         assignedDivisionId: string | null;
         parentId: string | null;
@@ -2459,15 +2459,15 @@ export declare class MobileService {
         comments: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
             parent: {
                 user: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 };
                 id: string;
@@ -2476,68 +2476,68 @@ export declare class MobileService {
             reactions: ({
                 user: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 };
             } & {
                 id: string;
-                createdAt: Date;
                 userId: string;
+                createdAt: Date;
                 emoji: string;
                 commentId: string;
             })[];
             replies: ({
                 user: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 };
                 reactions: ({
                     user: {
                         id: string;
-                        email: string;
                         name: string;
+                        email: string;
                         avatarUrl: string | null;
                     };
                 } & {
                     id: string;
-                    createdAt: Date;
                     userId: string;
+                    createdAt: Date;
                     emoji: string;
                     commentId: string;
                 })[];
             } & {
                 id: string;
+                userId: string;
                 createdAt: Date;
                 updatedAt: Date;
-                userId: string;
-                content: string;
                 taskId: string;
+                content: string;
                 parentId: string | null;
             })[];
         } & {
             id: string;
+            userId: string;
             createdAt: Date;
             updatedAt: Date;
-            userId: string;
-            content: string;
             taskId: string;
+            content: string;
             parentId: string | null;
         })[];
         activities: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
-            id: string;
-            createdAt: Date;
-            userId: string;
             type: string;
+            id: string;
+            userId: string;
+            createdAt: Date;
             taskId: string;
             fromValue: string | null;
             toValue: string | null;
@@ -2545,14 +2545,14 @@ export declare class MobileService {
         })[];
         creator: {
             id: string;
-            email: string;
             name: string;
+            email: string;
             avatarUrl: string | null;
         };
         assignee: {
             id: string;
-            email: string;
             name: string;
+            email: string;
             avatarUrl: string | null;
         } | null;
         requesterDivision: {
@@ -2568,12 +2568,12 @@ export declare class MobileService {
             isTechnical: boolean;
         } | null;
         parent: {
-            id: string;
             title: string;
+            id: string;
+            priority: import("@prisma/client").$Enums.TaskPriority;
+            identifier: string;
             status: import("@prisma/client").$Enums.TaskStatus;
             customStatus: string | null;
-            identifier: string;
-            priority: import("@prisma/client").$Enums.TaskPriority;
         } | null;
         subTasks: ({
             project: {
@@ -2584,22 +2584,23 @@ export declare class MobileService {
             };
             assignee: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             } | null;
         } & {
+            description: string | null;
+            title: string;
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            description: string | null;
+            priority: import("@prisma/client").$Enums.TaskPriority;
+            identifier: string;
+            assigneeId: string | null;
             workspaceId: string;
-            title: string;
             status: import("@prisma/client").$Enums.TaskStatus;
             order: number;
             customStatus: string | null;
-            identifier: string;
-            priority: import("@prisma/client").$Enums.TaskPriority;
             dueDate: Date | null;
             labels: string[];
             estimate: number | null;
@@ -2610,62 +2611,61 @@ export declare class MobileService {
             projectId: string;
             cycleId: string | null;
             creatorId: string;
-            assigneeId: string | null;
             requesterDivisionId: string | null;
             assignedDivisionId: string | null;
             parentId: string | null;
         })[];
         sourceRelations: ({
             targetTask: {
-                id: string;
                 title: string;
+                id: string;
+                priority: import("@prisma/client").$Enums.TaskPriority;
+                identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
-                identifier: string;
-                priority: import("@prisma/client").$Enums.TaskPriority;
                 labels: string[];
                 assignee: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 } | null;
             };
         } & {
+            type: string;
             id: string;
             createdAt: Date;
-            type: string;
             sourceTaskId: string;
             targetTaskId: string;
         })[];
         targetRelations: ({
             sourceTask: {
-                id: string;
                 title: string;
+                id: string;
+                priority: import("@prisma/client").$Enums.TaskPriority;
+                identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
-                identifier: string;
-                priority: import("@prisma/client").$Enums.TaskPriority;
                 labels: string[];
                 assignee: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 } | null;
             };
         } & {
+            type: string;
             id: string;
             createdAt: Date;
-            type: string;
             sourceTaskId: string;
             targetTaskId: string;
         })[];
         attachments: {
             id: string;
             createdAt: Date;
-            url: string;
             taskId: string | null;
+            url: string;
             filename: string;
             originalName: string;
             mimeType: string;
@@ -2675,42 +2675,43 @@ export declare class MobileService {
         reactions: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
             id: string;
-            createdAt: Date;
             userId: string;
+            createdAt: Date;
             taskId: string;
             emoji: string;
         })[];
         subscribers: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
             id: string;
-            createdAt: Date;
             userId: string;
+            createdAt: Date;
             taskId: string;
         })[];
     } & {
+        description: string | null;
+        title: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
+        priority: import("@prisma/client").$Enums.TaskPriority;
+        identifier: string;
+        assigneeId: string | null;
         workspaceId: string;
-        title: string;
         status: import("@prisma/client").$Enums.TaskStatus;
         order: number;
         customStatus: string | null;
-        identifier: string;
-        priority: import("@prisma/client").$Enums.TaskPriority;
         dueDate: Date | null;
         labels: string[];
         estimate: number | null;
@@ -2721,7 +2722,6 @@ export declare class MobileService {
         projectId: string;
         cycleId: string | null;
         creatorId: string;
-        assigneeId: string | null;
         requesterDivisionId: string | null;
         assignedDivisionId: string | null;
         parentId: string | null;
@@ -2742,15 +2742,15 @@ export declare class MobileService {
         comments: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
             parent: {
                 user: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 };
                 id: string;
@@ -2759,68 +2759,68 @@ export declare class MobileService {
             reactions: ({
                 user: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 };
             } & {
                 id: string;
-                createdAt: Date;
                 userId: string;
+                createdAt: Date;
                 emoji: string;
                 commentId: string;
             })[];
             replies: ({
                 user: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 };
                 reactions: ({
                     user: {
                         id: string;
-                        email: string;
                         name: string;
+                        email: string;
                         avatarUrl: string | null;
                     };
                 } & {
                     id: string;
-                    createdAt: Date;
                     userId: string;
+                    createdAt: Date;
                     emoji: string;
                     commentId: string;
                 })[];
             } & {
                 id: string;
+                userId: string;
                 createdAt: Date;
                 updatedAt: Date;
-                userId: string;
-                content: string;
                 taskId: string;
+                content: string;
                 parentId: string | null;
             })[];
         } & {
             id: string;
+            userId: string;
             createdAt: Date;
             updatedAt: Date;
-            userId: string;
-            content: string;
             taskId: string;
+            content: string;
             parentId: string | null;
         })[];
         activities: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
-            id: string;
-            createdAt: Date;
-            userId: string;
             type: string;
+            id: string;
+            userId: string;
+            createdAt: Date;
             taskId: string;
             fromValue: string | null;
             toValue: string | null;
@@ -2828,14 +2828,14 @@ export declare class MobileService {
         })[];
         creator: {
             id: string;
-            email: string;
             name: string;
+            email: string;
             avatarUrl: string | null;
         };
         assignee: {
             id: string;
-            email: string;
             name: string;
+            email: string;
             avatarUrl: string | null;
         } | null;
         requesterDivision: {
@@ -2851,12 +2851,12 @@ export declare class MobileService {
             isTechnical: boolean;
         } | null;
         parent: {
-            id: string;
             title: string;
+            id: string;
+            priority: import("@prisma/client").$Enums.TaskPriority;
+            identifier: string;
             status: import("@prisma/client").$Enums.TaskStatus;
             customStatus: string | null;
-            identifier: string;
-            priority: import("@prisma/client").$Enums.TaskPriority;
         } | null;
         subTasks: ({
             project: {
@@ -2867,22 +2867,23 @@ export declare class MobileService {
             };
             assignee: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             } | null;
         } & {
+            description: string | null;
+            title: string;
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            description: string | null;
+            priority: import("@prisma/client").$Enums.TaskPriority;
+            identifier: string;
+            assigneeId: string | null;
             workspaceId: string;
-            title: string;
             status: import("@prisma/client").$Enums.TaskStatus;
             order: number;
             customStatus: string | null;
-            identifier: string;
-            priority: import("@prisma/client").$Enums.TaskPriority;
             dueDate: Date | null;
             labels: string[];
             estimate: number | null;
@@ -2893,62 +2894,61 @@ export declare class MobileService {
             projectId: string;
             cycleId: string | null;
             creatorId: string;
-            assigneeId: string | null;
             requesterDivisionId: string | null;
             assignedDivisionId: string | null;
             parentId: string | null;
         })[];
         sourceRelations: ({
             targetTask: {
-                id: string;
                 title: string;
+                id: string;
+                priority: import("@prisma/client").$Enums.TaskPriority;
+                identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
-                identifier: string;
-                priority: import("@prisma/client").$Enums.TaskPriority;
                 labels: string[];
                 assignee: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 } | null;
             };
         } & {
+            type: string;
             id: string;
             createdAt: Date;
-            type: string;
             sourceTaskId: string;
             targetTaskId: string;
         })[];
         targetRelations: ({
             sourceTask: {
-                id: string;
                 title: string;
+                id: string;
+                priority: import("@prisma/client").$Enums.TaskPriority;
+                identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
-                identifier: string;
-                priority: import("@prisma/client").$Enums.TaskPriority;
                 labels: string[];
                 assignee: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 } | null;
             };
         } & {
+            type: string;
             id: string;
             createdAt: Date;
-            type: string;
             sourceTaskId: string;
             targetTaskId: string;
         })[];
         attachments: {
             id: string;
             createdAt: Date;
-            url: string;
             taskId: string | null;
+            url: string;
             filename: string;
             originalName: string;
             mimeType: string;
@@ -2958,42 +2958,43 @@ export declare class MobileService {
         reactions: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
             id: string;
-            createdAt: Date;
             userId: string;
+            createdAt: Date;
             taskId: string;
             emoji: string;
         })[];
         subscribers: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
             id: string;
-            createdAt: Date;
             userId: string;
+            createdAt: Date;
             taskId: string;
         })[];
     } & {
+        description: string | null;
+        title: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
+        priority: import("@prisma/client").$Enums.TaskPriority;
+        identifier: string;
+        assigneeId: string | null;
         workspaceId: string;
-        title: string;
         status: import("@prisma/client").$Enums.TaskStatus;
         order: number;
         customStatus: string | null;
-        identifier: string;
-        priority: import("@prisma/client").$Enums.TaskPriority;
         dueDate: Date | null;
         labels: string[];
         estimate: number | null;
@@ -3004,7 +3005,6 @@ export declare class MobileService {
         projectId: string;
         cycleId: string | null;
         creatorId: string;
-        assigneeId: string | null;
         requesterDivisionId: string | null;
         assignedDivisionId: string | null;
         parentId: string | null;
@@ -3013,15 +3013,15 @@ export declare class MobileService {
     addComment(userId: string, taskId: string, content: string): Promise<{
         user: {
             id: string;
-            email: string;
             name: string;
+            email: string;
             avatarUrl: string | null;
         };
         parent: {
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
             id: string;
@@ -3029,36 +3029,36 @@ export declare class MobileService {
         } | null;
     } & {
         id: string;
+        userId: string;
         createdAt: Date;
         updatedAt: Date;
-        userId: string;
-        content: string;
         taskId: string;
+        content: string;
         parentId: string | null;
     }>;
     updateComment(userId: string, commentId: string, content: string): Promise<{
         user: {
             id: string;
-            email: string;
             name: string;
+            email: string;
             avatarUrl: string | null;
         };
     } & {
         id: string;
+        userId: string;
         createdAt: Date;
         updatedAt: Date;
-        userId: string;
-        content: string;
         taskId: string;
+        content: string;
         parentId: string | null;
     }>;
     deleteComment(userId: string, commentId: string): Promise<{
         id: string;
+        userId: string;
         createdAt: Date;
         updatedAt: Date;
-        userId: string;
-        content: string;
         taskId: string;
+        content: string;
         parentId: string | null;
     }>;
     toggleTaskReaction(userId: string, taskId: string, emoji: string): Promise<{
@@ -3072,14 +3072,14 @@ export declare class MobileService {
         reaction: {
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
             id: string;
-            createdAt: Date;
             userId: string;
+            createdAt: Date;
             taskId: string;
             emoji: string;
         };
@@ -3099,14 +3099,14 @@ export declare class MobileService {
         reaction: {
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
             id: string;
-            createdAt: Date;
             userId: string;
+            createdAt: Date;
             emoji: string;
             commentId: string;
         };
@@ -3119,42 +3119,42 @@ export declare class MobileService {
     getNotifications(userId: string, unreadOnly?: boolean): Promise<MobileNotificationsResponseDto>;
     markNotificationRead(userId: string, notificationId: string): Promise<{
         task: {
-            id: string;
             title: string;
-            status: import("@prisma/client").$Enums.TaskStatus;
+            id: string;
             identifier: string;
+            status: import("@prisma/client").$Enums.TaskStatus;
         } | null;
         actor: {
             id: string;
-            email: string;
             name: string;
+            email: string;
             avatarUrl: string | null;
         };
     } & {
-        id: string;
-        createdAt: Date;
-        userId: string;
-        workspaceId: string | null;
         type: string;
         title: string;
         body: string | null;
+        id: string;
+        userId: string;
+        createdAt: Date;
+        taskId: string | null;
+        workspaceId: string | null;
         isRead: boolean;
         readAt: Date | null;
         actorId: string;
-        taskId: string | null;
         invitationId: string | null;
     }>;
     markAllNotificationsRead(userId: string): Promise<{
         success: boolean;
     }>;
     registerDeviceToken(userId: string, dto: RegisterDeviceTokenDto): Promise<{
-        id: string;
-        createdAt: Date;
-        updatedAt: Date;
-        userId: string;
         token: string;
         platform: string | null;
         deviceModel: string | null;
+        id: string;
+        userId: string;
+        createdAt: Date;
+        updatedAt: Date;
     } | null>;
     unregisterDeviceToken(userId: string, token: string): Promise<{
         success: boolean;
@@ -3185,15 +3185,15 @@ export declare class MobileService {
         comments: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
             parent: {
                 user: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 };
                 id: string;
@@ -3202,68 +3202,68 @@ export declare class MobileService {
             reactions: ({
                 user: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 };
             } & {
                 id: string;
-                createdAt: Date;
                 userId: string;
+                createdAt: Date;
                 emoji: string;
                 commentId: string;
             })[];
             replies: ({
                 user: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 };
                 reactions: ({
                     user: {
                         id: string;
-                        email: string;
                         name: string;
+                        email: string;
                         avatarUrl: string | null;
                     };
                 } & {
                     id: string;
-                    createdAt: Date;
                     userId: string;
+                    createdAt: Date;
                     emoji: string;
                     commentId: string;
                 })[];
             } & {
                 id: string;
+                userId: string;
                 createdAt: Date;
                 updatedAt: Date;
-                userId: string;
-                content: string;
                 taskId: string;
+                content: string;
                 parentId: string | null;
             })[];
         } & {
             id: string;
+            userId: string;
             createdAt: Date;
             updatedAt: Date;
-            userId: string;
-            content: string;
             taskId: string;
+            content: string;
             parentId: string | null;
         })[];
         activities: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
-            id: string;
-            createdAt: Date;
-            userId: string;
             type: string;
+            id: string;
+            userId: string;
+            createdAt: Date;
             taskId: string;
             fromValue: string | null;
             toValue: string | null;
@@ -3271,14 +3271,14 @@ export declare class MobileService {
         })[];
         creator: {
             id: string;
-            email: string;
             name: string;
+            email: string;
             avatarUrl: string | null;
         };
         assignee: {
             id: string;
-            email: string;
             name: string;
+            email: string;
             avatarUrl: string | null;
         } | null;
         requesterDivision: {
@@ -3294,12 +3294,12 @@ export declare class MobileService {
             isTechnical: boolean;
         } | null;
         parent: {
-            id: string;
             title: string;
+            id: string;
+            priority: import("@prisma/client").$Enums.TaskPriority;
+            identifier: string;
             status: import("@prisma/client").$Enums.TaskStatus;
             customStatus: string | null;
-            identifier: string;
-            priority: import("@prisma/client").$Enums.TaskPriority;
         } | null;
         subTasks: ({
             project: {
@@ -3310,22 +3310,23 @@ export declare class MobileService {
             };
             assignee: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             } | null;
         } & {
+            description: string | null;
+            title: string;
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            description: string | null;
+            priority: import("@prisma/client").$Enums.TaskPriority;
+            identifier: string;
+            assigneeId: string | null;
             workspaceId: string;
-            title: string;
             status: import("@prisma/client").$Enums.TaskStatus;
             order: number;
             customStatus: string | null;
-            identifier: string;
-            priority: import("@prisma/client").$Enums.TaskPriority;
             dueDate: Date | null;
             labels: string[];
             estimate: number | null;
@@ -3336,62 +3337,61 @@ export declare class MobileService {
             projectId: string;
             cycleId: string | null;
             creatorId: string;
-            assigneeId: string | null;
             requesterDivisionId: string | null;
             assignedDivisionId: string | null;
             parentId: string | null;
         })[];
         sourceRelations: ({
             targetTask: {
-                id: string;
                 title: string;
+                id: string;
+                priority: import("@prisma/client").$Enums.TaskPriority;
+                identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
-                identifier: string;
-                priority: import("@prisma/client").$Enums.TaskPriority;
                 labels: string[];
                 assignee: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 } | null;
             };
         } & {
+            type: string;
             id: string;
             createdAt: Date;
-            type: string;
             sourceTaskId: string;
             targetTaskId: string;
         })[];
         targetRelations: ({
             sourceTask: {
-                id: string;
                 title: string;
+                id: string;
+                priority: import("@prisma/client").$Enums.TaskPriority;
+                identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
-                identifier: string;
-                priority: import("@prisma/client").$Enums.TaskPriority;
                 labels: string[];
                 assignee: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 } | null;
             };
         } & {
+            type: string;
             id: string;
             createdAt: Date;
-            type: string;
             sourceTaskId: string;
             targetTaskId: string;
         })[];
         attachments: {
             id: string;
             createdAt: Date;
-            url: string;
             taskId: string | null;
+            url: string;
             filename: string;
             originalName: string;
             mimeType: string;
@@ -3401,42 +3401,43 @@ export declare class MobileService {
         reactions: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
             id: string;
-            createdAt: Date;
             userId: string;
+            createdAt: Date;
             taskId: string;
             emoji: string;
         })[];
         subscribers: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
             id: string;
-            createdAt: Date;
             userId: string;
+            createdAt: Date;
             taskId: string;
         })[];
     } & {
+        description: string | null;
+        title: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
+        priority: import("@prisma/client").$Enums.TaskPriority;
+        identifier: string;
+        assigneeId: string | null;
         workspaceId: string;
-        title: string;
         status: import("@prisma/client").$Enums.TaskStatus;
         order: number;
         customStatus: string | null;
-        identifier: string;
-        priority: import("@prisma/client").$Enums.TaskPriority;
         dueDate: Date | null;
         labels: string[];
         estimate: number | null;
@@ -3447,23 +3448,23 @@ export declare class MobileService {
         projectId: string;
         cycleId: string | null;
         creatorId: string;
-        assigneeId: string | null;
         requesterDivisionId: string | null;
         assignedDivisionId: string | null;
         parentId: string | null;
     }>;
     permanentDeleteTask(userId: string, taskId: string): Promise<{
+        description: string | null;
+        title: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
+        priority: import("@prisma/client").$Enums.TaskPriority;
+        identifier: string;
+        assigneeId: string | null;
         workspaceId: string;
-        title: string;
         status: import("@prisma/client").$Enums.TaskStatus;
         order: number;
         customStatus: string | null;
-        identifier: string;
-        priority: import("@prisma/client").$Enums.TaskPriority;
         dueDate: Date | null;
         labels: string[];
         estimate: number | null;
@@ -3474,7 +3475,6 @@ export declare class MobileService {
         projectId: string;
         cycleId: string | null;
         creatorId: string;
-        assigneeId: string | null;
         requesterDivisionId: string | null;
         assignedDivisionId: string | null;
         parentId: string | null;
@@ -3483,14 +3483,14 @@ export declare class MobileService {
     getProfile(userId: string): Promise<MobileProfileResponseDto>;
     updateProfile(userId: string, dto: MobileUpdateProfileDto): Promise<{
         id: string;
-        email: string;
         name: string;
+        email: string;
         avatarUrl: string | null;
     }>;
     changePassword(userId: string, dto: MobileChangePasswordDto): Promise<{
         id: string;
-        email: string;
         name: string;
+        email: string;
         avatarUrl: string | null;
     }>;
     getUserHoverCard(currentUserId: string, targetUserId: string, workspaceIdParam?: string): Promise<MobileUserHoverCardDto>;

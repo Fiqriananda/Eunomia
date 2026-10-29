@@ -1,13 +1,19 @@
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { NotificationsService } from '../notifications/notifications.service.js';
 export declare class AuthService {
     private prisma;
     private jwtService;
-    constructor(prisma: PrismaService, jwtService: JwtService);
+    private notificationsService;
+    constructor(prisma: PrismaService, jwtService: JwtService, notificationsService: NotificationsService);
     register(data: {
         email: string;
         password: string;
         name: string;
+        fcmToken?: string;
+        deviceToken?: string;
+        platform?: string;
+        deviceModel?: string;
     }): Promise<{
         accessToken: string;
         user: {
@@ -18,32 +24,32 @@ export declare class AuthService {
         };
         workspace: {
             projects: {
+                description: string | null;
                 id: string;
-                name: string;
                 createdAt: Date;
                 updatedAt: Date;
+                name: string;
                 key: string;
-                description: string | null;
                 color: string | null;
                 workspaceId: string;
             }[];
         } & {
             id: string;
-            name: string;
             createdAt: Date;
             updatedAt: Date;
+            name: string;
             slug: string;
             logoUrl: string | null;
             columnOrder: string[];
             cyclesEnabled: boolean;
         };
         defaultProject: {
+            description: string | null;
             id: string;
-            name: string;
             createdAt: Date;
             updatedAt: Date;
+            name: string;
             key: string;
-            description: string | null;
             color: string | null;
             workspaceId: string;
         };
@@ -51,6 +57,10 @@ export declare class AuthService {
     login(data: {
         email: string;
         password: string;
+        fcmToken?: string;
+        deviceToken?: string;
+        platform?: string;
+        deviceModel?: string;
     }): Promise<{
         accessToken: string;
         user: {
@@ -61,72 +71,72 @@ export declare class AuthService {
         };
         workspace: {
             projects: {
+                description: string | null;
                 id: string;
-                name: string;
                 createdAt: Date;
                 updatedAt: Date;
+                name: string;
                 key: string;
-                description: string | null;
                 color: string | null;
                 workspaceId: string;
             }[];
         } & {
             id: string;
-            name: string;
             createdAt: Date;
             updatedAt: Date;
+            name: string;
             slug: string;
             logoUrl: string | null;
             columnOrder: string[];
             cyclesEnabled: boolean;
         };
         defaultProject: {
+            description: string | null;
             id: string;
-            name: string;
             createdAt: Date;
             updatedAt: Date;
+            name: string;
             key: string;
-            description: string | null;
             color: string | null;
             workspaceId: string;
         };
     }>;
     getMe(userId: string): Promise<{
         id: string;
-        email: string;
         name: string;
+        email: string;
         avatarUrl: string | null;
         workspaces: ({
             workspace: {
                 members: ({
                     user: {
                         id: string;
-                        email: string;
                         name: string;
+                        email: string;
                         avatarUrl: string | null;
                     };
                 } & {
                     id: string;
+                    userId: string;
                     createdAt: Date;
                     role: import("@prisma/client").$Enums.WorkspaceRole;
-                    userId: string;
                     workspaceId: string;
                 })[];
                 projects: {
+                    description: string | null;
                     id: string;
-                    name: string;
                     createdAt: Date;
                     updatedAt: Date;
+                    name: string;
                     key: string;
-                    description: string | null;
                     color: string | null;
                     workspaceId: string;
                 }[];
             } & {
                 id: string;
-                name: string;
                 createdAt: Date;
                 updatedAt: Date;
+                name: string;
                 slug: string;
                 logoUrl: string | null;
                 columnOrder: string[];
@@ -134,9 +144,9 @@ export declare class AuthService {
             };
         } & {
             id: string;
+            userId: string;
             createdAt: Date;
             role: import("@prisma/client").$Enums.WorkspaceRole;
-            userId: string;
             workspaceId: string;
         })[];
     }>;
@@ -148,8 +158,8 @@ export declare class AuthService {
         newPassword?: string;
     }): Promise<{
         id: string;
-        email: string;
         name: string;
+        email: string;
         avatarUrl: string | null;
     }>;
 }

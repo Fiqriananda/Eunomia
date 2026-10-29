@@ -13,6 +13,10 @@ export class RegisterDto {
     email;
     password;
     name;
+    fcmToken;
+    deviceToken;
+    platform;
+    deviceModel;
 }
 __decorate([
     ApiProperty({ example: 'alex@company.com', description: 'User email address' }),
@@ -31,9 +35,37 @@ __decorate([
     IsString(),
     __metadata("design:type", String)
 ], RegisterDto.prototype, "name", void 0);
+__decorate([
+    ApiPropertyOptional({ example: 'dK5a...token', description: 'FCM push notification token' }),
+    IsOptional(),
+    IsString(),
+    __metadata("design:type", String)
+], RegisterDto.prototype, "fcmToken", void 0);
+__decorate([
+    ApiPropertyOptional({ example: 'dK5a...token', description: 'Alias for fcmToken' }),
+    IsOptional(),
+    IsString(),
+    __metadata("design:type", String)
+], RegisterDto.prototype, "deviceToken", void 0);
+__decorate([
+    ApiPropertyOptional({ example: 'android', enum: ['android', 'ios', 'web'] }),
+    IsOptional(),
+    IsString(),
+    __metadata("design:type", String)
+], RegisterDto.prototype, "platform", void 0);
+__decorate([
+    ApiPropertyOptional({ example: 'Pixel 8' }),
+    IsOptional(),
+    IsString(),
+    __metadata("design:type", String)
+], RegisterDto.prototype, "deviceModel", void 0);
 export class LoginDto {
     email;
     password;
+    fcmToken;
+    deviceToken;
+    platform;
+    deviceModel;
 }
 __decorate([
     ApiProperty({ example: 'alex@company.com', description: 'User email address' }),
@@ -46,6 +78,30 @@ __decorate([
     IsString(),
     __metadata("design:type", String)
 ], LoginDto.prototype, "password", void 0);
+__decorate([
+    ApiPropertyOptional({ example: 'dK5a...token', description: 'FCM push notification token' }),
+    IsOptional(),
+    IsString(),
+    __metadata("design:type", String)
+], LoginDto.prototype, "fcmToken", void 0);
+__decorate([
+    ApiPropertyOptional({ example: 'dK5a...token', description: 'Alias for fcmToken' }),
+    IsOptional(),
+    IsString(),
+    __metadata("design:type", String)
+], LoginDto.prototype, "deviceToken", void 0);
+__decorate([
+    ApiPropertyOptional({ example: 'android', enum: ['android', 'ios', 'web'] }),
+    IsOptional(),
+    IsString(),
+    __metadata("design:type", String)
+], LoginDto.prototype, "platform", void 0);
+__decorate([
+    ApiPropertyOptional({ example: 'Pixel 8' }),
+    IsOptional(),
+    IsString(),
+    __metadata("design:type", String)
+], LoginDto.prototype, "deviceModel", void 0);
 export class UpdateProfileDto {
     name;
     avatarUrl;

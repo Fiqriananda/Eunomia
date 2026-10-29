@@ -11,12 +11,15 @@ import { Injectable, ConflictException, UnauthorizedException, NotFoundException
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { NotificationsService } from '../notifications/notifications.service.js';
 let AuthService = class AuthService {
     prisma;
     jwtService;
-    constructor(prisma, jwtService) {
+    notificationsService;
+    constructor(prisma, jwtService, notificationsService) {
         this.prisma = prisma;
         this.jwtService = jwtService;
+        this.notificationsService = notificationsService;
     }
     async register(data) {
         const existing = await this.prisma.user.findUnique({
@@ -59,6 +62,16 @@ let AuthService = class AuthService {
             },
         });
         const token = this.jwtService.sign({ sub: user.id, email: user.email });
+        const pushToken = data.fcmToken || data.deviceToken;
+        if (pushToken) {
+            await this.notificationsService
+                .registerDeviceToken(user.id, {
+                token: pushToken,
+                platform: data.platform || 'android',
+                deviceModel: data.deviceModel,
+            })
+                .catch((err) => console.error('Failed to register device token on register:', err));
+        }
         return {
             accessToken: token,
             user: {
@@ -94,6 +107,16 @@ let AuthService = class AuthService {
             throw new UnauthorizedException('Invalid email or password');
         }
         const token = this.jwtService.sign({ sub: user.id, email: user.email });
+        const pushToken = data.fcmToken || data.deviceToken;
+        if (pushToken) {
+            await this.notificationsService
+                .registerDeviceToken(user.id, {
+                token: pushToken,
+                platform: data.platform || 'android',
+                deviceModel: data.deviceModel,
+            })
+                .catch((err) => console.error('Failed to register device token on login:', err));
+        }
         const firstWorkspace = user.workspaces[0]?.workspace;
         return {
             accessToken: token,
@@ -195,7 +218,8 @@ let AuthService = class AuthService {
 AuthService = __decorate([
     Injectable(),
     __metadata("design:paramtypes", [PrismaService,
-        JwtService])
+        JwtService,
+        NotificationsService])
 ], AuthService);
 export { AuthService };
 //# sourceMappingURL=auth.service.js.map

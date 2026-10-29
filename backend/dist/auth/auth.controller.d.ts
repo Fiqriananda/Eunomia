@@ -13,32 +13,32 @@ export declare class AuthController {
         };
         workspace: {
             projects: {
+                description: string | null;
                 id: string;
-                name: string;
                 createdAt: Date;
                 updatedAt: Date;
+                name: string;
                 key: string;
-                description: string | null;
                 color: string | null;
                 workspaceId: string;
             }[];
         } & {
             id: string;
-            name: string;
             createdAt: Date;
             updatedAt: Date;
+            name: string;
             slug: string;
             logoUrl: string | null;
             columnOrder: string[];
             cyclesEnabled: boolean;
         };
         defaultProject: {
+            description: string | null;
             id: string;
-            name: string;
             createdAt: Date;
             updatedAt: Date;
+            name: string;
             key: string;
-            description: string | null;
             color: string | null;
             workspaceId: string;
         };
@@ -53,72 +53,72 @@ export declare class AuthController {
         };
         workspace: {
             projects: {
+                description: string | null;
                 id: string;
-                name: string;
                 createdAt: Date;
                 updatedAt: Date;
+                name: string;
                 key: string;
-                description: string | null;
                 color: string | null;
                 workspaceId: string;
             }[];
         } & {
             id: string;
-            name: string;
             createdAt: Date;
             updatedAt: Date;
+            name: string;
             slug: string;
             logoUrl: string | null;
             columnOrder: string[];
             cyclesEnabled: boolean;
         };
         defaultProject: {
+            description: string | null;
             id: string;
-            name: string;
             createdAt: Date;
             updatedAt: Date;
+            name: string;
             key: string;
-            description: string | null;
             color: string | null;
             workspaceId: string;
         };
     }>;
     getMe(userId: string): Promise<{
         id: string;
-        email: string;
         name: string;
+        email: string;
         avatarUrl: string | null;
         workspaces: ({
             workspace: {
                 members: ({
                     user: {
                         id: string;
-                        email: string;
                         name: string;
+                        email: string;
                         avatarUrl: string | null;
                     };
                 } & {
                     id: string;
+                    userId: string;
                     createdAt: Date;
                     role: import("@prisma/client").$Enums.WorkspaceRole;
-                    userId: string;
                     workspaceId: string;
                 })[];
                 projects: {
+                    description: string | null;
                     id: string;
-                    name: string;
                     createdAt: Date;
                     updatedAt: Date;
+                    name: string;
                     key: string;
-                    description: string | null;
                     color: string | null;
                     workspaceId: string;
                 }[];
             } & {
                 id: string;
-                name: string;
                 createdAt: Date;
                 updatedAt: Date;
+                name: string;
                 slug: string;
                 logoUrl: string | null;
                 columnOrder: string[];
@@ -126,16 +126,16 @@ export declare class AuthController {
             };
         } & {
             id: string;
+            userId: string;
             createdAt: Date;
             role: import("@prisma/client").$Enums.WorkspaceRole;
-            userId: string;
             workspaceId: string;
         })[];
     }>;
     updateProfile(userId: string, body: UpdateProfileDto): Promise<{
         id: string;
-        email: string;
         name: string;
+        email: string;
         avatarUrl: string | null;
     }>;
 }

@@ -8,15 +8,25 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { NotificationsService } from '../notifications/notifications.service.js';
 
 @Injectable()
 export class AuthService {
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
+    private notificationsService: NotificationsService,
   ) {}
 
-  async register(data: { email: string; password: string; name: string }) {
+  async register(data: {
+    email: string;
+    password: string;
+    name: string;
+    fcmToken?: string;
+    deviceToken?: string;
+    platform?: string;
+    deviceModel?: string;
+  }) {
     const existing = await this.prisma.user.findUnique({
       where: { email: data.email.toLowerCase() },
     });
@@ -64,6 +74,17 @@ export class AuthService {
 
     const token = this.jwtService.sign({ sub: user.id, email: user.email });
 
+    const pushToken = data.fcmToken || data.deviceToken;
+    if (pushToken) {
+      await this.notificationsService
+        .registerDeviceToken(user.id, {
+          token: pushToken,
+          platform: data.platform || 'android',
+          deviceModel: data.deviceModel,
+        })
+        .catch((err) => console.error('Failed to register device token on register:', err));
+    }
+
     return {
       accessToken: token,
       user: {
@@ -77,7 +98,14 @@ export class AuthService {
     };
   }
 
-  async login(data: { email: string; password: string }) {
+  async login(data: {
+    email: string;
+    password: string;
+    fcmToken?: string;
+    deviceToken?: string;
+    platform?: string;
+    deviceModel?: string;
+  }) {
     const user = await this.prisma.user.findUnique({
       where: { email: data.email.toLowerCase() },
       include: {
@@ -103,6 +131,17 @@ export class AuthService {
     }
 
     const token = this.jwtService.sign({ sub: user.id, email: user.email });
+
+    const pushToken = data.fcmToken || data.deviceToken;
+    if (pushToken) {
+      await this.notificationsService
+        .registerDeviceToken(user.id, {
+          token: pushToken,
+          platform: data.platform || 'android',
+          deviceModel: data.deviceModel,
+        })
+        .catch((err) => console.error('Failed to register device token on login:', err));
+    }
 
     const firstWorkspace = user.workspaces[0]?.workspace;
 

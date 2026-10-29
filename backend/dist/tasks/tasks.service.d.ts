@@ -45,15 +45,15 @@ export declare class TasksService {
         comments: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
             parent: {
                 user: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 };
                 id: string;
@@ -62,68 +62,68 @@ export declare class TasksService {
             reactions: ({
                 user: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 };
             } & {
                 id: string;
-                createdAt: Date;
                 userId: string;
+                createdAt: Date;
                 emoji: string;
                 commentId: string;
             })[];
             replies: ({
                 user: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 };
                 reactions: ({
                     user: {
                         id: string;
-                        email: string;
                         name: string;
+                        email: string;
                         avatarUrl: string | null;
                     };
                 } & {
                     id: string;
-                    createdAt: Date;
                     userId: string;
+                    createdAt: Date;
                     emoji: string;
                     commentId: string;
                 })[];
             } & {
                 id: string;
+                userId: string;
                 createdAt: Date;
                 updatedAt: Date;
-                userId: string;
-                content: string;
                 taskId: string;
+                content: string;
                 parentId: string | null;
             })[];
         } & {
             id: string;
+            userId: string;
             createdAt: Date;
             updatedAt: Date;
-            userId: string;
-            content: string;
             taskId: string;
+            content: string;
             parentId: string | null;
         })[];
         activities: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
-            id: string;
-            createdAt: Date;
-            userId: string;
             type: string;
+            id: string;
+            userId: string;
+            createdAt: Date;
             taskId: string;
             fromValue: string | null;
             toValue: string | null;
@@ -131,14 +131,14 @@ export declare class TasksService {
         })[];
         creator: {
             id: string;
-            email: string;
             name: string;
+            email: string;
             avatarUrl: string | null;
         };
         assignee: {
             id: string;
-            email: string;
             name: string;
+            email: string;
             avatarUrl: string | null;
         } | null;
         requesterDivision: {
@@ -154,12 +154,12 @@ export declare class TasksService {
             isTechnical: boolean;
         } | null;
         parent: {
-            id: string;
             title: string;
+            id: string;
+            priority: import("@prisma/client").$Enums.TaskPriority;
+            identifier: string;
             status: import("@prisma/client").$Enums.TaskStatus;
             customStatus: string | null;
-            identifier: string;
-            priority: import("@prisma/client").$Enums.TaskPriority;
         } | null;
         subTasks: ({
             project: {
@@ -170,22 +170,23 @@ export declare class TasksService {
             };
             assignee: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             } | null;
         } & {
+            description: string | null;
+            title: string;
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            description: string | null;
+            priority: import("@prisma/client").$Enums.TaskPriority;
+            identifier: string;
+            assigneeId: string | null;
             workspaceId: string;
-            title: string;
             status: import("@prisma/client").$Enums.TaskStatus;
             order: number;
             customStatus: string | null;
-            identifier: string;
-            priority: import("@prisma/client").$Enums.TaskPriority;
             dueDate: Date | null;
             labels: string[];
             estimate: number | null;
@@ -196,62 +197,61 @@ export declare class TasksService {
             projectId: string;
             cycleId: string | null;
             creatorId: string;
-            assigneeId: string | null;
             requesterDivisionId: string | null;
             assignedDivisionId: string | null;
             parentId: string | null;
         })[];
         sourceRelations: ({
             targetTask: {
-                id: string;
                 title: string;
+                id: string;
+                priority: import("@prisma/client").$Enums.TaskPriority;
+                identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
-                identifier: string;
-                priority: import("@prisma/client").$Enums.TaskPriority;
                 labels: string[];
                 assignee: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 } | null;
             };
         } & {
+            type: string;
             id: string;
             createdAt: Date;
-            type: string;
             sourceTaskId: string;
             targetTaskId: string;
         })[];
         targetRelations: ({
             sourceTask: {
-                id: string;
                 title: string;
+                id: string;
+                priority: import("@prisma/client").$Enums.TaskPriority;
+                identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
-                identifier: string;
-                priority: import("@prisma/client").$Enums.TaskPriority;
                 labels: string[];
                 assignee: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 } | null;
             };
         } & {
+            type: string;
             id: string;
             createdAt: Date;
-            type: string;
             sourceTaskId: string;
             targetTaskId: string;
         })[];
         attachments: {
             id: string;
             createdAt: Date;
-            url: string;
             taskId: string | null;
+            url: string;
             filename: string;
             originalName: string;
             mimeType: string;
@@ -261,42 +261,43 @@ export declare class TasksService {
         reactions: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
             id: string;
-            createdAt: Date;
             userId: string;
+            createdAt: Date;
             taskId: string;
             emoji: string;
         })[];
         subscribers: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
             id: string;
-            createdAt: Date;
             userId: string;
+            createdAt: Date;
             taskId: string;
         })[];
     } & {
+        description: string | null;
+        title: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
+        priority: import("@prisma/client").$Enums.TaskPriority;
+        identifier: string;
+        assigneeId: string | null;
         workspaceId: string;
-        title: string;
         status: import("@prisma/client").$Enums.TaskStatus;
         order: number;
         customStatus: string | null;
-        identifier: string;
-        priority: import("@prisma/client").$Enums.TaskPriority;
         dueDate: Date | null;
         labels: string[];
         estimate: number | null;
@@ -307,7 +308,6 @@ export declare class TasksService {
         projectId: string;
         cycleId: string | null;
         creatorId: string;
-        assigneeId: string | null;
         requesterDivisionId: string | null;
         assignedDivisionId: string | null;
         parentId: string | null;
@@ -328,15 +328,15 @@ export declare class TasksService {
         comments: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
             parent: {
                 user: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 };
                 id: string;
@@ -345,68 +345,68 @@ export declare class TasksService {
             reactions: ({
                 user: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 };
             } & {
                 id: string;
-                createdAt: Date;
                 userId: string;
+                createdAt: Date;
                 emoji: string;
                 commentId: string;
             })[];
             replies: ({
                 user: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 };
                 reactions: ({
                     user: {
                         id: string;
-                        email: string;
                         name: string;
+                        email: string;
                         avatarUrl: string | null;
                     };
                 } & {
                     id: string;
-                    createdAt: Date;
                     userId: string;
+                    createdAt: Date;
                     emoji: string;
                     commentId: string;
                 })[];
             } & {
                 id: string;
+                userId: string;
                 createdAt: Date;
                 updatedAt: Date;
-                userId: string;
-                content: string;
                 taskId: string;
+                content: string;
                 parentId: string | null;
             })[];
         } & {
             id: string;
+            userId: string;
             createdAt: Date;
             updatedAt: Date;
-            userId: string;
-            content: string;
             taskId: string;
+            content: string;
             parentId: string | null;
         })[];
         activities: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
-            id: string;
-            createdAt: Date;
-            userId: string;
             type: string;
+            id: string;
+            userId: string;
+            createdAt: Date;
             taskId: string;
             fromValue: string | null;
             toValue: string | null;
@@ -414,14 +414,14 @@ export declare class TasksService {
         })[];
         creator: {
             id: string;
-            email: string;
             name: string;
+            email: string;
             avatarUrl: string | null;
         };
         assignee: {
             id: string;
-            email: string;
             name: string;
+            email: string;
             avatarUrl: string | null;
         } | null;
         requesterDivision: {
@@ -437,12 +437,12 @@ export declare class TasksService {
             isTechnical: boolean;
         } | null;
         parent: {
-            id: string;
             title: string;
+            id: string;
+            priority: import("@prisma/client").$Enums.TaskPriority;
+            identifier: string;
             status: import("@prisma/client").$Enums.TaskStatus;
             customStatus: string | null;
-            identifier: string;
-            priority: import("@prisma/client").$Enums.TaskPriority;
         } | null;
         subTasks: ({
             project: {
@@ -453,22 +453,23 @@ export declare class TasksService {
             };
             assignee: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             } | null;
         } & {
+            description: string | null;
+            title: string;
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            description: string | null;
+            priority: import("@prisma/client").$Enums.TaskPriority;
+            identifier: string;
+            assigneeId: string | null;
             workspaceId: string;
-            title: string;
             status: import("@prisma/client").$Enums.TaskStatus;
             order: number;
             customStatus: string | null;
-            identifier: string;
-            priority: import("@prisma/client").$Enums.TaskPriority;
             dueDate: Date | null;
             labels: string[];
             estimate: number | null;
@@ -479,62 +480,61 @@ export declare class TasksService {
             projectId: string;
             cycleId: string | null;
             creatorId: string;
-            assigneeId: string | null;
             requesterDivisionId: string | null;
             assignedDivisionId: string | null;
             parentId: string | null;
         })[];
         sourceRelations: ({
             targetTask: {
-                id: string;
                 title: string;
+                id: string;
+                priority: import("@prisma/client").$Enums.TaskPriority;
+                identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
-                identifier: string;
-                priority: import("@prisma/client").$Enums.TaskPriority;
                 labels: string[];
                 assignee: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 } | null;
             };
         } & {
+            type: string;
             id: string;
             createdAt: Date;
-            type: string;
             sourceTaskId: string;
             targetTaskId: string;
         })[];
         targetRelations: ({
             sourceTask: {
-                id: string;
                 title: string;
+                id: string;
+                priority: import("@prisma/client").$Enums.TaskPriority;
+                identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
-                identifier: string;
-                priority: import("@prisma/client").$Enums.TaskPriority;
                 labels: string[];
                 assignee: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 } | null;
             };
         } & {
+            type: string;
             id: string;
             createdAt: Date;
-            type: string;
             sourceTaskId: string;
             targetTaskId: string;
         })[];
         attachments: {
             id: string;
             createdAt: Date;
-            url: string;
             taskId: string | null;
+            url: string;
             filename: string;
             originalName: string;
             mimeType: string;
@@ -544,42 +544,43 @@ export declare class TasksService {
         reactions: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
             id: string;
-            createdAt: Date;
             userId: string;
+            createdAt: Date;
             taskId: string;
             emoji: string;
         })[];
         subscribers: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
             id: string;
-            createdAt: Date;
             userId: string;
+            createdAt: Date;
             taskId: string;
         })[];
     } & {
+        description: string | null;
+        title: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
+        priority: import("@prisma/client").$Enums.TaskPriority;
+        identifier: string;
+        assigneeId: string | null;
         workspaceId: string;
-        title: string;
         status: import("@prisma/client").$Enums.TaskStatus;
         order: number;
         customStatus: string | null;
-        identifier: string;
-        priority: import("@prisma/client").$Enums.TaskPriority;
         dueDate: Date | null;
         labels: string[];
         estimate: number | null;
@@ -590,7 +591,6 @@ export declare class TasksService {
         projectId: string;
         cycleId: string | null;
         creatorId: string;
-        assigneeId: string | null;
         requesterDivisionId: string | null;
         assignedDivisionId: string | null;
         parentId: string | null;
@@ -629,15 +629,15 @@ export declare class TasksService {
         comments: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
             parent: {
                 user: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 };
                 id: string;
@@ -646,68 +646,68 @@ export declare class TasksService {
             reactions: ({
                 user: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 };
             } & {
                 id: string;
-                createdAt: Date;
                 userId: string;
+                createdAt: Date;
                 emoji: string;
                 commentId: string;
             })[];
             replies: ({
                 user: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 };
                 reactions: ({
                     user: {
                         id: string;
-                        email: string;
                         name: string;
+                        email: string;
                         avatarUrl: string | null;
                     };
                 } & {
                     id: string;
-                    createdAt: Date;
                     userId: string;
+                    createdAt: Date;
                     emoji: string;
                     commentId: string;
                 })[];
             } & {
                 id: string;
+                userId: string;
                 createdAt: Date;
                 updatedAt: Date;
-                userId: string;
-                content: string;
                 taskId: string;
+                content: string;
                 parentId: string | null;
             })[];
         } & {
             id: string;
+            userId: string;
             createdAt: Date;
             updatedAt: Date;
-            userId: string;
-            content: string;
             taskId: string;
+            content: string;
             parentId: string | null;
         })[];
         activities: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
-            id: string;
-            createdAt: Date;
-            userId: string;
             type: string;
+            id: string;
+            userId: string;
+            createdAt: Date;
             taskId: string;
             fromValue: string | null;
             toValue: string | null;
@@ -715,14 +715,14 @@ export declare class TasksService {
         })[];
         creator: {
             id: string;
-            email: string;
             name: string;
+            email: string;
             avatarUrl: string | null;
         };
         assignee: {
             id: string;
-            email: string;
             name: string;
+            email: string;
             avatarUrl: string | null;
         } | null;
         requesterDivision: {
@@ -738,12 +738,12 @@ export declare class TasksService {
             isTechnical: boolean;
         } | null;
         parent: {
-            id: string;
             title: string;
+            id: string;
+            priority: import("@prisma/client").$Enums.TaskPriority;
+            identifier: string;
             status: import("@prisma/client").$Enums.TaskStatus;
             customStatus: string | null;
-            identifier: string;
-            priority: import("@prisma/client").$Enums.TaskPriority;
         } | null;
         subTasks: ({
             project: {
@@ -754,22 +754,23 @@ export declare class TasksService {
             };
             assignee: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             } | null;
         } & {
+            description: string | null;
+            title: string;
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            description: string | null;
+            priority: import("@prisma/client").$Enums.TaskPriority;
+            identifier: string;
+            assigneeId: string | null;
             workspaceId: string;
-            title: string;
             status: import("@prisma/client").$Enums.TaskStatus;
             order: number;
             customStatus: string | null;
-            identifier: string;
-            priority: import("@prisma/client").$Enums.TaskPriority;
             dueDate: Date | null;
             labels: string[];
             estimate: number | null;
@@ -780,62 +781,61 @@ export declare class TasksService {
             projectId: string;
             cycleId: string | null;
             creatorId: string;
-            assigneeId: string | null;
             requesterDivisionId: string | null;
             assignedDivisionId: string | null;
             parentId: string | null;
         })[];
         sourceRelations: ({
             targetTask: {
-                id: string;
                 title: string;
+                id: string;
+                priority: import("@prisma/client").$Enums.TaskPriority;
+                identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
-                identifier: string;
-                priority: import("@prisma/client").$Enums.TaskPriority;
                 labels: string[];
                 assignee: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 } | null;
             };
         } & {
+            type: string;
             id: string;
             createdAt: Date;
-            type: string;
             sourceTaskId: string;
             targetTaskId: string;
         })[];
         targetRelations: ({
             sourceTask: {
-                id: string;
                 title: string;
+                id: string;
+                priority: import("@prisma/client").$Enums.TaskPriority;
+                identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
-                identifier: string;
-                priority: import("@prisma/client").$Enums.TaskPriority;
                 labels: string[];
                 assignee: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 } | null;
             };
         } & {
+            type: string;
             id: string;
             createdAt: Date;
-            type: string;
             sourceTaskId: string;
             targetTaskId: string;
         })[];
         attachments: {
             id: string;
             createdAt: Date;
-            url: string;
             taskId: string | null;
+            url: string;
             filename: string;
             originalName: string;
             mimeType: string;
@@ -845,42 +845,43 @@ export declare class TasksService {
         reactions: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
             id: string;
-            createdAt: Date;
             userId: string;
+            createdAt: Date;
             taskId: string;
             emoji: string;
         })[];
         subscribers: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
             id: string;
-            createdAt: Date;
             userId: string;
+            createdAt: Date;
             taskId: string;
         })[];
     } & {
+        description: string | null;
+        title: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
+        priority: import("@prisma/client").$Enums.TaskPriority;
+        identifier: string;
+        assigneeId: string | null;
         workspaceId: string;
-        title: string;
         status: import("@prisma/client").$Enums.TaskStatus;
         order: number;
         customStatus: string | null;
-        identifier: string;
-        priority: import("@prisma/client").$Enums.TaskPriority;
         dueDate: Date | null;
         labels: string[];
         estimate: number | null;
@@ -891,7 +892,6 @@ export declare class TasksService {
         projectId: string;
         cycleId: string | null;
         creatorId: string;
-        assigneeId: string | null;
         requesterDivisionId: string | null;
         assignedDivisionId: string | null;
         parentId: string | null;
@@ -927,15 +927,15 @@ export declare class TasksService {
         comments: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
             parent: {
                 user: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 };
                 id: string;
@@ -944,68 +944,68 @@ export declare class TasksService {
             reactions: ({
                 user: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 };
             } & {
                 id: string;
-                createdAt: Date;
                 userId: string;
+                createdAt: Date;
                 emoji: string;
                 commentId: string;
             })[];
             replies: ({
                 user: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 };
                 reactions: ({
                     user: {
                         id: string;
-                        email: string;
                         name: string;
+                        email: string;
                         avatarUrl: string | null;
                     };
                 } & {
                     id: string;
-                    createdAt: Date;
                     userId: string;
+                    createdAt: Date;
                     emoji: string;
                     commentId: string;
                 })[];
             } & {
                 id: string;
+                userId: string;
                 createdAt: Date;
                 updatedAt: Date;
-                userId: string;
-                content: string;
                 taskId: string;
+                content: string;
                 parentId: string | null;
             })[];
         } & {
             id: string;
+            userId: string;
             createdAt: Date;
             updatedAt: Date;
-            userId: string;
-            content: string;
             taskId: string;
+            content: string;
             parentId: string | null;
         })[];
         activities: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
-            id: string;
-            createdAt: Date;
-            userId: string;
             type: string;
+            id: string;
+            userId: string;
+            createdAt: Date;
             taskId: string;
             fromValue: string | null;
             toValue: string | null;
@@ -1013,14 +1013,14 @@ export declare class TasksService {
         })[];
         creator: {
             id: string;
-            email: string;
             name: string;
+            email: string;
             avatarUrl: string | null;
         };
         assignee: {
             id: string;
-            email: string;
             name: string;
+            email: string;
             avatarUrl: string | null;
         } | null;
         requesterDivision: {
@@ -1036,12 +1036,12 @@ export declare class TasksService {
             isTechnical: boolean;
         } | null;
         parent: {
-            id: string;
             title: string;
+            id: string;
+            priority: import("@prisma/client").$Enums.TaskPriority;
+            identifier: string;
             status: import("@prisma/client").$Enums.TaskStatus;
             customStatus: string | null;
-            identifier: string;
-            priority: import("@prisma/client").$Enums.TaskPriority;
         } | null;
         subTasks: ({
             project: {
@@ -1052,22 +1052,23 @@ export declare class TasksService {
             };
             assignee: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             } | null;
         } & {
+            description: string | null;
+            title: string;
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            description: string | null;
+            priority: import("@prisma/client").$Enums.TaskPriority;
+            identifier: string;
+            assigneeId: string | null;
             workspaceId: string;
-            title: string;
             status: import("@prisma/client").$Enums.TaskStatus;
             order: number;
             customStatus: string | null;
-            identifier: string;
-            priority: import("@prisma/client").$Enums.TaskPriority;
             dueDate: Date | null;
             labels: string[];
             estimate: number | null;
@@ -1078,62 +1079,61 @@ export declare class TasksService {
             projectId: string;
             cycleId: string | null;
             creatorId: string;
-            assigneeId: string | null;
             requesterDivisionId: string | null;
             assignedDivisionId: string | null;
             parentId: string | null;
         })[];
         sourceRelations: ({
             targetTask: {
-                id: string;
                 title: string;
+                id: string;
+                priority: import("@prisma/client").$Enums.TaskPriority;
+                identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
-                identifier: string;
-                priority: import("@prisma/client").$Enums.TaskPriority;
                 labels: string[];
                 assignee: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 } | null;
             };
         } & {
+            type: string;
             id: string;
             createdAt: Date;
-            type: string;
             sourceTaskId: string;
             targetTaskId: string;
         })[];
         targetRelations: ({
             sourceTask: {
-                id: string;
                 title: string;
+                id: string;
+                priority: import("@prisma/client").$Enums.TaskPriority;
+                identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
-                identifier: string;
-                priority: import("@prisma/client").$Enums.TaskPriority;
                 labels: string[];
                 assignee: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 } | null;
             };
         } & {
+            type: string;
             id: string;
             createdAt: Date;
-            type: string;
             sourceTaskId: string;
             targetTaskId: string;
         })[];
         attachments: {
             id: string;
             createdAt: Date;
-            url: string;
             taskId: string | null;
+            url: string;
             filename: string;
             originalName: string;
             mimeType: string;
@@ -1143,42 +1143,43 @@ export declare class TasksService {
         reactions: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
             id: string;
-            createdAt: Date;
             userId: string;
+            createdAt: Date;
             taskId: string;
             emoji: string;
         })[];
         subscribers: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
             id: string;
-            createdAt: Date;
             userId: string;
+            createdAt: Date;
             taskId: string;
         })[];
     } & {
+        description: string | null;
+        title: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
+        priority: import("@prisma/client").$Enums.TaskPriority;
+        identifier: string;
+        assigneeId: string | null;
         workspaceId: string;
-        title: string;
         status: import("@prisma/client").$Enums.TaskStatus;
         order: number;
         customStatus: string | null;
-        identifier: string;
-        priority: import("@prisma/client").$Enums.TaskPriority;
         dueDate: Date | null;
         labels: string[];
         estimate: number | null;
@@ -1189,7 +1190,6 @@ export declare class TasksService {
         projectId: string;
         cycleId: string | null;
         creatorId: string;
-        assigneeId: string | null;
         requesterDivisionId: string | null;
         assignedDivisionId: string | null;
         parentId: string | null;
@@ -1215,15 +1215,15 @@ export declare class TasksService {
         comments: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
             parent: {
                 user: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 };
                 id: string;
@@ -1232,68 +1232,68 @@ export declare class TasksService {
             reactions: ({
                 user: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 };
             } & {
                 id: string;
-                createdAt: Date;
                 userId: string;
+                createdAt: Date;
                 emoji: string;
                 commentId: string;
             })[];
             replies: ({
                 user: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 };
                 reactions: ({
                     user: {
                         id: string;
-                        email: string;
                         name: string;
+                        email: string;
                         avatarUrl: string | null;
                     };
                 } & {
                     id: string;
-                    createdAt: Date;
                     userId: string;
+                    createdAt: Date;
                     emoji: string;
                     commentId: string;
                 })[];
             } & {
                 id: string;
+                userId: string;
                 createdAt: Date;
                 updatedAt: Date;
-                userId: string;
-                content: string;
                 taskId: string;
+                content: string;
                 parentId: string | null;
             })[];
         } & {
             id: string;
+            userId: string;
             createdAt: Date;
             updatedAt: Date;
-            userId: string;
-            content: string;
             taskId: string;
+            content: string;
             parentId: string | null;
         })[];
         activities: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
-            id: string;
-            createdAt: Date;
-            userId: string;
             type: string;
+            id: string;
+            userId: string;
+            createdAt: Date;
             taskId: string;
             fromValue: string | null;
             toValue: string | null;
@@ -1301,14 +1301,14 @@ export declare class TasksService {
         })[];
         creator: {
             id: string;
-            email: string;
             name: string;
+            email: string;
             avatarUrl: string | null;
         };
         assignee: {
             id: string;
-            email: string;
             name: string;
+            email: string;
             avatarUrl: string | null;
         } | null;
         requesterDivision: {
@@ -1324,12 +1324,12 @@ export declare class TasksService {
             isTechnical: boolean;
         } | null;
         parent: {
-            id: string;
             title: string;
+            id: string;
+            priority: import("@prisma/client").$Enums.TaskPriority;
+            identifier: string;
             status: import("@prisma/client").$Enums.TaskStatus;
             customStatus: string | null;
-            identifier: string;
-            priority: import("@prisma/client").$Enums.TaskPriority;
         } | null;
         subTasks: ({
             project: {
@@ -1340,22 +1340,23 @@ export declare class TasksService {
             };
             assignee: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             } | null;
         } & {
+            description: string | null;
+            title: string;
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            description: string | null;
+            priority: import("@prisma/client").$Enums.TaskPriority;
+            identifier: string;
+            assigneeId: string | null;
             workspaceId: string;
-            title: string;
             status: import("@prisma/client").$Enums.TaskStatus;
             order: number;
             customStatus: string | null;
-            identifier: string;
-            priority: import("@prisma/client").$Enums.TaskPriority;
             dueDate: Date | null;
             labels: string[];
             estimate: number | null;
@@ -1366,62 +1367,61 @@ export declare class TasksService {
             projectId: string;
             cycleId: string | null;
             creatorId: string;
-            assigneeId: string | null;
             requesterDivisionId: string | null;
             assignedDivisionId: string | null;
             parentId: string | null;
         })[];
         sourceRelations: ({
             targetTask: {
-                id: string;
                 title: string;
+                id: string;
+                priority: import("@prisma/client").$Enums.TaskPriority;
+                identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
-                identifier: string;
-                priority: import("@prisma/client").$Enums.TaskPriority;
                 labels: string[];
                 assignee: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 } | null;
             };
         } & {
+            type: string;
             id: string;
             createdAt: Date;
-            type: string;
             sourceTaskId: string;
             targetTaskId: string;
         })[];
         targetRelations: ({
             sourceTask: {
-                id: string;
                 title: string;
+                id: string;
+                priority: import("@prisma/client").$Enums.TaskPriority;
+                identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
-                identifier: string;
-                priority: import("@prisma/client").$Enums.TaskPriority;
                 labels: string[];
                 assignee: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 } | null;
             };
         } & {
+            type: string;
             id: string;
             createdAt: Date;
-            type: string;
             sourceTaskId: string;
             targetTaskId: string;
         })[];
         attachments: {
             id: string;
             createdAt: Date;
-            url: string;
             taskId: string | null;
+            url: string;
             filename: string;
             originalName: string;
             mimeType: string;
@@ -1431,42 +1431,43 @@ export declare class TasksService {
         reactions: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
             id: string;
-            createdAt: Date;
             userId: string;
+            createdAt: Date;
             taskId: string;
             emoji: string;
         })[];
         subscribers: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
             id: string;
-            createdAt: Date;
             userId: string;
+            createdAt: Date;
             taskId: string;
         })[];
     } & {
+        description: string | null;
+        title: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
+        priority: import("@prisma/client").$Enums.TaskPriority;
+        identifier: string;
+        assigneeId: string | null;
         workspaceId: string;
-        title: string;
         status: import("@prisma/client").$Enums.TaskStatus;
         order: number;
         customStatus: string | null;
-        identifier: string;
-        priority: import("@prisma/client").$Enums.TaskPriority;
         dueDate: Date | null;
         labels: string[];
         estimate: number | null;
@@ -1477,7 +1478,6 @@ export declare class TasksService {
         projectId: string;
         cycleId: string | null;
         creatorId: string;
-        assigneeId: string | null;
         requesterDivisionId: string | null;
         assignedDivisionId: string | null;
         parentId: string | null;
@@ -1490,15 +1490,15 @@ export declare class TasksService {
     }): Promise<{
         user: {
             id: string;
-            email: string;
             name: string;
+            email: string;
             avatarUrl: string | null;
         };
     } & {
-        id: string;
-        createdAt: Date;
-        userId: string;
         type: string;
+        id: string;
+        userId: string;
+        createdAt: Date;
         taskId: string;
         fromValue: string | null;
         toValue: string | null;
@@ -1520,15 +1520,15 @@ export declare class TasksService {
         comments: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
             parent: {
                 user: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 };
                 id: string;
@@ -1537,68 +1537,68 @@ export declare class TasksService {
             reactions: ({
                 user: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 };
             } & {
                 id: string;
-                createdAt: Date;
                 userId: string;
+                createdAt: Date;
                 emoji: string;
                 commentId: string;
             })[];
             replies: ({
                 user: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 };
                 reactions: ({
                     user: {
                         id: string;
-                        email: string;
                         name: string;
+                        email: string;
                         avatarUrl: string | null;
                     };
                 } & {
                     id: string;
-                    createdAt: Date;
                     userId: string;
+                    createdAt: Date;
                     emoji: string;
                     commentId: string;
                 })[];
             } & {
                 id: string;
+                userId: string;
                 createdAt: Date;
                 updatedAt: Date;
-                userId: string;
-                content: string;
                 taskId: string;
+                content: string;
                 parentId: string | null;
             })[];
         } & {
             id: string;
+            userId: string;
             createdAt: Date;
             updatedAt: Date;
-            userId: string;
-            content: string;
             taskId: string;
+            content: string;
             parentId: string | null;
         })[];
         activities: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
-            id: string;
-            createdAt: Date;
-            userId: string;
             type: string;
+            id: string;
+            userId: string;
+            createdAt: Date;
             taskId: string;
             fromValue: string | null;
             toValue: string | null;
@@ -1606,14 +1606,14 @@ export declare class TasksService {
         })[];
         creator: {
             id: string;
-            email: string;
             name: string;
+            email: string;
             avatarUrl: string | null;
         };
         assignee: {
             id: string;
-            email: string;
             name: string;
+            email: string;
             avatarUrl: string | null;
         } | null;
         requesterDivision: {
@@ -1629,12 +1629,12 @@ export declare class TasksService {
             isTechnical: boolean;
         } | null;
         parent: {
-            id: string;
             title: string;
+            id: string;
+            priority: import("@prisma/client").$Enums.TaskPriority;
+            identifier: string;
             status: import("@prisma/client").$Enums.TaskStatus;
             customStatus: string | null;
-            identifier: string;
-            priority: import("@prisma/client").$Enums.TaskPriority;
         } | null;
         subTasks: ({
             project: {
@@ -1645,22 +1645,23 @@ export declare class TasksService {
             };
             assignee: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             } | null;
         } & {
+            description: string | null;
+            title: string;
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            description: string | null;
+            priority: import("@prisma/client").$Enums.TaskPriority;
+            identifier: string;
+            assigneeId: string | null;
             workspaceId: string;
-            title: string;
             status: import("@prisma/client").$Enums.TaskStatus;
             order: number;
             customStatus: string | null;
-            identifier: string;
-            priority: import("@prisma/client").$Enums.TaskPriority;
             dueDate: Date | null;
             labels: string[];
             estimate: number | null;
@@ -1671,62 +1672,61 @@ export declare class TasksService {
             projectId: string;
             cycleId: string | null;
             creatorId: string;
-            assigneeId: string | null;
             requesterDivisionId: string | null;
             assignedDivisionId: string | null;
             parentId: string | null;
         })[];
         sourceRelations: ({
             targetTask: {
-                id: string;
                 title: string;
+                id: string;
+                priority: import("@prisma/client").$Enums.TaskPriority;
+                identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
-                identifier: string;
-                priority: import("@prisma/client").$Enums.TaskPriority;
                 labels: string[];
                 assignee: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 } | null;
             };
         } & {
+            type: string;
             id: string;
             createdAt: Date;
-            type: string;
             sourceTaskId: string;
             targetTaskId: string;
         })[];
         targetRelations: ({
             sourceTask: {
-                id: string;
                 title: string;
+                id: string;
+                priority: import("@prisma/client").$Enums.TaskPriority;
+                identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
-                identifier: string;
-                priority: import("@prisma/client").$Enums.TaskPriority;
                 labels: string[];
                 assignee: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 } | null;
             };
         } & {
+            type: string;
             id: string;
             createdAt: Date;
-            type: string;
             sourceTaskId: string;
             targetTaskId: string;
         })[];
         attachments: {
             id: string;
             createdAt: Date;
-            url: string;
             taskId: string | null;
+            url: string;
             filename: string;
             originalName: string;
             mimeType: string;
@@ -1736,42 +1736,43 @@ export declare class TasksService {
         reactions: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
             id: string;
-            createdAt: Date;
             userId: string;
+            createdAt: Date;
             taskId: string;
             emoji: string;
         })[];
         subscribers: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
             id: string;
-            createdAt: Date;
             userId: string;
+            createdAt: Date;
             taskId: string;
         })[];
     } & {
+        description: string | null;
+        title: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
+        priority: import("@prisma/client").$Enums.TaskPriority;
+        identifier: string;
+        assigneeId: string | null;
         workspaceId: string;
-        title: string;
         status: import("@prisma/client").$Enums.TaskStatus;
         order: number;
         customStatus: string | null;
-        identifier: string;
-        priority: import("@prisma/client").$Enums.TaskPriority;
         dueDate: Date | null;
         labels: string[];
         estimate: number | null;
@@ -1782,7 +1783,6 @@ export declare class TasksService {
         projectId: string;
         cycleId: string | null;
         creatorId: string;
-        assigneeId: string | null;
         requesterDivisionId: string | null;
         assignedDivisionId: string | null;
         parentId: string | null;
@@ -1803,15 +1803,15 @@ export declare class TasksService {
         comments: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
             parent: {
                 user: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 };
                 id: string;
@@ -1820,68 +1820,68 @@ export declare class TasksService {
             reactions: ({
                 user: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 };
             } & {
                 id: string;
-                createdAt: Date;
                 userId: string;
+                createdAt: Date;
                 emoji: string;
                 commentId: string;
             })[];
             replies: ({
                 user: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 };
                 reactions: ({
                     user: {
                         id: string;
-                        email: string;
                         name: string;
+                        email: string;
                         avatarUrl: string | null;
                     };
                 } & {
                     id: string;
-                    createdAt: Date;
                     userId: string;
+                    createdAt: Date;
                     emoji: string;
                     commentId: string;
                 })[];
             } & {
                 id: string;
+                userId: string;
                 createdAt: Date;
                 updatedAt: Date;
-                userId: string;
-                content: string;
                 taskId: string;
+                content: string;
                 parentId: string | null;
             })[];
         } & {
             id: string;
+            userId: string;
             createdAt: Date;
             updatedAt: Date;
-            userId: string;
-            content: string;
             taskId: string;
+            content: string;
             parentId: string | null;
         })[];
         activities: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
-            id: string;
-            createdAt: Date;
-            userId: string;
             type: string;
+            id: string;
+            userId: string;
+            createdAt: Date;
             taskId: string;
             fromValue: string | null;
             toValue: string | null;
@@ -1889,14 +1889,14 @@ export declare class TasksService {
         })[];
         creator: {
             id: string;
-            email: string;
             name: string;
+            email: string;
             avatarUrl: string | null;
         };
         assignee: {
             id: string;
-            email: string;
             name: string;
+            email: string;
             avatarUrl: string | null;
         } | null;
         requesterDivision: {
@@ -1912,12 +1912,12 @@ export declare class TasksService {
             isTechnical: boolean;
         } | null;
         parent: {
-            id: string;
             title: string;
+            id: string;
+            priority: import("@prisma/client").$Enums.TaskPriority;
+            identifier: string;
             status: import("@prisma/client").$Enums.TaskStatus;
             customStatus: string | null;
-            identifier: string;
-            priority: import("@prisma/client").$Enums.TaskPriority;
         } | null;
         subTasks: ({
             project: {
@@ -1928,22 +1928,23 @@ export declare class TasksService {
             };
             assignee: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             } | null;
         } & {
+            description: string | null;
+            title: string;
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            description: string | null;
+            priority: import("@prisma/client").$Enums.TaskPriority;
+            identifier: string;
+            assigneeId: string | null;
             workspaceId: string;
-            title: string;
             status: import("@prisma/client").$Enums.TaskStatus;
             order: number;
             customStatus: string | null;
-            identifier: string;
-            priority: import("@prisma/client").$Enums.TaskPriority;
             dueDate: Date | null;
             labels: string[];
             estimate: number | null;
@@ -1954,62 +1955,61 @@ export declare class TasksService {
             projectId: string;
             cycleId: string | null;
             creatorId: string;
-            assigneeId: string | null;
             requesterDivisionId: string | null;
             assignedDivisionId: string | null;
             parentId: string | null;
         })[];
         sourceRelations: ({
             targetTask: {
-                id: string;
                 title: string;
+                id: string;
+                priority: import("@prisma/client").$Enums.TaskPriority;
+                identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
-                identifier: string;
-                priority: import("@prisma/client").$Enums.TaskPriority;
                 labels: string[];
                 assignee: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 } | null;
             };
         } & {
+            type: string;
             id: string;
             createdAt: Date;
-            type: string;
             sourceTaskId: string;
             targetTaskId: string;
         })[];
         targetRelations: ({
             sourceTask: {
-                id: string;
                 title: string;
+                id: string;
+                priority: import("@prisma/client").$Enums.TaskPriority;
+                identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
-                identifier: string;
-                priority: import("@prisma/client").$Enums.TaskPriority;
                 labels: string[];
                 assignee: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 } | null;
             };
         } & {
+            type: string;
             id: string;
             createdAt: Date;
-            type: string;
             sourceTaskId: string;
             targetTaskId: string;
         })[];
         attachments: {
             id: string;
             createdAt: Date;
-            url: string;
             taskId: string | null;
+            url: string;
             filename: string;
             originalName: string;
             mimeType: string;
@@ -2019,42 +2019,43 @@ export declare class TasksService {
         reactions: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
             id: string;
-            createdAt: Date;
             userId: string;
+            createdAt: Date;
             taskId: string;
             emoji: string;
         })[];
         subscribers: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
             id: string;
-            createdAt: Date;
             userId: string;
+            createdAt: Date;
             taskId: string;
         })[];
     } & {
+        description: string | null;
+        title: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
+        priority: import("@prisma/client").$Enums.TaskPriority;
+        identifier: string;
+        assigneeId: string | null;
         workspaceId: string;
-        title: string;
         status: import("@prisma/client").$Enums.TaskStatus;
         order: number;
         customStatus: string | null;
-        identifier: string;
-        priority: import("@prisma/client").$Enums.TaskPriority;
         dueDate: Date | null;
         labels: string[];
         estimate: number | null;
@@ -2065,23 +2066,23 @@ export declare class TasksService {
         projectId: string;
         cycleId: string | null;
         creatorId: string;
-        assigneeId: string | null;
         requesterDivisionId: string | null;
         assignedDivisionId: string | null;
         parentId: string | null;
     }>;
     permanentDeleteTask(id: string, userId?: string): Promise<{
+        description: string | null;
+        title: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
+        priority: import("@prisma/client").$Enums.TaskPriority;
+        identifier: string;
+        assigneeId: string | null;
         workspaceId: string;
-        title: string;
         status: import("@prisma/client").$Enums.TaskStatus;
         order: number;
         customStatus: string | null;
-        identifier: string;
-        priority: import("@prisma/client").$Enums.TaskPriority;
         dueDate: Date | null;
         labels: string[];
         estimate: number | null;
@@ -2092,7 +2093,6 @@ export declare class TasksService {
         projectId: string;
         cycleId: string | null;
         creatorId: string;
-        assigneeId: string | null;
         requesterDivisionId: string | null;
         assignedDivisionId: string | null;
         parentId: string | null;
@@ -2100,15 +2100,15 @@ export declare class TasksService {
     addComment(taskId: string, userId: string, content: string, parentId?: string): Promise<{
         user: {
             id: string;
-            email: string;
             name: string;
+            email: string;
             avatarUrl: string | null;
         };
         parent: {
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
             id: string;
@@ -2116,36 +2116,36 @@ export declare class TasksService {
         } | null;
     } & {
         id: string;
+        userId: string;
         createdAt: Date;
         updatedAt: Date;
-        userId: string;
-        content: string;
         taskId: string;
+        content: string;
         parentId: string | null;
     }>;
     updateComment(commentId: string, userId: string, content: string): Promise<{
         user: {
             id: string;
-            email: string;
             name: string;
+            email: string;
             avatarUrl: string | null;
         };
     } & {
         id: string;
+        userId: string;
         createdAt: Date;
         updatedAt: Date;
-        userId: string;
-        content: string;
         taskId: string;
+        content: string;
         parentId: string | null;
     }>;
     deleteComment(commentId: string, userId: string): Promise<{
         id: string;
+        userId: string;
         createdAt: Date;
         updatedAt: Date;
-        userId: string;
-        content: string;
         taskId: string;
+        content: string;
         parentId: string | null;
     }>;
     createSubTask(parentId: string, userId: string, data: {
@@ -2174,15 +2174,15 @@ export declare class TasksService {
         comments: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
             parent: {
                 user: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 };
                 id: string;
@@ -2191,68 +2191,68 @@ export declare class TasksService {
             reactions: ({
                 user: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 };
             } & {
                 id: string;
-                createdAt: Date;
                 userId: string;
+                createdAt: Date;
                 emoji: string;
                 commentId: string;
             })[];
             replies: ({
                 user: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 };
                 reactions: ({
                     user: {
                         id: string;
-                        email: string;
                         name: string;
+                        email: string;
                         avatarUrl: string | null;
                     };
                 } & {
                     id: string;
-                    createdAt: Date;
                     userId: string;
+                    createdAt: Date;
                     emoji: string;
                     commentId: string;
                 })[];
             } & {
                 id: string;
+                userId: string;
                 createdAt: Date;
                 updatedAt: Date;
-                userId: string;
-                content: string;
                 taskId: string;
+                content: string;
                 parentId: string | null;
             })[];
         } & {
             id: string;
+            userId: string;
             createdAt: Date;
             updatedAt: Date;
-            userId: string;
-            content: string;
             taskId: string;
+            content: string;
             parentId: string | null;
         })[];
         activities: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
-            id: string;
-            createdAt: Date;
-            userId: string;
             type: string;
+            id: string;
+            userId: string;
+            createdAt: Date;
             taskId: string;
             fromValue: string | null;
             toValue: string | null;
@@ -2260,14 +2260,14 @@ export declare class TasksService {
         })[];
         creator: {
             id: string;
-            email: string;
             name: string;
+            email: string;
             avatarUrl: string | null;
         };
         assignee: {
             id: string;
-            email: string;
             name: string;
+            email: string;
             avatarUrl: string | null;
         } | null;
         requesterDivision: {
@@ -2283,12 +2283,12 @@ export declare class TasksService {
             isTechnical: boolean;
         } | null;
         parent: {
-            id: string;
             title: string;
+            id: string;
+            priority: import("@prisma/client").$Enums.TaskPriority;
+            identifier: string;
             status: import("@prisma/client").$Enums.TaskStatus;
             customStatus: string | null;
-            identifier: string;
-            priority: import("@prisma/client").$Enums.TaskPriority;
         } | null;
         subTasks: ({
             project: {
@@ -2299,22 +2299,23 @@ export declare class TasksService {
             };
             assignee: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             } | null;
         } & {
+            description: string | null;
+            title: string;
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            description: string | null;
+            priority: import("@prisma/client").$Enums.TaskPriority;
+            identifier: string;
+            assigneeId: string | null;
             workspaceId: string;
-            title: string;
             status: import("@prisma/client").$Enums.TaskStatus;
             order: number;
             customStatus: string | null;
-            identifier: string;
-            priority: import("@prisma/client").$Enums.TaskPriority;
             dueDate: Date | null;
             labels: string[];
             estimate: number | null;
@@ -2325,62 +2326,61 @@ export declare class TasksService {
             projectId: string;
             cycleId: string | null;
             creatorId: string;
-            assigneeId: string | null;
             requesterDivisionId: string | null;
             assignedDivisionId: string | null;
             parentId: string | null;
         })[];
         sourceRelations: ({
             targetTask: {
-                id: string;
                 title: string;
+                id: string;
+                priority: import("@prisma/client").$Enums.TaskPriority;
+                identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
-                identifier: string;
-                priority: import("@prisma/client").$Enums.TaskPriority;
                 labels: string[];
                 assignee: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 } | null;
             };
         } & {
+            type: string;
             id: string;
             createdAt: Date;
-            type: string;
             sourceTaskId: string;
             targetTaskId: string;
         })[];
         targetRelations: ({
             sourceTask: {
-                id: string;
                 title: string;
+                id: string;
+                priority: import("@prisma/client").$Enums.TaskPriority;
+                identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
-                identifier: string;
-                priority: import("@prisma/client").$Enums.TaskPriority;
                 labels: string[];
                 assignee: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 } | null;
             };
         } & {
+            type: string;
             id: string;
             createdAt: Date;
-            type: string;
             sourceTaskId: string;
             targetTaskId: string;
         })[];
         attachments: {
             id: string;
             createdAt: Date;
-            url: string;
             taskId: string | null;
+            url: string;
             filename: string;
             originalName: string;
             mimeType: string;
@@ -2390,42 +2390,43 @@ export declare class TasksService {
         reactions: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
             id: string;
-            createdAt: Date;
             userId: string;
+            createdAt: Date;
             taskId: string;
             emoji: string;
         })[];
         subscribers: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
             id: string;
-            createdAt: Date;
             userId: string;
+            createdAt: Date;
             taskId: string;
         })[];
     } & {
+        description: string | null;
+        title: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
+        priority: import("@prisma/client").$Enums.TaskPriority;
+        identifier: string;
+        assigneeId: string | null;
         workspaceId: string;
-        title: string;
         status: import("@prisma/client").$Enums.TaskStatus;
         order: number;
         customStatus: string | null;
-        identifier: string;
-        priority: import("@prisma/client").$Enums.TaskPriority;
         dueDate: Date | null;
         labels: string[];
         estimate: number | null;
@@ -2436,7 +2437,6 @@ export declare class TasksService {
         projectId: string;
         cycleId: string | null;
         creatorId: string;
-        assigneeId: string | null;
         requesterDivisionId: string | null;
         assignedDivisionId: string | null;
         parentId: string | null;
@@ -2457,15 +2457,15 @@ export declare class TasksService {
         comments: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
             parent: {
                 user: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 };
                 id: string;
@@ -2474,68 +2474,68 @@ export declare class TasksService {
             reactions: ({
                 user: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 };
             } & {
                 id: string;
-                createdAt: Date;
                 userId: string;
+                createdAt: Date;
                 emoji: string;
                 commentId: string;
             })[];
             replies: ({
                 user: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 };
                 reactions: ({
                     user: {
                         id: string;
-                        email: string;
                         name: string;
+                        email: string;
                         avatarUrl: string | null;
                     };
                 } & {
                     id: string;
-                    createdAt: Date;
                     userId: string;
+                    createdAt: Date;
                     emoji: string;
                     commentId: string;
                 })[];
             } & {
                 id: string;
+                userId: string;
                 createdAt: Date;
                 updatedAt: Date;
-                userId: string;
-                content: string;
                 taskId: string;
+                content: string;
                 parentId: string | null;
             })[];
         } & {
             id: string;
+            userId: string;
             createdAt: Date;
             updatedAt: Date;
-            userId: string;
-            content: string;
             taskId: string;
+            content: string;
             parentId: string | null;
         })[];
         activities: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
-            id: string;
-            createdAt: Date;
-            userId: string;
             type: string;
+            id: string;
+            userId: string;
+            createdAt: Date;
             taskId: string;
             fromValue: string | null;
             toValue: string | null;
@@ -2543,14 +2543,14 @@ export declare class TasksService {
         })[];
         creator: {
             id: string;
-            email: string;
             name: string;
+            email: string;
             avatarUrl: string | null;
         };
         assignee: {
             id: string;
-            email: string;
             name: string;
+            email: string;
             avatarUrl: string | null;
         } | null;
         requesterDivision: {
@@ -2566,12 +2566,12 @@ export declare class TasksService {
             isTechnical: boolean;
         } | null;
         parent: {
-            id: string;
             title: string;
+            id: string;
+            priority: import("@prisma/client").$Enums.TaskPriority;
+            identifier: string;
             status: import("@prisma/client").$Enums.TaskStatus;
             customStatus: string | null;
-            identifier: string;
-            priority: import("@prisma/client").$Enums.TaskPriority;
         } | null;
         subTasks: ({
             project: {
@@ -2582,22 +2582,23 @@ export declare class TasksService {
             };
             assignee: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             } | null;
         } & {
+            description: string | null;
+            title: string;
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            description: string | null;
+            priority: import("@prisma/client").$Enums.TaskPriority;
+            identifier: string;
+            assigneeId: string | null;
             workspaceId: string;
-            title: string;
             status: import("@prisma/client").$Enums.TaskStatus;
             order: number;
             customStatus: string | null;
-            identifier: string;
-            priority: import("@prisma/client").$Enums.TaskPriority;
             dueDate: Date | null;
             labels: string[];
             estimate: number | null;
@@ -2608,62 +2609,61 @@ export declare class TasksService {
             projectId: string;
             cycleId: string | null;
             creatorId: string;
-            assigneeId: string | null;
             requesterDivisionId: string | null;
             assignedDivisionId: string | null;
             parentId: string | null;
         })[];
         sourceRelations: ({
             targetTask: {
-                id: string;
                 title: string;
+                id: string;
+                priority: import("@prisma/client").$Enums.TaskPriority;
+                identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
-                identifier: string;
-                priority: import("@prisma/client").$Enums.TaskPriority;
                 labels: string[];
                 assignee: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 } | null;
             };
         } & {
+            type: string;
             id: string;
             createdAt: Date;
-            type: string;
             sourceTaskId: string;
             targetTaskId: string;
         })[];
         targetRelations: ({
             sourceTask: {
-                id: string;
                 title: string;
+                id: string;
+                priority: import("@prisma/client").$Enums.TaskPriority;
+                identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
-                identifier: string;
-                priority: import("@prisma/client").$Enums.TaskPriority;
                 labels: string[];
                 assignee: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 } | null;
             };
         } & {
+            type: string;
             id: string;
             createdAt: Date;
-            type: string;
             sourceTaskId: string;
             targetTaskId: string;
         })[];
         attachments: {
             id: string;
             createdAt: Date;
-            url: string;
             taskId: string | null;
+            url: string;
             filename: string;
             originalName: string;
             mimeType: string;
@@ -2673,42 +2673,43 @@ export declare class TasksService {
         reactions: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
             id: string;
-            createdAt: Date;
             userId: string;
+            createdAt: Date;
             taskId: string;
             emoji: string;
         })[];
         subscribers: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
             id: string;
-            createdAt: Date;
             userId: string;
+            createdAt: Date;
             taskId: string;
         })[];
     } & {
+        description: string | null;
+        title: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
+        priority: import("@prisma/client").$Enums.TaskPriority;
+        identifier: string;
+        assigneeId: string | null;
         workspaceId: string;
-        title: string;
         status: import("@prisma/client").$Enums.TaskStatus;
         order: number;
         customStatus: string | null;
-        identifier: string;
-        priority: import("@prisma/client").$Enums.TaskPriority;
         dueDate: Date | null;
         labels: string[];
         estimate: number | null;
@@ -2719,7 +2720,6 @@ export declare class TasksService {
         projectId: string;
         cycleId: string | null;
         creatorId: string;
-        assigneeId: string | null;
         requesterDivisionId: string | null;
         assignedDivisionId: string | null;
         parentId: string | null;
@@ -2740,15 +2740,15 @@ export declare class TasksService {
         comments: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
             parent: {
                 user: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 };
                 id: string;
@@ -2757,68 +2757,68 @@ export declare class TasksService {
             reactions: ({
                 user: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 };
             } & {
                 id: string;
-                createdAt: Date;
                 userId: string;
+                createdAt: Date;
                 emoji: string;
                 commentId: string;
             })[];
             replies: ({
                 user: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 };
                 reactions: ({
                     user: {
                         id: string;
-                        email: string;
                         name: string;
+                        email: string;
                         avatarUrl: string | null;
                     };
                 } & {
                     id: string;
-                    createdAt: Date;
                     userId: string;
+                    createdAt: Date;
                     emoji: string;
                     commentId: string;
                 })[];
             } & {
                 id: string;
+                userId: string;
                 createdAt: Date;
                 updatedAt: Date;
-                userId: string;
-                content: string;
                 taskId: string;
+                content: string;
                 parentId: string | null;
             })[];
         } & {
             id: string;
+            userId: string;
             createdAt: Date;
             updatedAt: Date;
-            userId: string;
-            content: string;
             taskId: string;
+            content: string;
             parentId: string | null;
         })[];
         activities: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
-            id: string;
-            createdAt: Date;
-            userId: string;
             type: string;
+            id: string;
+            userId: string;
+            createdAt: Date;
             taskId: string;
             fromValue: string | null;
             toValue: string | null;
@@ -2826,14 +2826,14 @@ export declare class TasksService {
         })[];
         creator: {
             id: string;
-            email: string;
             name: string;
+            email: string;
             avatarUrl: string | null;
         };
         assignee: {
             id: string;
-            email: string;
             name: string;
+            email: string;
             avatarUrl: string | null;
         } | null;
         requesterDivision: {
@@ -2849,12 +2849,12 @@ export declare class TasksService {
             isTechnical: boolean;
         } | null;
         parent: {
-            id: string;
             title: string;
+            id: string;
+            priority: import("@prisma/client").$Enums.TaskPriority;
+            identifier: string;
             status: import("@prisma/client").$Enums.TaskStatus;
             customStatus: string | null;
-            identifier: string;
-            priority: import("@prisma/client").$Enums.TaskPriority;
         } | null;
         subTasks: ({
             project: {
@@ -2865,22 +2865,23 @@ export declare class TasksService {
             };
             assignee: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             } | null;
         } & {
+            description: string | null;
+            title: string;
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            description: string | null;
+            priority: import("@prisma/client").$Enums.TaskPriority;
+            identifier: string;
+            assigneeId: string | null;
             workspaceId: string;
-            title: string;
             status: import("@prisma/client").$Enums.TaskStatus;
             order: number;
             customStatus: string | null;
-            identifier: string;
-            priority: import("@prisma/client").$Enums.TaskPriority;
             dueDate: Date | null;
             labels: string[];
             estimate: number | null;
@@ -2891,62 +2892,61 @@ export declare class TasksService {
             projectId: string;
             cycleId: string | null;
             creatorId: string;
-            assigneeId: string | null;
             requesterDivisionId: string | null;
             assignedDivisionId: string | null;
             parentId: string | null;
         })[];
         sourceRelations: ({
             targetTask: {
-                id: string;
                 title: string;
+                id: string;
+                priority: import("@prisma/client").$Enums.TaskPriority;
+                identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
-                identifier: string;
-                priority: import("@prisma/client").$Enums.TaskPriority;
                 labels: string[];
                 assignee: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 } | null;
             };
         } & {
+            type: string;
             id: string;
             createdAt: Date;
-            type: string;
             sourceTaskId: string;
             targetTaskId: string;
         })[];
         targetRelations: ({
             sourceTask: {
-                id: string;
                 title: string;
+                id: string;
+                priority: import("@prisma/client").$Enums.TaskPriority;
+                identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
-                identifier: string;
-                priority: import("@prisma/client").$Enums.TaskPriority;
                 labels: string[];
                 assignee: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 } | null;
             };
         } & {
+            type: string;
             id: string;
             createdAt: Date;
-            type: string;
             sourceTaskId: string;
             targetTaskId: string;
         })[];
         attachments: {
             id: string;
             createdAt: Date;
-            url: string;
             taskId: string | null;
+            url: string;
             filename: string;
             originalName: string;
             mimeType: string;
@@ -2956,42 +2956,43 @@ export declare class TasksService {
         reactions: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
             id: string;
-            createdAt: Date;
             userId: string;
+            createdAt: Date;
             taskId: string;
             emoji: string;
         })[];
         subscribers: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
             id: string;
-            createdAt: Date;
             userId: string;
+            createdAt: Date;
             taskId: string;
         })[];
     } & {
+        description: string | null;
+        title: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
+        priority: import("@prisma/client").$Enums.TaskPriority;
+        identifier: string;
+        assigneeId: string | null;
         workspaceId: string;
-        title: string;
         status: import("@prisma/client").$Enums.TaskStatus;
         order: number;
         customStatus: string | null;
-        identifier: string;
-        priority: import("@prisma/client").$Enums.TaskPriority;
         dueDate: Date | null;
         labels: string[];
         estimate: number | null;
@@ -3002,7 +3003,6 @@ export declare class TasksService {
         projectId: string;
         cycleId: string | null;
         creatorId: string;
-        assigneeId: string | null;
         requesterDivisionId: string | null;
         assignedDivisionId: string | null;
         parentId: string | null;
@@ -3026,15 +3026,15 @@ export declare class TasksService {
         comments: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
             parent: {
                 user: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 };
                 id: string;
@@ -3043,68 +3043,68 @@ export declare class TasksService {
             reactions: ({
                 user: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 };
             } & {
                 id: string;
-                createdAt: Date;
                 userId: string;
+                createdAt: Date;
                 emoji: string;
                 commentId: string;
             })[];
             replies: ({
                 user: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 };
                 reactions: ({
                     user: {
                         id: string;
-                        email: string;
                         name: string;
+                        email: string;
                         avatarUrl: string | null;
                     };
                 } & {
                     id: string;
-                    createdAt: Date;
                     userId: string;
+                    createdAt: Date;
                     emoji: string;
                     commentId: string;
                 })[];
             } & {
                 id: string;
+                userId: string;
                 createdAt: Date;
                 updatedAt: Date;
-                userId: string;
-                content: string;
                 taskId: string;
+                content: string;
                 parentId: string | null;
             })[];
         } & {
             id: string;
+            userId: string;
             createdAt: Date;
             updatedAt: Date;
-            userId: string;
-            content: string;
             taskId: string;
+            content: string;
             parentId: string | null;
         })[];
         activities: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
-            id: string;
-            createdAt: Date;
-            userId: string;
             type: string;
+            id: string;
+            userId: string;
+            createdAt: Date;
             taskId: string;
             fromValue: string | null;
             toValue: string | null;
@@ -3112,14 +3112,14 @@ export declare class TasksService {
         })[];
         creator: {
             id: string;
-            email: string;
             name: string;
+            email: string;
             avatarUrl: string | null;
         };
         assignee: {
             id: string;
-            email: string;
             name: string;
+            email: string;
             avatarUrl: string | null;
         } | null;
         requesterDivision: {
@@ -3135,12 +3135,12 @@ export declare class TasksService {
             isTechnical: boolean;
         } | null;
         parent: {
-            id: string;
             title: string;
+            id: string;
+            priority: import("@prisma/client").$Enums.TaskPriority;
+            identifier: string;
             status: import("@prisma/client").$Enums.TaskStatus;
             customStatus: string | null;
-            identifier: string;
-            priority: import("@prisma/client").$Enums.TaskPriority;
         } | null;
         subTasks: ({
             project: {
@@ -3151,22 +3151,23 @@ export declare class TasksService {
             };
             assignee: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             } | null;
         } & {
+            description: string | null;
+            title: string;
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            description: string | null;
+            priority: import("@prisma/client").$Enums.TaskPriority;
+            identifier: string;
+            assigneeId: string | null;
             workspaceId: string;
-            title: string;
             status: import("@prisma/client").$Enums.TaskStatus;
             order: number;
             customStatus: string | null;
-            identifier: string;
-            priority: import("@prisma/client").$Enums.TaskPriority;
             dueDate: Date | null;
             labels: string[];
             estimate: number | null;
@@ -3177,62 +3178,61 @@ export declare class TasksService {
             projectId: string;
             cycleId: string | null;
             creatorId: string;
-            assigneeId: string | null;
             requesterDivisionId: string | null;
             assignedDivisionId: string | null;
             parentId: string | null;
         })[];
         sourceRelations: ({
             targetTask: {
-                id: string;
                 title: string;
+                id: string;
+                priority: import("@prisma/client").$Enums.TaskPriority;
+                identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
-                identifier: string;
-                priority: import("@prisma/client").$Enums.TaskPriority;
                 labels: string[];
                 assignee: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 } | null;
             };
         } & {
+            type: string;
             id: string;
             createdAt: Date;
-            type: string;
             sourceTaskId: string;
             targetTaskId: string;
         })[];
         targetRelations: ({
             sourceTask: {
-                id: string;
                 title: string;
+                id: string;
+                priority: import("@prisma/client").$Enums.TaskPriority;
+                identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
-                identifier: string;
-                priority: import("@prisma/client").$Enums.TaskPriority;
                 labels: string[];
                 assignee: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 } | null;
             };
         } & {
+            type: string;
             id: string;
             createdAt: Date;
-            type: string;
             sourceTaskId: string;
             targetTaskId: string;
         })[];
         attachments: {
             id: string;
             createdAt: Date;
-            url: string;
             taskId: string | null;
+            url: string;
             filename: string;
             originalName: string;
             mimeType: string;
@@ -3242,42 +3242,43 @@ export declare class TasksService {
         reactions: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
             id: string;
-            createdAt: Date;
             userId: string;
+            createdAt: Date;
             taskId: string;
             emoji: string;
         })[];
         subscribers: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
             id: string;
-            createdAt: Date;
             userId: string;
+            createdAt: Date;
             taskId: string;
         })[];
     } & {
+        description: string | null;
+        title: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
+        priority: import("@prisma/client").$Enums.TaskPriority;
+        identifier: string;
+        assigneeId: string | null;
         workspaceId: string;
-        title: string;
         status: import("@prisma/client").$Enums.TaskStatus;
         order: number;
         customStatus: string | null;
-        identifier: string;
-        priority: import("@prisma/client").$Enums.TaskPriority;
         dueDate: Date | null;
         labels: string[];
         estimate: number | null;
@@ -3288,7 +3289,6 @@ export declare class TasksService {
         projectId: string;
         cycleId: string | null;
         creatorId: string;
-        assigneeId: string | null;
         requesterDivisionId: string | null;
         assignedDivisionId: string | null;
         parentId: string | null;
@@ -3309,15 +3309,15 @@ export declare class TasksService {
         comments: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
             parent: {
                 user: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 };
                 id: string;
@@ -3326,68 +3326,68 @@ export declare class TasksService {
             reactions: ({
                 user: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 };
             } & {
                 id: string;
-                createdAt: Date;
                 userId: string;
+                createdAt: Date;
                 emoji: string;
                 commentId: string;
             })[];
             replies: ({
                 user: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 };
                 reactions: ({
                     user: {
                         id: string;
-                        email: string;
                         name: string;
+                        email: string;
                         avatarUrl: string | null;
                     };
                 } & {
                     id: string;
-                    createdAt: Date;
                     userId: string;
+                    createdAt: Date;
                     emoji: string;
                     commentId: string;
                 })[];
             } & {
                 id: string;
+                userId: string;
                 createdAt: Date;
                 updatedAt: Date;
-                userId: string;
-                content: string;
                 taskId: string;
+                content: string;
                 parentId: string | null;
             })[];
         } & {
             id: string;
+            userId: string;
             createdAt: Date;
             updatedAt: Date;
-            userId: string;
-            content: string;
             taskId: string;
+            content: string;
             parentId: string | null;
         })[];
         activities: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
-            id: string;
-            createdAt: Date;
-            userId: string;
             type: string;
+            id: string;
+            userId: string;
+            createdAt: Date;
             taskId: string;
             fromValue: string | null;
             toValue: string | null;
@@ -3395,14 +3395,14 @@ export declare class TasksService {
         })[];
         creator: {
             id: string;
-            email: string;
             name: string;
+            email: string;
             avatarUrl: string | null;
         };
         assignee: {
             id: string;
-            email: string;
             name: string;
+            email: string;
             avatarUrl: string | null;
         } | null;
         requesterDivision: {
@@ -3418,12 +3418,12 @@ export declare class TasksService {
             isTechnical: boolean;
         } | null;
         parent: {
-            id: string;
             title: string;
+            id: string;
+            priority: import("@prisma/client").$Enums.TaskPriority;
+            identifier: string;
             status: import("@prisma/client").$Enums.TaskStatus;
             customStatus: string | null;
-            identifier: string;
-            priority: import("@prisma/client").$Enums.TaskPriority;
         } | null;
         subTasks: ({
             project: {
@@ -3434,22 +3434,23 @@ export declare class TasksService {
             };
             assignee: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             } | null;
         } & {
+            description: string | null;
+            title: string;
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            description: string | null;
+            priority: import("@prisma/client").$Enums.TaskPriority;
+            identifier: string;
+            assigneeId: string | null;
             workspaceId: string;
-            title: string;
             status: import("@prisma/client").$Enums.TaskStatus;
             order: number;
             customStatus: string | null;
-            identifier: string;
-            priority: import("@prisma/client").$Enums.TaskPriority;
             dueDate: Date | null;
             labels: string[];
             estimate: number | null;
@@ -3460,62 +3461,61 @@ export declare class TasksService {
             projectId: string;
             cycleId: string | null;
             creatorId: string;
-            assigneeId: string | null;
             requesterDivisionId: string | null;
             assignedDivisionId: string | null;
             parentId: string | null;
         })[];
         sourceRelations: ({
             targetTask: {
-                id: string;
                 title: string;
+                id: string;
+                priority: import("@prisma/client").$Enums.TaskPriority;
+                identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
-                identifier: string;
-                priority: import("@prisma/client").$Enums.TaskPriority;
                 labels: string[];
                 assignee: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 } | null;
             };
         } & {
+            type: string;
             id: string;
             createdAt: Date;
-            type: string;
             sourceTaskId: string;
             targetTaskId: string;
         })[];
         targetRelations: ({
             sourceTask: {
-                id: string;
                 title: string;
+                id: string;
+                priority: import("@prisma/client").$Enums.TaskPriority;
+                identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
-                identifier: string;
-                priority: import("@prisma/client").$Enums.TaskPriority;
                 labels: string[];
                 assignee: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 } | null;
             };
         } & {
+            type: string;
             id: string;
             createdAt: Date;
-            type: string;
             sourceTaskId: string;
             targetTaskId: string;
         })[];
         attachments: {
             id: string;
             createdAt: Date;
-            url: string;
             taskId: string | null;
+            url: string;
             filename: string;
             originalName: string;
             mimeType: string;
@@ -3525,42 +3525,43 @@ export declare class TasksService {
         reactions: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
             id: string;
-            createdAt: Date;
             userId: string;
+            createdAt: Date;
             taskId: string;
             emoji: string;
         })[];
         subscribers: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
             id: string;
-            createdAt: Date;
             userId: string;
+            createdAt: Date;
             taskId: string;
         })[];
     } & {
+        description: string | null;
+        title: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
+        priority: import("@prisma/client").$Enums.TaskPriority;
+        identifier: string;
+        assigneeId: string | null;
         workspaceId: string;
-        title: string;
         status: import("@prisma/client").$Enums.TaskStatus;
         order: number;
         customStatus: string | null;
-        identifier: string;
-        priority: import("@prisma/client").$Enums.TaskPriority;
         dueDate: Date | null;
         labels: string[];
         estimate: number | null;
@@ -3571,7 +3572,6 @@ export declare class TasksService {
         projectId: string;
         cycleId: string | null;
         creatorId: string;
-        assigneeId: string | null;
         requesterDivisionId: string | null;
         assignedDivisionId: string | null;
         parentId: string | null;
@@ -3587,14 +3587,14 @@ export declare class TasksService {
         reaction: {
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
             id: string;
-            createdAt: Date;
             userId: string;
+            createdAt: Date;
             taskId: string;
             emoji: string;
         };
@@ -3614,14 +3614,14 @@ export declare class TasksService {
         reaction: {
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
             id: string;
-            createdAt: Date;
             userId: string;
+            createdAt: Date;
             emoji: string;
             commentId: string;
         };
@@ -3635,14 +3635,14 @@ export declare class TasksService {
         subscription: {
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
             id: string;
-            createdAt: Date;
             userId: string;
+            createdAt: Date;
             taskId: string;
         };
     }>;
@@ -3652,14 +3652,14 @@ export declare class TasksService {
     getTaskSubscribers(taskId: string): Promise<({
         user: {
             id: string;
-            email: string;
             name: string;
+            email: string;
             avatarUrl: string | null;
         };
     } & {
         id: string;
-        createdAt: Date;
         userId: string;
+        createdAt: Date;
         taskId: string;
     })[]>;
     createIntakeRequest(userId: string, data: {
@@ -3689,15 +3689,15 @@ export declare class TasksService {
         comments: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
             parent: {
                 user: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 };
                 id: string;
@@ -3706,68 +3706,68 @@ export declare class TasksService {
             reactions: ({
                 user: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 };
             } & {
                 id: string;
-                createdAt: Date;
                 userId: string;
+                createdAt: Date;
                 emoji: string;
                 commentId: string;
             })[];
             replies: ({
                 user: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 };
                 reactions: ({
                     user: {
                         id: string;
-                        email: string;
                         name: string;
+                        email: string;
                         avatarUrl: string | null;
                     };
                 } & {
                     id: string;
-                    createdAt: Date;
                     userId: string;
+                    createdAt: Date;
                     emoji: string;
                     commentId: string;
                 })[];
             } & {
                 id: string;
+                userId: string;
                 createdAt: Date;
                 updatedAt: Date;
-                userId: string;
-                content: string;
                 taskId: string;
+                content: string;
                 parentId: string | null;
             })[];
         } & {
             id: string;
+            userId: string;
             createdAt: Date;
             updatedAt: Date;
-            userId: string;
-            content: string;
             taskId: string;
+            content: string;
             parentId: string | null;
         })[];
         activities: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
-            id: string;
-            createdAt: Date;
-            userId: string;
             type: string;
+            id: string;
+            userId: string;
+            createdAt: Date;
             taskId: string;
             fromValue: string | null;
             toValue: string | null;
@@ -3775,14 +3775,14 @@ export declare class TasksService {
         })[];
         creator: {
             id: string;
-            email: string;
             name: string;
+            email: string;
             avatarUrl: string | null;
         };
         assignee: {
             id: string;
-            email: string;
             name: string;
+            email: string;
             avatarUrl: string | null;
         } | null;
         requesterDivision: {
@@ -3798,12 +3798,12 @@ export declare class TasksService {
             isTechnical: boolean;
         } | null;
         parent: {
-            id: string;
             title: string;
+            id: string;
+            priority: import("@prisma/client").$Enums.TaskPriority;
+            identifier: string;
             status: import("@prisma/client").$Enums.TaskStatus;
             customStatus: string | null;
-            identifier: string;
-            priority: import("@prisma/client").$Enums.TaskPriority;
         } | null;
         subTasks: ({
             project: {
@@ -3814,22 +3814,23 @@ export declare class TasksService {
             };
             assignee: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             } | null;
         } & {
+            description: string | null;
+            title: string;
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            description: string | null;
+            priority: import("@prisma/client").$Enums.TaskPriority;
+            identifier: string;
+            assigneeId: string | null;
             workspaceId: string;
-            title: string;
             status: import("@prisma/client").$Enums.TaskStatus;
             order: number;
             customStatus: string | null;
-            identifier: string;
-            priority: import("@prisma/client").$Enums.TaskPriority;
             dueDate: Date | null;
             labels: string[];
             estimate: number | null;
@@ -3840,62 +3841,61 @@ export declare class TasksService {
             projectId: string;
             cycleId: string | null;
             creatorId: string;
-            assigneeId: string | null;
             requesterDivisionId: string | null;
             assignedDivisionId: string | null;
             parentId: string | null;
         })[];
         sourceRelations: ({
             targetTask: {
-                id: string;
                 title: string;
+                id: string;
+                priority: import("@prisma/client").$Enums.TaskPriority;
+                identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
-                identifier: string;
-                priority: import("@prisma/client").$Enums.TaskPriority;
                 labels: string[];
                 assignee: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 } | null;
             };
         } & {
+            type: string;
             id: string;
             createdAt: Date;
-            type: string;
             sourceTaskId: string;
             targetTaskId: string;
         })[];
         targetRelations: ({
             sourceTask: {
-                id: string;
                 title: string;
+                id: string;
+                priority: import("@prisma/client").$Enums.TaskPriority;
+                identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
-                identifier: string;
-                priority: import("@prisma/client").$Enums.TaskPriority;
                 labels: string[];
                 assignee: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 } | null;
             };
         } & {
+            type: string;
             id: string;
             createdAt: Date;
-            type: string;
             sourceTaskId: string;
             targetTaskId: string;
         })[];
         attachments: {
             id: string;
             createdAt: Date;
-            url: string;
             taskId: string | null;
+            url: string;
             filename: string;
             originalName: string;
             mimeType: string;
@@ -3905,42 +3905,43 @@ export declare class TasksService {
         reactions: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
             id: string;
-            createdAt: Date;
             userId: string;
+            createdAt: Date;
             taskId: string;
             emoji: string;
         })[];
         subscribers: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
             id: string;
-            createdAt: Date;
             userId: string;
+            createdAt: Date;
             taskId: string;
         })[];
     } & {
+        description: string | null;
+        title: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
+        priority: import("@prisma/client").$Enums.TaskPriority;
+        identifier: string;
+        assigneeId: string | null;
         workspaceId: string;
-        title: string;
         status: import("@prisma/client").$Enums.TaskStatus;
         order: number;
         customStatus: string | null;
-        identifier: string;
-        priority: import("@prisma/client").$Enums.TaskPriority;
         dueDate: Date | null;
         labels: string[];
         estimate: number | null;
@@ -3951,7 +3952,6 @@ export declare class TasksService {
         projectId: string;
         cycleId: string | null;
         creatorId: string;
-        assigneeId: string | null;
         requesterDivisionId: string | null;
         assignedDivisionId: string | null;
         parentId: string | null;
@@ -3972,15 +3972,15 @@ export declare class TasksService {
         comments: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
             parent: {
                 user: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 };
                 id: string;
@@ -3989,68 +3989,68 @@ export declare class TasksService {
             reactions: ({
                 user: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 };
             } & {
                 id: string;
-                createdAt: Date;
                 userId: string;
+                createdAt: Date;
                 emoji: string;
                 commentId: string;
             })[];
             replies: ({
                 user: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 };
                 reactions: ({
                     user: {
                         id: string;
-                        email: string;
                         name: string;
+                        email: string;
                         avatarUrl: string | null;
                     };
                 } & {
                     id: string;
-                    createdAt: Date;
                     userId: string;
+                    createdAt: Date;
                     emoji: string;
                     commentId: string;
                 })[];
             } & {
                 id: string;
+                userId: string;
                 createdAt: Date;
                 updatedAt: Date;
-                userId: string;
-                content: string;
                 taskId: string;
+                content: string;
                 parentId: string | null;
             })[];
         } & {
             id: string;
+            userId: string;
             createdAt: Date;
             updatedAt: Date;
-            userId: string;
-            content: string;
             taskId: string;
+            content: string;
             parentId: string | null;
         })[];
         activities: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
-            id: string;
-            createdAt: Date;
-            userId: string;
             type: string;
+            id: string;
+            userId: string;
+            createdAt: Date;
             taskId: string;
             fromValue: string | null;
             toValue: string | null;
@@ -4058,14 +4058,14 @@ export declare class TasksService {
         })[];
         creator: {
             id: string;
-            email: string;
             name: string;
+            email: string;
             avatarUrl: string | null;
         };
         assignee: {
             id: string;
-            email: string;
             name: string;
+            email: string;
             avatarUrl: string | null;
         } | null;
         requesterDivision: {
@@ -4081,12 +4081,12 @@ export declare class TasksService {
             isTechnical: boolean;
         } | null;
         parent: {
-            id: string;
             title: string;
+            id: string;
+            priority: import("@prisma/client").$Enums.TaskPriority;
+            identifier: string;
             status: import("@prisma/client").$Enums.TaskStatus;
             customStatus: string | null;
-            identifier: string;
-            priority: import("@prisma/client").$Enums.TaskPriority;
         } | null;
         subTasks: ({
             project: {
@@ -4097,22 +4097,23 @@ export declare class TasksService {
             };
             assignee: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             } | null;
         } & {
+            description: string | null;
+            title: string;
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            description: string | null;
+            priority: import("@prisma/client").$Enums.TaskPriority;
+            identifier: string;
+            assigneeId: string | null;
             workspaceId: string;
-            title: string;
             status: import("@prisma/client").$Enums.TaskStatus;
             order: number;
             customStatus: string | null;
-            identifier: string;
-            priority: import("@prisma/client").$Enums.TaskPriority;
             dueDate: Date | null;
             labels: string[];
             estimate: number | null;
@@ -4123,62 +4124,61 @@ export declare class TasksService {
             projectId: string;
             cycleId: string | null;
             creatorId: string;
-            assigneeId: string | null;
             requesterDivisionId: string | null;
             assignedDivisionId: string | null;
             parentId: string | null;
         })[];
         sourceRelations: ({
             targetTask: {
-                id: string;
                 title: string;
+                id: string;
+                priority: import("@prisma/client").$Enums.TaskPriority;
+                identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
-                identifier: string;
-                priority: import("@prisma/client").$Enums.TaskPriority;
                 labels: string[];
                 assignee: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 } | null;
             };
         } & {
+            type: string;
             id: string;
             createdAt: Date;
-            type: string;
             sourceTaskId: string;
             targetTaskId: string;
         })[];
         targetRelations: ({
             sourceTask: {
-                id: string;
                 title: string;
+                id: string;
+                priority: import("@prisma/client").$Enums.TaskPriority;
+                identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
-                identifier: string;
-                priority: import("@prisma/client").$Enums.TaskPriority;
                 labels: string[];
                 assignee: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 } | null;
             };
         } & {
+            type: string;
             id: string;
             createdAt: Date;
-            type: string;
             sourceTaskId: string;
             targetTaskId: string;
         })[];
         attachments: {
             id: string;
             createdAt: Date;
-            url: string;
             taskId: string | null;
+            url: string;
             filename: string;
             originalName: string;
             mimeType: string;
@@ -4188,42 +4188,43 @@ export declare class TasksService {
         reactions: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
             id: string;
-            createdAt: Date;
             userId: string;
+            createdAt: Date;
             taskId: string;
             emoji: string;
         })[];
         subscribers: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
             id: string;
-            createdAt: Date;
             userId: string;
+            createdAt: Date;
             taskId: string;
         })[];
     } & {
+        description: string | null;
+        title: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
+        priority: import("@prisma/client").$Enums.TaskPriority;
+        identifier: string;
+        assigneeId: string | null;
         workspaceId: string;
-        title: string;
         status: import("@prisma/client").$Enums.TaskStatus;
         order: number;
         customStatus: string | null;
-        identifier: string;
-        priority: import("@prisma/client").$Enums.TaskPriority;
         dueDate: Date | null;
         labels: string[];
         estimate: number | null;
@@ -4234,7 +4235,6 @@ export declare class TasksService {
         projectId: string;
         cycleId: string | null;
         creatorId: string;
-        assigneeId: string | null;
         requesterDivisionId: string | null;
         assignedDivisionId: string | null;
         parentId: string | null;
@@ -4261,15 +4261,15 @@ export declare class TasksService {
         comments: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
             parent: {
                 user: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 };
                 id: string;
@@ -4278,68 +4278,68 @@ export declare class TasksService {
             reactions: ({
                 user: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 };
             } & {
                 id: string;
-                createdAt: Date;
                 userId: string;
+                createdAt: Date;
                 emoji: string;
                 commentId: string;
             })[];
             replies: ({
                 user: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 };
                 reactions: ({
                     user: {
                         id: string;
-                        email: string;
                         name: string;
+                        email: string;
                         avatarUrl: string | null;
                     };
                 } & {
                     id: string;
-                    createdAt: Date;
                     userId: string;
+                    createdAt: Date;
                     emoji: string;
                     commentId: string;
                 })[];
             } & {
                 id: string;
+                userId: string;
                 createdAt: Date;
                 updatedAt: Date;
-                userId: string;
-                content: string;
                 taskId: string;
+                content: string;
                 parentId: string | null;
             })[];
         } & {
             id: string;
+            userId: string;
             createdAt: Date;
             updatedAt: Date;
-            userId: string;
-            content: string;
             taskId: string;
+            content: string;
             parentId: string | null;
         })[];
         activities: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
-            id: string;
-            createdAt: Date;
-            userId: string;
             type: string;
+            id: string;
+            userId: string;
+            createdAt: Date;
             taskId: string;
             fromValue: string | null;
             toValue: string | null;
@@ -4347,14 +4347,14 @@ export declare class TasksService {
         })[];
         creator: {
             id: string;
-            email: string;
             name: string;
+            email: string;
             avatarUrl: string | null;
         };
         assignee: {
             id: string;
-            email: string;
             name: string;
+            email: string;
             avatarUrl: string | null;
         } | null;
         requesterDivision: {
@@ -4370,12 +4370,12 @@ export declare class TasksService {
             isTechnical: boolean;
         } | null;
         parent: {
-            id: string;
             title: string;
+            id: string;
+            priority: import("@prisma/client").$Enums.TaskPriority;
+            identifier: string;
             status: import("@prisma/client").$Enums.TaskStatus;
             customStatus: string | null;
-            identifier: string;
-            priority: import("@prisma/client").$Enums.TaskPriority;
         } | null;
         subTasks: ({
             project: {
@@ -4386,22 +4386,23 @@ export declare class TasksService {
             };
             assignee: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             } | null;
         } & {
+            description: string | null;
+            title: string;
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            description: string | null;
+            priority: import("@prisma/client").$Enums.TaskPriority;
+            identifier: string;
+            assigneeId: string | null;
             workspaceId: string;
-            title: string;
             status: import("@prisma/client").$Enums.TaskStatus;
             order: number;
             customStatus: string | null;
-            identifier: string;
-            priority: import("@prisma/client").$Enums.TaskPriority;
             dueDate: Date | null;
             labels: string[];
             estimate: number | null;
@@ -4412,62 +4413,61 @@ export declare class TasksService {
             projectId: string;
             cycleId: string | null;
             creatorId: string;
-            assigneeId: string | null;
             requesterDivisionId: string | null;
             assignedDivisionId: string | null;
             parentId: string | null;
         })[];
         sourceRelations: ({
             targetTask: {
-                id: string;
                 title: string;
+                id: string;
+                priority: import("@prisma/client").$Enums.TaskPriority;
+                identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
-                identifier: string;
-                priority: import("@prisma/client").$Enums.TaskPriority;
                 labels: string[];
                 assignee: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 } | null;
             };
         } & {
+            type: string;
             id: string;
             createdAt: Date;
-            type: string;
             sourceTaskId: string;
             targetTaskId: string;
         })[];
         targetRelations: ({
             sourceTask: {
-                id: string;
                 title: string;
+                id: string;
+                priority: import("@prisma/client").$Enums.TaskPriority;
+                identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
                 customStatus: string | null;
-                identifier: string;
-                priority: import("@prisma/client").$Enums.TaskPriority;
                 labels: string[];
                 assignee: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 } | null;
             };
         } & {
+            type: string;
             id: string;
             createdAt: Date;
-            type: string;
             sourceTaskId: string;
             targetTaskId: string;
         })[];
         attachments: {
             id: string;
             createdAt: Date;
-            url: string;
             taskId: string | null;
+            url: string;
             filename: string;
             originalName: string;
             mimeType: string;
@@ -4477,42 +4477,43 @@ export declare class TasksService {
         reactions: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
             id: string;
-            createdAt: Date;
             userId: string;
+            createdAt: Date;
             taskId: string;
             emoji: string;
         })[];
         subscribers: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
             id: string;
-            createdAt: Date;
             userId: string;
+            createdAt: Date;
             taskId: string;
         })[];
     } & {
+        description: string | null;
+        title: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
+        priority: import("@prisma/client").$Enums.TaskPriority;
+        identifier: string;
+        assigneeId: string | null;
         workspaceId: string;
-        title: string;
         status: import("@prisma/client").$Enums.TaskStatus;
         order: number;
         customStatus: string | null;
-        identifier: string;
-        priority: import("@prisma/client").$Enums.TaskPriority;
         dueDate: Date | null;
         labels: string[];
         estimate: number | null;
@@ -4523,7 +4524,6 @@ export declare class TasksService {
         projectId: string;
         cycleId: string | null;
         creatorId: string;
-        assigneeId: string | null;
         requesterDivisionId: string | null;
         assignedDivisionId: string | null;
         parentId: string | null;

@@ -14,31 +14,31 @@ export declare class WorkspacesService {
         members: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
             id: string;
+            userId: string;
             createdAt: Date;
             role: import("@prisma/client").$Enums.WorkspaceRole;
-            userId: string;
             workspaceId: string;
         })[];
         projects: {
+            description: string | null;
             id: string;
-            name: string;
             createdAt: Date;
             updatedAt: Date;
+            name: string;
             key: string;
-            description: string | null;
             color: string | null;
             workspaceId: string;
         }[];
         id: string;
-        name: string;
         createdAt: Date;
         updatedAt: Date;
+        name: string;
         slug: string;
         logoUrl: string | null;
         columnOrder: string[];
@@ -49,24 +49,24 @@ export declare class WorkspacesService {
         members: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
             id: string;
+            userId: string;
             createdAt: Date;
             role: import("@prisma/client").$Enums.WorkspaceRole;
-            userId: string;
             workspaceId: string;
         })[];
         projects: {
+            description: string | null;
             id: string;
-            name: string;
             createdAt: Date;
             updatedAt: Date;
+            name: string;
             key: string;
-            description: string | null;
             color: string | null;
             workspaceId: string;
         }[];
@@ -74,31 +74,31 @@ export declare class WorkspacesService {
             members: ({
                 user: {
                     id: string;
-                    email: string;
                     name: string;
+                    email: string;
                     avatarUrl: string | null;
                 };
             } & {
                 id: string;
+                userId: string;
                 createdAt: Date;
                 role: string | null;
-                userId: string;
                 divisionId: string;
             })[];
         } & {
+            description: string | null;
             id: string;
-            name: string;
             createdAt: Date;
             updatedAt: Date;
+            name: string;
             slug: string;
-            description: string | null;
             workspaceId: string;
             isTechnical: boolean;
         })[];
         id: string;
-        name: string;
         createdAt: Date;
         updatedAt: Date;
+        name: string;
         slug: string;
         logoUrl: string | null;
         columnOrder: string[];
@@ -108,20 +108,20 @@ export declare class WorkspacesService {
         name: string;
     }): Promise<{
         projects: {
+            description: string | null;
             id: string;
-            name: string;
             createdAt: Date;
             updatedAt: Date;
+            name: string;
             key: string;
-            description: string | null;
             color: string | null;
             workspaceId: string;
         }[];
     } & {
         id: string;
-        name: string;
         createdAt: Date;
         updatedAt: Date;
+        name: string;
         slug: string;
         logoUrl: string | null;
         columnOrder: string[];
@@ -141,18 +141,18 @@ export declare class WorkspacesService {
             };
             invitedBy: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
+            token: string;
             id: string;
-            email: string;
             createdAt: Date;
             updatedAt: Date;
+            email: string;
             role: import("@prisma/client").$Enums.WorkspaceRole;
             workspaceId: string;
-            token: string;
             status: import("@prisma/client").$Enums.InvitationStatus;
             invitedById: string;
         };
@@ -160,22 +160,22 @@ export declare class WorkspacesService {
     getWorkspaceMembers(workspaceId: string): Promise<({
         user: {
             id: string;
-            email: string;
             name: string;
+            email: string;
             avatarUrl: string | null;
         };
     } & {
         id: string;
+        userId: string;
         createdAt: Date;
         role: import("@prisma/client").$Enums.WorkspaceRole;
-        userId: string;
         workspaceId: string;
     })[]>;
     getWorkspaceSections(workspaceId: string): Promise<{
         id: string;
-        name: string;
         createdAt: Date;
         updatedAt: Date;
+        name: string;
         key: string;
         color: string;
         workspaceId: string;
@@ -189,9 +189,9 @@ export declare class WorkspacesService {
         category?: any;
     }): Promise<{
         id: string;
-        name: string;
         createdAt: Date;
         updatedAt: Date;
+        name: string;
         key: string;
         color: string;
         workspaceId: string;
@@ -200,9 +200,9 @@ export declare class WorkspacesService {
     }>;
     deleteWorkspaceSection(workspaceId: string, sectionId: string): Promise<{
         id: string;
-        name: string;
         createdAt: Date;
         updatedAt: Date;
+        name: string;
         key: string;
         color: string;
         workspaceId: string;
@@ -211,9 +211,9 @@ export declare class WorkspacesService {
     }>;
     updateColumnOrder(workspaceId: string, columnOrder: string[]): Promise<{
         id: string;
-        name: string;
         createdAt: Date;
         updatedAt: Date;
+        name: string;
         slug: string;
         logoUrl: string | null;
         columnOrder: string[];
@@ -228,31 +228,31 @@ export declare class WorkspacesService {
         members: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
             id: string;
+            userId: string;
             createdAt: Date;
             role: import("@prisma/client").$Enums.WorkspaceRole;
-            userId: string;
             workspaceId: string;
         })[];
         projects: {
+            description: string | null;
             id: string;
-            name: string;
             createdAt: Date;
             updatedAt: Date;
+            name: string;
             key: string;
-            description: string | null;
             color: string | null;
             workspaceId: string;
         }[];
         id: string;
-        name: string;
         createdAt: Date;
         updatedAt: Date;
+        name: string;
         slug: string;
         logoUrl: string | null;
         columnOrder: string[];
@@ -261,15 +261,15 @@ export declare class WorkspacesService {
     updateMemberRole(workspaceId: string, memberId: string, role: WorkspaceRole): Promise<{
         user: {
             id: string;
-            email: string;
             name: string;
+            email: string;
             avatarUrl: string | null;
         };
     } & {
         id: string;
+        userId: string;
         createdAt: Date;
         role: import("@prisma/client").$Enums.WorkspaceRole;
-        userId: string;
         workspaceId: string;
     }>;
     removeMember(workspaceId: string, memberId: string): Promise<{
@@ -279,18 +279,18 @@ export declare class WorkspacesService {
     getWorkspaceInvitations(workspaceId: string, currentUserId: string): Promise<({
         invitedBy: {
             id: string;
-            email: string;
             name: string;
+            email: string;
             avatarUrl: string | null;
         };
     } & {
+        token: string;
         id: string;
-        email: string;
         createdAt: Date;
         updatedAt: Date;
+        email: string;
         role: import("@prisma/client").$Enums.WorkspaceRole;
         workspaceId: string;
-        token: string;
         status: import("@prisma/client").$Enums.InvitationStatus;
         invitedById: string;
     })[]>;
@@ -306,18 +306,18 @@ export declare class WorkspacesService {
         };
         invitedBy: {
             id: string;
-            email: string;
             name: string;
+            email: string;
             avatarUrl: string | null;
         };
     } & {
+        token: string;
         id: string;
-        email: string;
         createdAt: Date;
         updatedAt: Date;
+        email: string;
         role: import("@prisma/client").$Enums.WorkspaceRole;
         workspaceId: string;
-        token: string;
         status: import("@prisma/client").$Enums.InvitationStatus;
         invitedById: string;
     }>;
@@ -326,9 +326,9 @@ export declare class WorkspacesService {
         message: string;
         workspace: {
             id: string;
-            name: string;
             createdAt: Date;
             updatedAt: Date;
+            name: string;
             slug: string;
             logoUrl: string | null;
             columnOrder: string[];
@@ -337,15 +337,15 @@ export declare class WorkspacesService {
         membership: {
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
             id: string;
+            userId: string;
             createdAt: Date;
             role: import("@prisma/client").$Enums.WorkspaceRole;
-            userId: string;
             workspaceId: string;
         };
     }>;
@@ -368,9 +368,9 @@ export declare class WorkspacesService {
         };
         workspace: {
             id: string;
-            name: string;
             createdAt: Date;
             updatedAt: Date;
+            name: string;
             slug: string;
             logoUrl: string | null;
             columnOrder: string[];
@@ -379,15 +379,15 @@ export declare class WorkspacesService {
         membership: {
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
             id: string;
+            userId: string;
             createdAt: Date;
             role: import("@prisma/client").$Enums.WorkspaceRole;
-            userId: string;
             workspaceId: string;
         };
     }>;
@@ -396,15 +396,15 @@ export declare class WorkspacesService {
         members: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
             id: string;
+            userId: string;
             createdAt: Date;
             role: string | null;
-            userId: string;
             divisionId: string;
         })[];
         _count: {
@@ -412,12 +412,12 @@ export declare class WorkspacesService {
             requestedTasks: number;
         };
     } & {
+        description: string | null;
         id: string;
-        name: string;
         createdAt: Date;
         updatedAt: Date;
+        name: string;
         slug: string;
-        description: string | null;
         workspaceId: string;
         isTechnical: boolean;
     })[]>;
@@ -430,24 +430,24 @@ export declare class WorkspacesService {
         members: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
             id: string;
+            userId: string;
             createdAt: Date;
             role: string | null;
-            userId: string;
             divisionId: string;
         })[];
     } & {
+        description: string | null;
         id: string;
-        name: string;
         createdAt: Date;
         updatedAt: Date;
+        name: string;
         slug: string;
-        description: string | null;
         workspaceId: string;
         isTechnical: boolean;
     }>;
@@ -460,66 +460,66 @@ export declare class WorkspacesService {
         members: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
             id: string;
+            userId: string;
             createdAt: Date;
             role: string | null;
-            userId: string;
             divisionId: string;
         })[];
     } & {
+        description: string | null;
         id: string;
-        name: string;
         createdAt: Date;
         updatedAt: Date;
+        name: string;
         slug: string;
-        description: string | null;
         workspaceId: string;
         isTechnical: boolean;
     }>;
     deleteDivision(divisionId: string, userId: string): Promise<{
+        description: string | null;
         id: string;
-        name: string;
         createdAt: Date;
         updatedAt: Date;
+        name: string;
         slug: string;
-        description: string | null;
         workspaceId: string;
         isTechnical: boolean;
     }>;
     addDivisionMember(divisionId: string, userId: string, targetUserId: string, role?: string): Promise<{
         user: {
             id: string;
-            email: string;
             name: string;
+            email: string;
             avatarUrl: string | null;
         };
         division: {
+            description: string | null;
             id: string;
-            name: string;
             createdAt: Date;
             updatedAt: Date;
+            name: string;
             slug: string;
-            description: string | null;
             workspaceId: string;
             isTechnical: boolean;
         };
     } & {
         id: string;
+        userId: string;
         createdAt: Date;
         role: string | null;
-        userId: string;
         divisionId: string;
     }>;
     removeDivisionMember(divisionId: string, userId: string, targetUserId: string): Promise<{
         id: string;
+        userId: string;
         createdAt: Date;
         role: string | null;
-        userId: string;
         divisionId: string;
     }>;
 }

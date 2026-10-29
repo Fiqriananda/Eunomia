@@ -5,8 +5,8 @@ export declare class UploadsService {
     createAttachment(file: Express.Multer.File, userId: string, taskId?: string): Promise<{
         id: string;
         createdAt: Date;
-        url: string;
         taskId: string | null;
+        url: string;
         filename: string;
         originalName: string;
         mimeType: string;
@@ -16,8 +16,8 @@ export declare class UploadsService {
     linkAttachmentToTask(attachmentId: string, taskId: string): Promise<{
         id: string;
         createdAt: Date;
-        url: string;
         taskId: string | null;
+        url: string;
         filename: string;
         originalName: string;
         mimeType: string;
@@ -27,8 +27,8 @@ export declare class UploadsService {
     deleteAttachment(id: string): Promise<{
         id: string;
         createdAt: Date;
-        url: string;
         taskId: string | null;
+        url: string;
         filename: string;
         originalName: string;
         mimeType: string;

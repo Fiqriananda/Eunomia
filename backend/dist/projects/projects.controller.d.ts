@@ -7,12 +7,12 @@ export declare class ProjectsController {
             tasks: number;
         };
     } & {
+        description: string | null;
         id: string;
-        name: string;
         createdAt: Date;
         updatedAt: Date;
+        name: string;
         key: string;
-        description: string | null;
         color: string | null;
         workspaceId: string;
     })[]>;
@@ -23,12 +23,12 @@ export declare class ProjectsController {
         description?: string;
         color?: string;
     }): Promise<{
+        description: string | null;
         id: string;
-        name: string;
         createdAt: Date;
         updatedAt: Date;
+        name: string;
         key: string;
-        description: string | null;
         color: string | null;
         workspaceId: string;
     }>;
@@ -38,12 +38,12 @@ export declare class ProjectsController {
         description?: string;
         color?: string;
     }): Promise<{
+        description: string | null;
         id: string;
-        name: string;
         createdAt: Date;
         updatedAt: Date;
+        name: string;
         key: string;
-        description: string | null;
         color: string | null;
         workspaceId: string;
     }>;

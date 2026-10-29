@@ -16,65 +16,65 @@ export declare class InboxController {
                     key: string;
                     color: string | null;
                 };
-                id: string;
                 title: string;
-                status: import("@prisma/client").$Enums.TaskStatus;
-                identifier: string;
+                id: string;
                 priority: import("@prisma/client").$Enums.TaskPriority;
+                identifier: string;
+                status: import("@prisma/client").$Enums.TaskStatus;
             } | null;
             actor: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
             invitation: {
+                token: string;
                 id: string;
                 role: import("@prisma/client").$Enums.WorkspaceRole;
-                token: string;
                 status: import("@prisma/client").$Enums.InvitationStatus;
             } | null;
         } & {
-            id: string;
-            createdAt: Date;
-            userId: string;
-            workspaceId: string | null;
             type: string;
             title: string;
             body: string | null;
+            id: string;
+            userId: string;
+            createdAt: Date;
+            taskId: string | null;
+            workspaceId: string | null;
             isRead: boolean;
             readAt: Date | null;
             actorId: string;
-            taskId: string | null;
             invitationId: string | null;
         })[];
         unreadCount: number;
     }>;
     markAsRead(id: string, userId: string): Promise<{
         task: {
-            id: string;
             title: string;
-            status: import("@prisma/client").$Enums.TaskStatus;
+            id: string;
             identifier: string;
+            status: import("@prisma/client").$Enums.TaskStatus;
         } | null;
         actor: {
             id: string;
-            email: string;
             name: string;
+            email: string;
             avatarUrl: string | null;
         };
     } & {
-        id: string;
-        createdAt: Date;
-        userId: string;
-        workspaceId: string | null;
         type: string;
         title: string;
         body: string | null;
+        id: string;
+        userId: string;
+        createdAt: Date;
+        taskId: string | null;
+        workspaceId: string | null;
         isRead: boolean;
         readAt: Date | null;
         actorId: string;
-        taskId: string | null;
         invitationId: string | null;
     }>;
     markAllAsRead(userId: string): Promise<{

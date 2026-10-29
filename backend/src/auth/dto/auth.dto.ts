@@ -15,6 +15,26 @@ export class RegisterDto {
   @IsNotEmpty()
   @IsString()
   name: string;
+
+  @ApiPropertyOptional({ example: 'dK5a...token', description: 'FCM push notification token' })
+  @IsOptional()
+  @IsString()
+  fcmToken?: string;
+
+  @ApiPropertyOptional({ example: 'dK5a...token', description: 'Alias for fcmToken' })
+  @IsOptional()
+  @IsString()
+  deviceToken?: string;
+
+  @ApiPropertyOptional({ example: 'android', enum: ['android', 'ios', 'web'] })
+  @IsOptional()
+  @IsString()
+  platform?: string;
+
+  @ApiPropertyOptional({ example: 'Pixel 8' })
+  @IsOptional()
+  @IsString()
+  deviceModel?: string;
 }
 
 export class LoginDto {
@@ -26,6 +46,26 @@ export class LoginDto {
   @IsNotEmpty()
   @IsString()
   password: string;
+
+  @ApiPropertyOptional({ example: 'dK5a...token', description: 'FCM push notification token' })
+  @IsOptional()
+  @IsString()
+  fcmToken?: string;
+
+  @ApiPropertyOptional({ example: 'dK5a...token', description: 'Alias for fcmToken' })
+  @IsOptional()
+  @IsString()
+  deviceToken?: string;
+
+  @ApiPropertyOptional({ example: 'android', enum: ['android', 'ios', 'web'] })
+  @IsOptional()
+  @IsString()
+  platform?: string;
+
+  @ApiPropertyOptional({ example: 'Pixel 8' })
+  @IsOptional()
+  @IsString()
+  deviceModel?: string;
 }
 
 export class UpdateProfileDto {
