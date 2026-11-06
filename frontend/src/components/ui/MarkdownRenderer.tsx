@@ -178,7 +178,15 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
   onImageClick,
   onContentChange,
 }) => {
-  if (!content) return null;
+  const sanitizedContent = useMemo(() => {
+    if (!content) return '';
+    return content.replace(
+      /(?:@[\w.-]+)?\" target=\"_blank\" rel=\"noopener noreferrer\" class=\"[^\"]*\">\s*/gi,
+      '',
+    );
+  }, [content]);
+
+  if (!sanitizedContent) return null;
 
   const { workspace } = useAuth();
 
@@ -205,8 +213,8 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
 
     const mentionPattern =
       escapedMembers.length > 0
-        ? `(@(?:${escapedMembers.join('|')}|[a-zA-Z0-9_\\-\\.]+)(?=$|[\\s.,!?:;]))`
-        : `(@[a-zA-Z0-9_\\-\\.]+(?=$|[\\s.,!?:;]))`;
+        ? `((?:^|[\\s(\\[])@(?:${escapedMembers.join('|')}|[a-zA-Z0-9_\\-\\.]+)(?=$|[\\s.,!?:;\\])]))`
+        : `((?:^|[\\s(\\[])@[a-zA-Z0-9_\\-\\.]+(?=$|[\\s.,!?:;\\])]))`;
 
     return new RegExp(
       `(!\\[(.*?)\\]\\((.*?)\\)|\\[(.*?)\\]\\((.*?)\\)|~~([^~]+)~~|\\*\\*\\*([^*]+)\\*\\*\\*|\\*\\*([^*]+)\\*\\*|\\*([^*]+)\\*|\`([^\`]+)\`|${mentionPattern}|(https?:\\/\\/[^\\s]+))`,
@@ -217,7 +225,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
   // Helper to toggle checkbox on a specific line
   const handleToggleCheckbox = (lineIndex: number, currentChecked: boolean) => {
     if (!onContentChange) return;
-    const rawLines = content.split('\n');
+    const rawLines = sanitizedContent.split('\n');
     if (lineIndex < 0 || lineIndex >= rawLines.length) return;
 
     const targetLine = rawLines[lineIndex];
@@ -399,8 +407,10 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
         );
       }
       // 8. Mention: @username
-      else if (fullMatch.startsWith('@')) {
-        const mentionName = fullMatch.slice(1).trim();
+      else if (fullMatch.includes('@')) {
+        const leadingWhitespace = fullMatch.match(/^[\s(\[]/)?.[0] || '';
+        const mentionPart = fullMatch.slice(leadingWhitespace.length);
+        const mentionName = mentionPart.slice(1).trim();
         const matchedMember = effectiveMembers.find((m) => {
           const mName = m.user?.name?.toLowerCase() || '';
           const mEmail = m.user?.email?.split('@')[0]?.toLowerCase() || '';
@@ -429,14 +439,17 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
         );
 
         nodes.push(
-          <ProfileHoverCard
-            key={`${keyPrefix}-mention-${match.index}`}
-            user={matchedMember?.user || { name: mentionName }}
-            member={matchedMember}
-            workspaceName={workspace?.name}
-          >
-            {mentionBadge}
-          </ProfileHoverCard>,
+          <React.Fragment key={`${keyPrefix}-mention-wrap-${match.index}`}>
+            {leadingWhitespace}
+            <ProfileHoverCard
+              key={`${keyPrefix}-mention-${match.index}`}
+              user={matchedMember?.user || { name: mentionName }}
+              member={matchedMember}
+              workspaceName={workspace?.name}
+            >
+              {mentionBadge}
+            </ProfileHoverCard>
+          </React.Fragment>,
         );
       }
       // 9. Autolink: https://...
@@ -469,7 +482,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
     return nodes;
   };
 
-  const lines = content.split('\n');
+  const lines = sanitizedContent.split('\n');
   const elements: React.ReactNode[] = [];
 
   let i = 0;

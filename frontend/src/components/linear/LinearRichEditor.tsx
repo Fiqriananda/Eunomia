@@ -36,8 +36,14 @@ interface LinearRichEditorProps {
 function markdownToHtml(md: string, membersList: WorkspaceMember[] = []): string {
   if (!md || !md.trim()) return '';
 
+  // Sanitize previously corrupted leaked link attributes
+  const cleanInput = md.replace(
+    /(?:@[\w.-]+)?\" target=\"_blank\" rel=\"noopener noreferrer\" class=\"[^\"]*\">\s*/gi,
+    '',
+  );
+
   // 1. Normalize multi-line image tags where ] and ( are separated by newlines
-  let normalized = md.replace(
+  let normalized = cleanInput.replace(
     /!\[([\s\S]*?)\]\s*\(([\s\S]*?)\)/g,
     (_, alt, url) => {
       const cleanAlt = alt.trim().replace(/\n+/g, ' ');
@@ -291,16 +297,67 @@ function escapeHtml(text: string): string {
   return text
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }
 
 /**
  * Formats inline Markdown into HTML elements
  */
 function formatInline(text: string, membersList: WorkspaceMember[] = []): string {
-  let res = escapeHtml(text);
+  if (!text) return '';
 
-  // Match team member names first (longest names first) for accurate multi-word mentions
+  // Sanitize previously corrupted leaked link attributes
+  let res = text.replace(
+    /(?:@[\w.-]+)?\" target=\"_blank\" rel=\"noopener noreferrer\" class=\"[^\"]*\">\s*/gi,
+    '',
+  );
+
+  const tokens: { id: string; html: string }[] = [];
+  const createToken = (html: string) => {
+    const id = `__INLINE_TOKEN_${tokens.length}__`;
+    tokens.push({ id, html });
+    return id;
+  };
+
+  // 1. Protect inline code: `code`
+  res = res.replace(/`([^`]+)`/g, (_, code) => {
+    const escapedCode = escapeHtml(code);
+    return createToken(
+      `<code class="px-1.5 py-0.5 rounded bg-[#181926] text-indigo-300 font-mono text-xs border border-border/40">${escapedCode}</code>`,
+    );
+  });
+
+  // 2. Protect markdown links: [text](url)
+  res = res.replace(/\[(.*?)\]\((.*?)\)/g, (_, label, url) => {
+    const cleanUrl = url.trim().replace(/^<|>$/g, '').replace(/"/g, '%22');
+    const safeLabel = escapeHtml(label);
+    return createToken(
+      `<a href="${cleanUrl}" target="_blank" rel="noopener noreferrer" class="text-indigo-400 underline hover:text-indigo-300">${safeLabel}</a>`,
+    );
+  });
+
+  // 3. Protect bare URLs / Autolinks: https://... or http://...
+  res = res.replace(/(https?:\/\/[^\s<]+)/g, (url) => {
+    let cleanUrl = url;
+    let trailingPunct = '';
+    if (/[.,!?:;]$/.test(cleanUrl)) {
+      trailingPunct = cleanUrl.slice(-1);
+      cleanUrl = cleanUrl.slice(0, -1);
+    }
+    const safeUrl = cleanUrl.replace(/"/g, '%22');
+    const safeText = escapeHtml(cleanUrl);
+    return (
+      createToken(
+        `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="text-indigo-400 underline hover:text-indigo-300">${safeText}</a>`,
+      ) + trailingPunct
+    );
+  });
+
+  // Escape HTML for remaining text
+  res = escapeHtml(res);
+
+  // 4. Team member mentions (longest names first)
   const sortedMembers = [...membersList].sort(
     (a, b) => (b.user?.name?.length || 0) - (a.user?.name?.length || 0),
   );
@@ -308,27 +365,28 @@ function formatInline(text: string, membersList: WorkspaceMember[] = []): string
     if (m.user?.name) {
       const name = m.user.name;
       const escapedName = escapeHtml(name);
+      // Require start of line, whitespace, or open bracket/paren before @
       const mentionRegex = new RegExp(
-        `@${escapedName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=$|[\\s.,!?:;])`,
+        `(^|[\\s(\\[])@${escapedName.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&')}(?=$|[\\s.,!?:;\\])])`,
         'gi',
       );
       res = res.replace(
         mentionRegex,
-        `<span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 select-none" contenteditable="false" data-mention="${escapedName}">@${escapedName}</span>`,
+        `$1<span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 select-none" contenteditable="false" data-mention="${escapedName}">@${escapedName}</span>`,
       );
     }
   }
 
-  // Generic @mentions (e.g. @SarahConnor or @Sarah Connor)
+  // 5. Generic @mentions (e.g. @SarahConnor) - require start of line or whitespace before @
   res = res.replace(
-    /@([A-Za-z0-9_\-\.]+(?:\s+[A-Za-z0-9_\-\.]+)?)/g,
-    (match, name) => {
+    /(^|[\s(\[])@([A-Za-z0-9_\-.]+)(?=$|[\s.,!?:;\])])/g,
+    (match, prefix, name) => {
       if (match.includes('data-mention') || match.includes('<span')) return match;
-      return `<span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 select-none" contenteditable="false" data-mention="${name}">@${name}</span>`;
+      return `${prefix}<span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 select-none" contenteditable="false" data-mention="${name}">@${name}</span>`;
     },
   );
 
-  // Bold & Italic: ***text***
+  // 6. Bold & Italic: ***text***
   res = res.replace(/\*\*\*(.*?)\*\*\*/g, '<strong><em>$1</em></strong>');
   // Bold: **text**
   res = res.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
@@ -347,16 +405,11 @@ function formatInline(text: string, membersList: WorkspaceMember[] = []): string
   // Underline: <u>text</u>
   res = res.replace(/&lt;u&gt;(.*?)&lt;\/u&gt;/g, '<u class="underline">$1</u>');
   res = res.replace(/<u>(.*?)<\/u>/g, '<u class="underline">$1</u>');
-  // Inline Code: `code`
-  res = res.replace(
-    /`([^`]+)`/g,
-    '<code class="px-1.5 py-0.5 rounded bg-[#181926] text-indigo-300 font-mono text-xs border border-border/40">$1</code>',
-  );
-  // Links: [text](url)
-  res = res.replace(
-    /\[(.*?)\]\((.*?)\)/g,
-    '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-indigo-400 underline hover:text-indigo-300">$1</a>',
-  );
+
+  // 7. Restore protected tokens
+  for (const { id, html } of tokens) {
+    res = res.replace(id, html);
+  }
 
   return res;
 }
@@ -453,8 +506,19 @@ function htmlToMarkdown(node: Node): string {
     }
     case 'blockquote':
       return `\n> ${childrenMd.trim()}\n\n`;
-    case 'a':
-      return `[${childrenMd}](${el.getAttribute('href') || ''})`;
+    case 'a': {
+      const rawHref = el.getAttribute('href') || '';
+      const cleanHref = rawHref
+        .replace(/"/g, '')
+        .replace(/<[^>]+>/g, '')
+        .trim();
+      const cleanChildren = childrenMd.trim();
+      if (!cleanHref) return cleanChildren;
+      if (cleanChildren === cleanHref) {
+        return cleanHref;
+      }
+      return `[${cleanChildren}](${cleanHref})`;
+    }
     case 'img': {
       if (el.closest('.editor-image-card')) {
         return '';
@@ -509,6 +573,10 @@ function cleanMarkdown(md: string): string {
     .replace(/\u00A0/g, ' ')
     .replace(/\r\n/g, '\n')
     .replace(/\n{3,}/g, '\n\n')
+    .replace(
+      /(?:@[\w.-]+)?\" target=\"_blank\" rel=\"noopener noreferrer\" class=\"[^\"]*\">\s*/gi,
+      '',
+    )
     .trim();
 }
 
@@ -1032,7 +1100,8 @@ export function LinearRichEditor({
   const formatLink = () => {
     const url = prompt('Enter URL (e.g. https://example.com):');
     if (url) {
-      document.execCommand('createLink', false, url);
+      const cleanUrl = url.trim().replace(/"/g, '%22');
+      document.execCommand('createLink', false, cleanUrl);
       syncMarkdown();
     }
   };
