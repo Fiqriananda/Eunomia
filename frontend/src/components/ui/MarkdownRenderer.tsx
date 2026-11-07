@@ -789,25 +789,37 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
         </blockquote>,
       );
     }
-    // 8. Bullet list: - or * or +
-    else if (/^[-*+]\s+(.*)/.test(line)) {
-      const itemText = line.replace(/^[-*+]\s+/, '');
+    // 8. Bullet list: - or * or + or • (with nested indentation support)
+    else if (/^(\s*)([-*+•])\s+(.*)/.test(line)) {
+      const match = line.match(/^(\s*)([-*+•])\s+(.*)/)!;
+      const indent = match[1].replace(/\t/g, '  ').length;
+      const itemText = match[3];
+      const isNested = indent >= 2;
       elements.push(
         <li
           key={`li-${i}`}
-          className="ml-5 list-disc text-zinc-300 my-0.5 text-xs leading-relaxed"
+          className={cn(
+            'text-zinc-300 my-0.5 text-xs leading-relaxed',
+            isNested ? 'ml-10 list-[circle]' : 'ml-5 list-disc',
+          )}
         >
           {renderInline(itemText, `li-${i}`)}
         </li>,
       );
     }
-    // 9. Numbered list: 1. 2. etc.
-    else if (/^\d+\.\s+(.*)/.test(line)) {
-      const itemText = line.replace(/^\d+\.\s+/, '');
+    // 9. Numbered list: 1. 2. etc. (with nested indentation support)
+    else if (/^(\s*)(\d+)\.\s+(.*)/.test(line)) {
+      const match = line.match(/^(\s*)(\d+)\.\s+(.*)/)!;
+      const indent = match[1].replace(/\t/g, '  ').length;
+      const itemText = match[3];
+      const isNested = indent >= 2;
       elements.push(
         <li
           key={`oli-${i}`}
-          className="ml-5 list-decimal text-zinc-300 my-0.5 text-xs leading-relaxed"
+          className={cn(
+            'text-zinc-300 my-0.5 text-xs leading-relaxed',
+            isNested ? 'ml-10 list-[lower-alpha]' : 'ml-5 list-decimal',
+          )}
         >
           {renderInline(itemText, `oli-${i}`)}
         </li>,
