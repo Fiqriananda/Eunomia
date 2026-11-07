@@ -38,13 +38,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../../lib/utils';
 
 interface SidebarProps {
-  currentTab: 'all' | 'active' | 'backlog' | 'inbox' | 'cycles' | 'trash' | 'team' | 'triage' | 'requests';
-  onTabChange: (tab: 'all' | 'active' | 'backlog' | 'inbox' | 'cycles' | 'trash' | 'team' | 'triage' | 'requests') => void;
+  currentTab: 'all' | 'active' | 'backlog' | 'inbox' | 'cycles' | 'trash' | 'team' | 'triage' | 'requests' | 'projects';
+  onTabChange: (tab: 'all' | 'active' | 'backlog' | 'inbox' | 'cycles' | 'trash' | 'team' | 'triage' | 'requests' | 'projects') => void;
   onOpenCreateIssue: () => void;
   onOpenInviteModal: () => void;
   onOpenCommandMenu: () => void;
   onOpenWorkspaceSettings?: () => void;
   onOpenIntakeModal?: () => void;
+  onOpenCreateProject?: () => void;
   taskCounts?: { all: number; active: number; backlog: number; trash?: number };
   unreadInboxCount?: number;
   triageCount?: number;
@@ -59,6 +60,7 @@ export function Sidebar({
   onOpenInviteModal,
   onOpenCommandMenu,
   onOpenWorkspaceSettings,
+  onOpenCreateProject,
   taskCounts = { all: 0, active: 0, backlog: 0 },
   unreadInboxCount = 0,
   triageCount = 0,
@@ -103,7 +105,7 @@ export function Sidebar({
     }
   };
 
-  const handleTabSelect = (tab: 'all' | 'active' | 'backlog' | 'inbox' | 'cycles' | 'trash' | 'team' | 'triage' | 'requests') => {
+  const handleTabSelect = (tab: 'all' | 'active' | 'backlog' | 'inbox' | 'cycles' | 'trash' | 'team' | 'triage' | 'requests' | 'projects') => {
     onTabChange(tab);
     onMobileClose?.();
   };
@@ -508,29 +510,57 @@ export function Sidebar({
           </button>
         </div>
 
-        {/* Projects Section */}
+        {/* Projects (Epics) Section */}
         <div className="p-2 pt-3 border-t border-border/40 space-y-1">
           <div className="px-2.5 py-1 text-[10px] font-semibold text-zinc-500 uppercase tracking-wider flex items-center justify-between">
-            <span>Projects</span>
+            <button
+              onClick={() => {
+                setProject(null);
+                handleTabSelect('projects');
+              }}
+              className="hover:text-zinc-300 transition-colors flex items-center gap-1"
+            >
+              <span>Projects (Epics)</span>
+            </button>
+            {onOpenCreateProject && (
+              <button
+                onClick={onOpenCreateProject}
+                title="Create new project / epic"
+                className="text-zinc-400 hover:text-white p-0.5 rounded hover:bg-zinc-800 transition-colors"
+              >
+                <Plus className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
 
           <button
-            onClick={() => handleProjectSelect(null)}
+            onClick={() => {
+              setProject(null);
+              handleTabSelect('projects');
+            }}
             className={cn(
-              'w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md transition-colors text-left text-xs',
-              project === null
-                ? 'text-primary font-medium bg-secondary/50'
+              'w-full flex items-center justify-between px-2.5 py-1.5 rounded-md transition-colors text-left text-xs',
+              currentTab === 'projects' && project === null
+                ? 'bg-secondary text-white font-medium'
                 : 'text-zinc-400 hover:text-zinc-200 hover:bg-secondary/40',
             )}
           >
-            <FolderKanban className="w-3.5 h-3.5 text-zinc-500" />
-            <span>All Projects</span>
+            <div className="flex items-center gap-2">
+              <FolderKanban className={cn("w-3.5 h-3.5", currentTab === 'projects' ? 'text-indigo-400' : 'text-zinc-500')} />
+              <span>All Projects & Epics</span>
+            </div>
+            <span className="text-[10px] font-mono text-zinc-500 bg-zinc-800/60 px-1.5 py-0.2 rounded">
+              {projects.length}
+            </span>
           </button>
 
           {projects.map((p) => (
             <button
               key={p.id}
-              onClick={() => handleProjectSelect(p)}
+              onClick={() => {
+                handleProjectSelect(p);
+                handleTabSelect('projects');
+              }}
               className={cn(
                 'w-full flex items-center justify-between px-2.5 py-1.5 rounded-md transition-colors text-left text-xs',
                 project?.id === p.id

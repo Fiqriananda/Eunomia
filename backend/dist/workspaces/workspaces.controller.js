@@ -157,7 +157,7 @@ __decorate([
 ], WorkspacesController.prototype, "getWorkspaceById", null);
 __decorate([
     Patch(':id'),
-    ApiOperation({ summary: 'Update workspace settings (e.g. name, cyclesEnabled)' }),
+    ApiOperation({ summary: 'Update workspace settings (e.g. name, cyclesEnabled, ticketPrefix)' }),
     ApiParam({ name: 'id', description: 'Workspace ID' }),
     ApiBody({
         schema: {
@@ -165,6 +165,8 @@ __decorate([
             properties: {
                 name: { type: 'string', example: 'Acme Corp' },
                 cyclesEnabled: { type: 'boolean', example: false },
+                ticketPrefix: { type: 'string', example: 'LAB' },
+                migrateExistingTasks: { type: 'boolean', example: false },
             },
         },
     }),

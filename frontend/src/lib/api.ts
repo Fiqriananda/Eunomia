@@ -98,12 +98,19 @@ class ApiClient {
       }),
     update: (
       id: string,
-      data: { name?: string; cyclesEnabled?: boolean; logoUrl?: string | null },
+      data: {
+        name?: string;
+        cyclesEnabled?: boolean;
+        logoUrl?: string | null;
+        ticketPrefix?: string;
+        migrateExistingTasks?: boolean;
+      },
     ) =>
       this.request<Workspace>(`/workspaces/${id}`, {
         method: 'PATCH',
         body: JSON.stringify(data),
       }),
+
     getMembers: (workspaceId: string) =>
       this.request<WorkspaceMember[]>(`/workspaces/${workspaceId}/members`),
     inviteMember: (workspaceId: string, data: { email: string; name?: string; role?: string }) =>
@@ -172,21 +179,48 @@ class ApiClient {
       }),
   };
 
-  // Projects
+  // Projects (Epics)
   projects = {
     getByWorkspace: (workspaceId: string) =>
       this.request<Project[]>(`/projects?workspaceId=${workspaceId}`),
-    create: (data: { workspaceId: string; name: string; key: string; description?: string; color?: string }) =>
+    getById: (id: string) =>
+      this.request<Project>(`/projects/${id}`),
+    create: (data: {
+      workspaceId: string;
+      name: string;
+      key?: string;
+      description?: string;
+      color?: string;
+      status?: string;
+      targetDate?: string;
+      leadId?: string;
+    }) =>
       this.request<Project>('/projects', {
         method: 'POST',
         body: JSON.stringify(data),
       }),
-    update: (id: string, data: { name?: string; key?: string; description?: string; color?: string }) =>
+    update: (
+      id: string,
+      data: {
+        name?: string;
+        key?: string;
+        description?: string;
+        color?: string;
+        status?: string;
+        targetDate?: string | null;
+        leadId?: string | null;
+      },
+    ) =>
       this.request<Project>(`/projects/${id}`, {
         method: 'PATCH',
         body: JSON.stringify(data),
       }),
+    delete: (id: string) =>
+      this.request<{ success: boolean }>(`/projects/${id}`, {
+        method: 'DELETE',
+      }),
   };
+
 
   // Cycles
   cycles = {
@@ -300,7 +334,7 @@ class ApiClient {
 
     create: (data: {
       workspaceId: string;
-      projectId: string;
+      projectId?: string | null;
       title: string;
       description?: string;
       status?: TaskStatus;
@@ -329,7 +363,7 @@ class ApiClient {
         assigneeId?: string | null;
         dueDate?: string | null;
         labels?: string[];
-        projectId?: string;
+        projectId?: string | null;
         identifier?: string;
         parentId?: string | null;
         cycleId?: string | null;

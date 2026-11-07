@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { Command } from 'cmdk';
 import { Task } from '../../types';
-import { Search, Plus, LayoutGrid, List, SlidersHorizontal, LogOut, CheckCircle2 } from 'lucide-react';
+import { Search, Plus, LayoutGrid, List, SlidersHorizontal, LogOut, CheckCircle2, FolderKanban } from 'lucide-react';
 import { PriorityIcon } from './PriorityIcon';
 import { StatusIcon } from './StatusIcon';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -14,6 +14,7 @@ interface CommandMenuProps {
   tasks: Task[];
   onSelectTask: (task: Task) => void;
   onOpenCreateTask: () => void;
+  onOpenCreateProject?: () => void;
   onChangeView: (view: 'board-priority' | 'board-status' | 'list') => void;
   onLogout: () => void;
 }
@@ -24,6 +25,7 @@ export function CommandMenu({
   tasks,
   onSelectTask,
   onOpenCreateTask,
+  onOpenCreateProject,
   onChangeView,
   onLogout,
 }: CommandMenuProps) {
@@ -89,6 +91,20 @@ export function CommandMenu({
                   <span>Create new issue</span>
                   <span className="ml-auto text-[10px] font-mono text-muted-foreground">C</span>
                 </Command.Item>
+
+                {onOpenCreateProject && (
+                  <Command.Item
+                    onSelect={() => {
+                      onOpenCreateProject();
+                      onClose();
+                    }}
+                    className="flex items-center gap-2 px-2.5 py-2 rounded-md hover:bg-secondary cursor-pointer text-foreground aria-selected:bg-secondary"
+                  >
+                    <FolderKanban className="w-4 h-4 text-indigo-400" />
+                    <span>Create new Project / Epic</span>
+                    <span className="ml-auto text-[10px] font-mono text-muted-foreground">P</span>
+                  </Command.Item>
+                )}
 
                 <Command.Item
                   onSelect={() => {

@@ -17,7 +17,7 @@ export declare class InboxService {
                     name: string;
                     key: string;
                     color: string | null;
-                };
+                } | null;
                 title: string;
                 id: string;
                 priority: import("@prisma/client").$Enums.TaskPriority;

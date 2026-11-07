@@ -26,6 +26,7 @@ import {
   Sparkles,
   Users,
   Image as ImageIcon,
+  Tag,
 } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
 
@@ -35,6 +36,9 @@ function WorkspaceSettingsContent() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [workspaceName, setWorkspaceName] = useState('');
+  const [ticketPrefix, setTicketPrefix] = useState('');
+  const [migrateTasks, setMigrateTasks] = useState(false);
+  const [isSavingPrefix, setIsSavingPrefix] = useState(false);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const [isSavingName, setIsSavingName] = useState(false);
@@ -55,6 +59,7 @@ function WorkspaceSettingsContent() {
     if (workspace) {
       setWorkspaceName(workspace.name);
       setLogoUrl(workspace.logoUrl || null);
+      setTicketPrefix(workspace.ticketPrefix || 'LAB');
     }
   }, [workspace]);
 
@@ -218,6 +223,43 @@ function WorkspaceSettingsContent() {
       });
     } finally {
       setIsSavingName(false);
+    }
+  };
+
+  // Handle Save Workspace Ticket Prefix
+  const handleSavePrefix = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!canManage) return;
+
+    const clean = ticketPrefix.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+    if (!clean) {
+      setFeedback({ type: 'error', message: 'Ticket prefix cannot be empty.' });
+      return;
+    }
+
+    setIsSavingPrefix(true);
+    setFeedback(null);
+    try {
+      const updated = await api.workspaces.update(workspace.id, {
+        ticketPrefix: clean,
+        migrateExistingTasks: migrateTasks,
+      });
+      updateActiveWorkspace(updated);
+      setFeedback({
+        type: 'success',
+        message: migrateTasks
+          ? `Workspace prefix updated to ${clean} and all existing tasks migrated.`
+          : `Workspace prefix updated to ${clean}. New issues will use ${clean}-1, ${clean}-2...`,
+      });
+      setMigrateTasks(false);
+    } catch (err: any) {
+      console.error('Failed to update ticket prefix:', err);
+      setFeedback({
+        type: 'error',
+        message: err.message || 'Failed to update ticket prefix.',
+      });
+    } finally {
+      setIsSavingPrefix(false);
     }
   };
 
@@ -545,6 +587,64 @@ function WorkspaceSettingsContent() {
             <div className="flex items-center gap-4 text-[11px] text-zinc-500">
               <span>Workspace ID: <code className="text-zinc-400 font-mono">{workspace.id}</code></span>
               <span>Slug: <code className="text-zinc-400 font-mono">{workspace.slug}</code></span>
+            </div>
+          </form>
+
+          {/* Workspace Ticket Prefix Form */}
+          <form onSubmit={handleSavePrefix} className="space-y-4 pt-4 border-t border-[#202234]">
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between max-w-md">
+                <label className="text-xs font-medium text-zinc-300 flex items-center gap-1.5">
+                  <Tag className="w-3.5 h-3.5 text-indigo-400" />
+                  <span>Workspace Ticket Prefix (Team Prefix)</span>
+                </label>
+                <span className="text-[11px] font-mono font-semibold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20">
+                  {ticketPrefix || 'LAB'}-1, {ticketPrefix || 'LAB'}-2
+                </span>
+              </div>
+              <p className="text-[11px] text-zinc-400 max-w-md leading-relaxed">
+                All tasks in this workspace share this single prefix. Projects act as Epics without altering ticket IDs.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-2 max-w-md">
+                <input
+                  type="text"
+                  value={ticketPrefix}
+                  onChange={(e) => setTicketPrefix(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))}
+                  maxLength={6}
+                  disabled={!canManage || isSavingPrefix}
+                  placeholder="e.g. LAB or MTN"
+                  className="w-36 bg-[#161726] border border-[#282a40] focus:border-indigo-500 rounded-lg px-3 py-2 text-xs font-mono font-bold text-white uppercase focus:outline-none transition-colors disabled:opacity-60"
+                />
+                {canManage && (
+                  <Button
+                    type="submit"
+                    variant="linear"
+                    size="sm"
+                    disabled={isSavingPrefix || !ticketPrefix.trim() || (ticketPrefix === workspace.ticketPrefix && !migrateTasks)}
+                    className="h-9 px-4 text-xs bg-indigo-600 hover:bg-indigo-500 text-white disabled:opacity-40"
+                  >
+                    {isSavingPrefix ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Save className="w-3.5 h-3.5 mr-1.5" />
+                    )}
+                    <span>Save Prefix</span>
+                  </Button>
+                )}
+              </div>
+              {canManage && (
+                <label className="flex items-center gap-2 pt-1 cursor-pointer max-w-md">
+                  <input
+                    type="checkbox"
+                    checked={migrateTasks}
+                    onChange={(e) => setMigrateTasks(e.target.checked)}
+                    className="rounded border-[#282a40] bg-[#161726] text-indigo-600 focus:ring-0 focus:ring-offset-0 cursor-pointer"
+                  />
+                  <span className="text-[11px] text-zinc-400 hover:text-zinc-300">
+                    Migrate all existing issues to use this prefix (e.g. {ticketPrefix || 'LAB'}-X)
+                  </span>
+                </label>
+              )}
             </div>
           </form>
         </section>

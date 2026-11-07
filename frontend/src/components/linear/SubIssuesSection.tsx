@@ -106,7 +106,7 @@ export function SubIssuesSection({
         priority: newPriority,
         assigneeId: newAssigneeId || undefined,
         labels: newLabels,
-        projectId: parentTask.projectId,
+        projectId: parentTask.projectId || undefined,
       });
 
       onSubTasksChange([...subTasks, created]);

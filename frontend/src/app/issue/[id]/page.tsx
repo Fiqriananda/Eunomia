@@ -595,7 +595,7 @@ function IssueDetailContent() {
         setCustomStatus(fetchedTask.customStatus || null);
         setPriority(fetchedTask.priority);
         setAssigneeId(fetchedTask.assigneeId || null);
-        setProjectId(fetchedTask.projectId);
+        setProjectId(fetchedTask.projectId || '');
         setCycleId(fetchedTask.cycleId || null);
         setEstimate(fetchedTask.estimate || 1);
         setDueDate(fetchedTask.dueDate ? new Date(fetchedTask.dueDate).toISOString().split('T')[0] : '');

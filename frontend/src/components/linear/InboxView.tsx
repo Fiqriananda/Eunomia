@@ -352,7 +352,7 @@ export function InboxView({ onUnreadCountChange, onOpenMobileNav }: InboxViewPro
     try {
       const newSub = await api.tasks.createSubTask(selectedTask.id, {
         title: subIssueTitle.trim(),
-        projectId: selectedTask.projectId,
+        projectId: selectedTask.projectId || undefined,
       });
       setSelectedTask((prev) => {
         if (!prev) return null;

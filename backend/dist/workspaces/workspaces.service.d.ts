@@ -33,6 +33,9 @@ export declare class WorkspacesService {
             name: string;
             key: string;
             color: string | null;
+            status: string;
+            targetDate: Date | null;
+            leadId: string | null;
             workspaceId: string;
         }[];
         id: string;
@@ -41,6 +44,7 @@ export declare class WorkspacesService {
         name: string;
         slug: string;
         logoUrl: string | null;
+        ticketPrefix: string;
         columnOrder: string[];
         cyclesEnabled: boolean;
     }[]>;
@@ -68,6 +72,9 @@ export declare class WorkspacesService {
             name: string;
             key: string;
             color: string | null;
+            status: string;
+            targetDate: Date | null;
+            leadId: string | null;
             workspaceId: string;
         }[];
         divisions: ({
@@ -101,11 +108,13 @@ export declare class WorkspacesService {
         name: string;
         slug: string;
         logoUrl: string | null;
+        ticketPrefix: string;
         columnOrder: string[];
         cyclesEnabled: boolean;
     }>;
     createWorkspace(userId: string, data: {
         name: string;
+        ticketPrefix?: string;
     }): Promise<{
         projects: {
             description: string | null;
@@ -115,6 +124,9 @@ export declare class WorkspacesService {
             name: string;
             key: string;
             color: string | null;
+            status: string;
+            targetDate: Date | null;
+            leadId: string | null;
             workspaceId: string;
         }[];
     } & {
@@ -124,6 +136,7 @@ export declare class WorkspacesService {
         name: string;
         slug: string;
         logoUrl: string | null;
+        ticketPrefix: string;
         columnOrder: string[];
         cyclesEnabled: boolean;
     }>;
@@ -152,8 +165,8 @@ export declare class WorkspacesService {
             updatedAt: Date;
             email: string;
             role: import("@prisma/client").$Enums.WorkspaceRole;
-            workspaceId: string;
             status: import("@prisma/client").$Enums.InvitationStatus;
+            workspaceId: string;
             invitedById: string;
         };
     }>;
@@ -216,6 +229,7 @@ export declare class WorkspacesService {
         name: string;
         slug: string;
         logoUrl: string | null;
+        ticketPrefix: string;
         columnOrder: string[];
         cyclesEnabled: boolean;
     }>;
@@ -223,6 +237,8 @@ export declare class WorkspacesService {
         name?: string;
         cyclesEnabled?: boolean;
         logoUrl?: string | null;
+        ticketPrefix?: string;
+        migrateExistingTasks?: boolean;
     }): Promise<{
         role: "OWNER" | "ADMIN";
         members: ({
@@ -247,6 +263,9 @@ export declare class WorkspacesService {
             name: string;
             key: string;
             color: string | null;
+            status: string;
+            targetDate: Date | null;
+            leadId: string | null;
             workspaceId: string;
         }[];
         id: string;
@@ -255,6 +274,7 @@ export declare class WorkspacesService {
         name: string;
         slug: string;
         logoUrl: string | null;
+        ticketPrefix: string;
         columnOrder: string[];
         cyclesEnabled: boolean;
     }>;
@@ -290,8 +310,8 @@ export declare class WorkspacesService {
         updatedAt: Date;
         email: string;
         role: import("@prisma/client").$Enums.WorkspaceRole;
-        workspaceId: string;
         status: import("@prisma/client").$Enums.InvitationStatus;
+        workspaceId: string;
         invitedById: string;
     })[]>;
     cancelInvitation(workspaceId: string, invitationId: string, currentUserId: string): Promise<{
@@ -317,8 +337,8 @@ export declare class WorkspacesService {
         updatedAt: Date;
         email: string;
         role: import("@prisma/client").$Enums.WorkspaceRole;
-        workspaceId: string;
         status: import("@prisma/client").$Enums.InvitationStatus;
+        workspaceId: string;
         invitedById: string;
     }>;
     acceptInvitation(tokenOrId: string, currentUserId: string): Promise<{
@@ -331,6 +351,7 @@ export declare class WorkspacesService {
             name: string;
             slug: string;
             logoUrl: string | null;
+            ticketPrefix: string;
             columnOrder: string[];
             cyclesEnabled: boolean;
         };
@@ -373,6 +394,7 @@ export declare class WorkspacesService {
             name: string;
             slug: string;
             logoUrl: string | null;
+            ticketPrefix: string;
             columnOrder: string[];
             cyclesEnabled: boolean;
         };
