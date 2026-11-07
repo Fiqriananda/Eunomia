@@ -549,12 +549,14 @@ function htmlToMarkdown(node: Node): string {
       const parentTag = el.parentElement?.tagName.toLowerCase();
       const isIndented = el.classList.contains('ml-5');
       const prefix = isIndented ? '  ' : '';
+      const cleanContent = childrenMd.trim().replace(/^[-*+]\s+/, '');
       if (parentTag === 'ol') {
         const index =
           Array.from(el.parentElement?.children || []).indexOf(el) + 1;
-        return `${prefix}${index}. ${childrenMd.trim()}\n`;
+        const textWithoutNum = cleanContent.replace(/^\d+\.\s+/, '');
+        return `${prefix}${index}. ${textWithoutNum}\n`;
       }
-      return `${prefix}- ${childrenMd.trim()}\n`;
+      return `${prefix}- ${cleanContent}\n`;
     }
     case 'p':
       return `\n${childrenMd}\n`;
@@ -786,6 +788,36 @@ export function LinearRichEditor({
         e.preventDefault();
         setMentionQuery(null);
         return;
+      }
+    }
+
+    // Auto markdown shortcuts: '- ' or '* ' -> Bullet list, '1. ' -> Ordered list
+    if (e.key === ' ') {
+      const sel = window.getSelection();
+      if (sel && sel.isCollapsed && sel.rangeCount) {
+        const range = sel.getRangeAt(0);
+        const node = range.startContainer;
+        if (node.nodeType === Node.TEXT_NODE) {
+          const text = node.textContent || '';
+          const offset = range.startOffset;
+          const textBefore = text.slice(0, offset);
+
+          if ((textBefore === '-' || textBefore === '*') && offset === 1) {
+            e.preventDefault();
+            const remainingText = text.slice(offset);
+            node.textContent = remainingText;
+            document.execCommand('insertUnorderedList', false);
+            syncMarkdown();
+            return;
+          } else if (textBefore === '1.' && offset === 2) {
+            e.preventDefault();
+            const remainingText = text.slice(offset);
+            node.textContent = remainingText;
+            document.execCommand('insertOrderedList', false);
+            syncMarkdown();
+            return;
+          }
+        }
       }
     }
   };
@@ -1066,6 +1098,42 @@ export function LinearRichEditor({
   };
 
   const formatBulletList = () => {
+    editorRef.current?.focus();
+    const sel = window.getSelection();
+    if (!sel || !sel.rangeCount || !editorRef.current) return;
+
+    const range = sel.getRangeAt(0);
+    const selectedText = range.toString();
+
+    if (selectedText.trim()) {
+      const lines = selectedText
+        .split('\n')
+        .map((l) => l.trim())
+        .filter(Boolean);
+
+      if (lines.length > 1) {
+        const ul = document.createElement('ul');
+        ul.className = 'list-disc list-inside space-y-1 my-1.5';
+        for (const line of lines) {
+          const li = document.createElement('li');
+          const cleanLine = line.replace(/^[-*+]\s+/, '');
+          li.innerHTML = formatInline(cleanLine, members);
+          ul.appendChild(li);
+        }
+        range.deleteContents();
+        range.insertNode(ul);
+
+        const newRange = document.createRange();
+        newRange.setStartAfter(ul);
+        newRange.collapse(true);
+        sel.removeAllRanges();
+        sel.addRange(newRange);
+
+        syncMarkdown();
+        return;
+      }
+    }
+
     document.execCommand('insertUnorderedList', false);
     syncMarkdown();
   };
@@ -1266,7 +1334,7 @@ export function LinearRichEditor({
         onPaste={handlePaste}
         onBlur={onBlur}
         data-placeholder={placeholder}
-        className="outline-none min-h-[120px] py-1 text-sm text-zinc-100 leading-relaxed font-sans cursor-text empty:before:content-[attr(data-placeholder)] empty:before:text-zinc-600 empty:before:pointer-events-none focus:outline-none"
+        className="outline-none min-h-[120px] py-1 text-sm text-zinc-100 leading-relaxed font-sans cursor-text empty:before:content-[attr(data-placeholder)] empty:before:text-zinc-600 empty:before:pointer-events-none focus:outline-none [&_ul]:list-disc [&_ul]:list-inside [&_ul]:space-y-1 [&_ul]:my-1.5 [&_ol]:list-decimal [&_ol]:list-inside [&_ol]:space-y-1 [&_ol]:my-1.5 [&_li]:leading-relaxed"
       />
 
       {/* Subtle hover attach image button in corner */}
