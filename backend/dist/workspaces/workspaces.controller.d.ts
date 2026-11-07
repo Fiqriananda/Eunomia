@@ -27,6 +27,9 @@ export declare class WorkspacesController {
             name: string;
             key: string;
             color: string | null;
+            status: string;
+            targetDate: Date | null;
+            leadId: string | null;
             workspaceId: string;
         }[];
         id: string;
@@ -35,6 +38,7 @@ export declare class WorkspacesController {
         name: string;
         slug: string;
         logoUrl: string | null;
+        ticketPrefix: string;
         columnOrder: string[];
         cyclesEnabled: boolean;
     }[]>;
@@ -57,8 +61,8 @@ export declare class WorkspacesController {
         updatedAt: Date;
         email: string;
         role: import("@prisma/client").$Enums.WorkspaceRole;
-        workspaceId: string;
         status: import("@prisma/client").$Enums.InvitationStatus;
+        workspaceId: string;
         invitedById: string;
     }>;
     acceptInvitation(token: string, userId: string): Promise<{
@@ -71,6 +75,7 @@ export declare class WorkspacesController {
             name: string;
             slug: string;
             logoUrl: string | null;
+            ticketPrefix: string;
             columnOrder: string[];
             cyclesEnabled: boolean;
         };
@@ -113,6 +118,7 @@ export declare class WorkspacesController {
             name: string;
             slug: string;
             logoUrl: string | null;
+            ticketPrefix: string;
             columnOrder: string[];
             cyclesEnabled: boolean;
         };
@@ -155,6 +161,9 @@ export declare class WorkspacesController {
             name: string;
             key: string;
             color: string | null;
+            status: string;
+            targetDate: Date | null;
+            leadId: string | null;
             workspaceId: string;
         }[];
         divisions: ({
@@ -188,6 +197,7 @@ export declare class WorkspacesController {
         name: string;
         slug: string;
         logoUrl: string | null;
+        ticketPrefix: string;
         columnOrder: string[];
         cyclesEnabled: boolean;
     }>;
@@ -195,6 +205,8 @@ export declare class WorkspacesController {
         name?: string;
         cyclesEnabled?: boolean;
         logoUrl?: string | null;
+        ticketPrefix?: string;
+        migrateExistingTasks?: boolean;
     }): Promise<{
         role: "OWNER" | "ADMIN";
         members: ({
@@ -219,6 +231,9 @@ export declare class WorkspacesController {
             name: string;
             key: string;
             color: string | null;
+            status: string;
+            targetDate: Date | null;
+            leadId: string | null;
             workspaceId: string;
         }[];
         id: string;
@@ -227,6 +242,7 @@ export declare class WorkspacesController {
         name: string;
         slug: string;
         logoUrl: string | null;
+        ticketPrefix: string;
         columnOrder: string[];
         cyclesEnabled: boolean;
     }>;
@@ -241,6 +257,9 @@ export declare class WorkspacesController {
             name: string;
             key: string;
             color: string | null;
+            status: string;
+            targetDate: Date | null;
+            leadId: string | null;
             workspaceId: string;
         }[];
     } & {
@@ -250,6 +269,7 @@ export declare class WorkspacesController {
         name: string;
         slug: string;
         logoUrl: string | null;
+        ticketPrefix: string;
         columnOrder: string[];
         cyclesEnabled: boolean;
     }>;
@@ -292,8 +312,8 @@ export declare class WorkspacesController {
             updatedAt: Date;
             email: string;
             role: import("@prisma/client").$Enums.WorkspaceRole;
-            workspaceId: string;
             status: import("@prisma/client").$Enums.InvitationStatus;
+            workspaceId: string;
             invitedById: string;
         };
     }>;
@@ -311,8 +331,8 @@ export declare class WorkspacesController {
         updatedAt: Date;
         email: string;
         role: import("@prisma/client").$Enums.WorkspaceRole;
-        workspaceId: string;
         status: import("@prisma/client").$Enums.InvitationStatus;
+        workspaceId: string;
         invitedById: string;
     })[]>;
     cancelInvitation(workspaceId: string, invitationId: string, userId: string): Promise<{
@@ -384,6 +404,7 @@ export declare class WorkspacesController {
         name: string;
         slug: string;
         logoUrl: string | null;
+        ticketPrefix: string;
         columnOrder: string[];
         cyclesEnabled: boolean;
     }>;

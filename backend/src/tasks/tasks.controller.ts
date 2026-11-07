@@ -145,7 +145,7 @@ export class TasksController {
     @Body()
     body: {
       workspaceId: string;
-      projectId: string;
+      projectId?: string;
       title: string;
       description?: string;
       status?: TaskStatus;

@@ -20,14 +20,16 @@ import { TeamView } from '../components/linear/TeamView';
 import { TriageView } from '../components/linear/TriageView';
 import { StakeholderRequestsView } from '../components/linear/StakeholderRequestsView';
 import { CreateIntakeModal } from '../components/linear/CreateIntakeModal';
-import { Task, TaskPriority, TaskStatus, WorkflowSection, Cycle, Division } from '../types';
+import { ProjectsView } from '../components/linear/ProjectsView';
+import { CreateProjectModal } from '../components/linear/CreateProjectModal';
+import { Task, TaskPriority, TaskStatus, WorkflowSection, Cycle, Division, Project } from '../types';
 import { api } from '../lib/api';
 import { Loader2, Plus, SlidersHorizontal, Filter, X, Sparkles, UserPlus, RotateCw, Trash2, Layers, Inbox, Users, Menu, GitPullRequest } from 'lucide-react';
 import { Button } from '../components/ui/button';
 
 function Dashboard() {
   const router = useRouter();
-  const { user, workspace, project, projects, loading, refreshWorkspacesAndProjects } = useAuth();
+  const { user, workspace, project, projects, setProject, loading, refreshWorkspacesAndProjects } = useAuth();
   const { socket } = useSocket();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [tasksLoading, setTasksLoading] = useState(false);
@@ -48,7 +50,7 @@ function Dashboard() {
   const [trashCount, setTrashCount] = useState<number>(0);
 
   // View & Tab state
-  const [sidebarTab, setSidebarTab] = useState<'all' | 'active' | 'backlog' | 'inbox' | 'cycles' | 'trash' | 'team' | 'triage' | 'requests'>('all');
+  const [sidebarTab, setSidebarTab] = useState<'all' | 'active' | 'backlog' | 'inbox' | 'cycles' | 'trash' | 'team' | 'triage' | 'requests' | 'projects'>('all');
   const [viewMode, setViewMode] = useState<'board-priority' | 'board-status' | 'list'>('board-status');
   const [searchQuery, setSearchQuery] = useState('');
   const [filterPriority, setFilterPriority] = useState<string>('ALL');
@@ -61,6 +63,8 @@ function Dashboard() {
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [isWorkspaceSettingsOpen, setIsWorkspaceSettingsOpen] = useState(false);
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+  const [isCreateProjectOpen, setIsCreateProjectOpen] = useState(false);
+  const [editingProject, setEditingProject] = useState<Project | null>(null);
 
   // Fallback to 'all' if user was on 'cycles' tab and cycles got disabled
   useEffect(() => {
@@ -473,7 +477,7 @@ function Dashboard() {
   const handleCreateTask = async (taskData: {
     title: string;
     description?: string;
-    projectId: string;
+    projectId?: string | null;
     status: TaskStatus;
     customStatus?: string | null;
     priority: TaskPriority;
@@ -589,6 +593,10 @@ function Dashboard() {
         onOpenInviteModal={() => setIsInviteOpen(true)}
         onOpenCommandMenu={() => setIsCommandOpen(true)}
         onOpenWorkspaceSettings={() => router.push('/settings/workspace')}
+        onOpenCreateProject={() => {
+          setEditingProject(null);
+          setIsCreateProjectOpen(true);
+        }}
         taskCounts={{
           all: tasks.length,
           active: tasks.filter((t) => t.status === 'TODO' || t.status === 'IN_PROGRESS').length,
@@ -679,6 +687,31 @@ function Dashboard() {
             workspace={workspace}
             currentUser={user}
             onOpenTaskDetail={handleTaskClick}
+          />
+        ) : sidebarTab === 'projects' && workspace ? (
+          <ProjectsView
+            projects={projects}
+            tasks={tasks}
+            workspace={workspace}
+            selectedProject={project}
+            onSelectProject={(p) => setProject(p)}
+            onOpenCreateProject={() => {
+              setEditingProject(null);
+              setIsCreateProjectOpen(true);
+            }}
+            onOpenEditProject={(p) => {
+              setEditingProject(p);
+              setIsCreateProjectOpen(true);
+            }}
+            onOpenCreateTaskForProject={(p) => {
+              setProject(p);
+              setIsCreateOpen(true);
+            }}
+            onOpenTaskDetail={handleTaskClick}
+            onRefresh={async () => {
+              await refreshWorkspacesAndProjects();
+              await fetchTasks();
+            }}
           />
         ) : (
           <>
@@ -912,9 +945,14 @@ function Dashboard() {
         tasks={tasks}
         onSelectTask={handleTaskClick}
         onOpenCreateTask={() => setIsCreateOpen(true)}
+        onOpenCreateProject={() => {
+          setEditingProject(null);
+          setIsCreateProjectOpen(true);
+        }}
         onChangeView={setViewMode}
         onLogout={() => {}}
       />
+
 
       {/* Team Invite Modal */}
       {workspace && (
@@ -946,6 +984,23 @@ function Dashboard() {
             fetchTasks();
             fetchTriageCount();
             fetchDivisions();
+          }}
+        />
+      )}
+
+      {/* Project / Epic Modal */}
+      {workspace && (
+        <CreateProjectModal
+          isOpen={isCreateProjectOpen}
+          onClose={() => {
+            setIsCreateProjectOpen(false);
+            setEditingProject(null);
+          }}
+          initialData={editingProject}
+          onSuccess={async (savedProj) => {
+            await refreshWorkspacesAndProjects();
+            await fetchTasks();
+            setProject(savedProj);
           }}
         />
       )}

@@ -17,6 +17,7 @@ import {
   Save,
   Plus,
   Trash2,
+  Tag,
 } from 'lucide-react';
 import { Button } from '../ui/button';
 
@@ -29,6 +30,9 @@ export function WorkspaceSettingsModal({ isOpen, onClose }: WorkspaceSettingsMod
   const { user, workspace, updateActiveWorkspace } = useAuth();
 
   const [workspaceName, setWorkspaceName] = useState(workspace?.name || '');
+  const [ticketPrefix, setTicketPrefix] = useState(workspace?.ticketPrefix || 'LAB');
+  const [migrateTasks, setMigrateTasks] = useState(false);
+  const [isUpdatingPrefix, setIsUpdatingPrefix] = useState(false);
   const [isUpdatingName, setIsUpdatingName] = useState(false);
   const [isTogglingCycles, setIsTogglingCycles] = useState(false);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(
@@ -44,10 +48,11 @@ export function WorkspaceSettingsModal({ isOpen, onClose }: WorkspaceSettingsMod
   const [isSubmittingDivision, setIsSubmittingDivision] = useState(false);
   const [deletingDivisionId, setDeletingDivisionId] = useState<string | null>(null);
 
-  // Sync workspace name when workspace changes
+  // Sync workspace state when workspace changes
   useEffect(() => {
     if (workspace) {
       setWorkspaceName(workspace.name);
+      setTicketPrefix(workspace.ticketPrefix || 'LAB');
     }
   }, [workspace]);
 
@@ -144,6 +149,44 @@ export function WorkspaceSettingsModal({ isOpen, onClose }: WorkspaceSettingsMod
       });
     } finally {
       setIsUpdatingName(false);
+    }
+  };
+
+  const handleSavePrefix = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!canManage) return;
+
+    const clean = ticketPrefix.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+    if (!clean) {
+      setFeedback({ type: 'error', message: 'Ticket prefix cannot be empty.' });
+      return;
+    }
+
+    setIsUpdatingPrefix(true);
+    setFeedback(null);
+
+    try {
+      const updated = await api.workspaces.update(workspace.id, {
+        ticketPrefix: clean,
+        migrateExistingTasks: migrateTasks,
+      });
+
+      updateActiveWorkspace(updated);
+      setFeedback({
+        type: 'success',
+        message: migrateTasks
+          ? `Workspace prefix updated to ${clean} and all existing tasks migrated.`
+          : `Workspace prefix updated to ${clean}. New issues will use ${clean}-1, ${clean}-2...`,
+      });
+      setMigrateTasks(false);
+    } catch (err: any) {
+      console.error('Failed to update ticket prefix:', err);
+      setFeedback({
+        type: 'error',
+        message: err.message || 'Failed to update ticket prefix.',
+      });
+    } finally {
+      setIsUpdatingPrefix(false);
     }
   };
 
@@ -327,6 +370,63 @@ export function WorkspaceSettingsModal({ isOpen, onClose }: WorkspaceSettingsMod
                     <span>{workspace.slug}</span>
                     <span className="text-[10px] text-zinc-500">Read-only</span>
                   </div>
+                </div>
+              </form>
+
+              {/* Workspace Ticket Prefix Form */}
+              <form onSubmit={handleSavePrefix} className="space-y-3 pt-2">
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs text-zinc-300 font-medium flex items-center gap-1.5">
+                      <Tag className="w-3.5 h-3.5 text-indigo-400" />
+                      <span>Workspace Ticket Prefix</span>
+                    </label>
+                    <span className="text-[11px] font-mono font-semibold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20">
+                      {ticketPrefix || 'LAB'}-1, {ticketPrefix || 'LAB'}-2
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-zinc-400 leading-relaxed">
+                    All tasks in this workspace share this single prefix. Projects act as Epics without altering ticket IDs.
+                  </p>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={ticketPrefix}
+                      onChange={(e) => setTicketPrefix(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))}
+                      maxLength={6}
+                      disabled={!canManage || isUpdatingPrefix}
+                      className="w-36 bg-[#151622] border border-border/80 rounded-lg px-3 py-2 text-xs font-mono font-bold text-white uppercase focus:outline-none focus:border-indigo-500 disabled:opacity-50 transition-colors"
+                      placeholder="e.g. LAB"
+                    />
+                    {canManage && (
+                      <Button
+                        type="submit"
+                        size="sm"
+                        disabled={isUpdatingPrefix || !ticketPrefix.trim() || (ticketPrefix === workspace.ticketPrefix && !migrateTasks)}
+                        className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium px-3 shrink-0"
+                      >
+                        {isUpdatingPrefix ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <Save className="w-3.5 h-3.5 mr-1" />
+                        )}
+                        Save Prefix
+                      </Button>
+                    )}
+                  </div>
+                  {canManage && (
+                    <label className="flex items-center gap-2 pt-1 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={migrateTasks}
+                        onChange={(e) => setMigrateTasks(e.target.checked)}
+                        className="rounded border-border/80 bg-[#151622] text-indigo-600 focus:ring-0 focus:ring-offset-0 cursor-pointer"
+                      />
+                      <span className="text-[11px] text-zinc-400 hover:text-zinc-300">
+                        Migrate all existing issues to use this prefix (e.g. {ticketPrefix || 'LAB'}-X)
+                      </span>
+                    </label>
+                  )}
                 </div>
               </form>
             </div>

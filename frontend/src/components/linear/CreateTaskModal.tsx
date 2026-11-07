@@ -18,7 +18,7 @@ interface CreateTaskModalProps {
   onSubmit: (taskData: {
     title: string;
     description?: string;
-    projectId: string;
+    projectId?: string | null;
     status: TaskStatus;
     customStatus?: string | null;
     priority: TaskPriority;
@@ -78,7 +78,7 @@ export function CreateTaskModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !projectId) return;
+    if (!title.trim()) return;
 
     setSubmitting(true);
     try {
@@ -102,7 +102,7 @@ export function CreateTaskModal({
       await onSubmit({
         title: title.trim(),
         description: description.trim() || undefined,
-        projectId,
+        projectId: projectId || undefined,
         status: finalStatus,
         customStatus: finalCustomStatus,
         priority,
@@ -194,17 +194,18 @@ export function CreateTaskModal({
 
             {/* Selectors Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 pt-2 border-t border-border/40 text-xs">
-              {/* Project */}
+              {/* Project (Epic) */}
               <div className="space-y-1">
-                <span className="text-[11px] text-muted-foreground font-medium">Project</span>
+                <span className="text-[11px] text-muted-foreground font-medium">Project (Epic)</span>
                 <select
                   value={projectId}
                   onChange={(e) => setProjectId(e.target.value)}
                   className="w-full bg-[#1b1d2c] border border-border text-foreground rounded px-2 py-1.5 text-xs focus:ring-1 focus:ring-primary focus:outline-none cursor-pointer"
                 >
+                  <option value="">No Project (Standalone)</option>
                   {projects.map((p) => (
                     <option key={p.id} value={p.id}>
-                      {p.name} ({p.key})
+                      {p.name}
                     </option>
                   ))}
                 </select>

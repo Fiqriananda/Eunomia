@@ -27,6 +27,9 @@ export declare class MobileController {
             name: string;
             key: string;
             color: string | null;
+            status: string;
+            targetDate: Date | null;
+            leadId: string | null;
             workspaceId: string;
         }[];
     } & {
@@ -36,6 +39,7 @@ export declare class MobileController {
         name: string;
         slug: string;
         logoUrl: string | null;
+        ticketPrefix: string;
         columnOrder: string[];
         cyclesEnabled: boolean;
     }>;
@@ -61,13 +65,50 @@ export declare class MobileController {
             updatedAt: Date;
             email: string;
             role: import("@prisma/client").$Enums.WorkspaceRole;
-            workspaceId: string;
             status: import("@prisma/client").$Enums.InvitationStatus;
+            workspaceId: string;
             invitedById: string;
         };
     }>;
     getProjects(userId: string, workspaceId?: string): Promise<MobileProjectDto[]>;
     createProject(userId: string, dto: MobileCreateProjectDto): Promise<{
+        tasks: {
+            description: string | null;
+            title: string;
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            priority: import("@prisma/client").$Enums.TaskPriority;
+            identifier: string;
+            assigneeId: string | null;
+            status: import("@prisma/client").$Enums.TaskStatus;
+            workspaceId: string;
+            order: number;
+            customStatus: string | null;
+            dueDate: Date | null;
+            labels: string[];
+            estimate: number | null;
+            isArchived: boolean;
+            deletedAt: Date | null;
+            triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
+            externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
+            projectId: string | null;
+            cycleId: string | null;
+            creatorId: string;
+            requesterDivisionId: string | null;
+            assignedDivisionId: string | null;
+            parentId: string | null;
+        }[];
+        lead: {
+            id: string;
+            name: string;
+            email: string;
+            avatarUrl: string | null;
+        } | null;
+        _count: {
+            tasks: number;
+        };
+    } & {
         description: string | null;
         id: string;
         createdAt: Date;
@@ -75,10 +116,50 @@ export declare class MobileController {
         name: string;
         key: string;
         color: string | null;
+        status: string;
+        targetDate: Date | null;
+        leadId: string | null;
         workspaceId: string;
     }>;
     getProjectDetail(userId: string, projectId: string): Promise<MobileProjectDetailDto>;
     updateProject(projectId: string, dto: MobileUpdateProjectDto): Promise<{
+        tasks: {
+            description: string | null;
+            title: string;
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            priority: import("@prisma/client").$Enums.TaskPriority;
+            identifier: string;
+            assigneeId: string | null;
+            status: import("@prisma/client").$Enums.TaskStatus;
+            workspaceId: string;
+            order: number;
+            customStatus: string | null;
+            dueDate: Date | null;
+            labels: string[];
+            estimate: number | null;
+            isArchived: boolean;
+            deletedAt: Date | null;
+            triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
+            externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
+            projectId: string | null;
+            cycleId: string | null;
+            creatorId: string;
+            requesterDivisionId: string | null;
+            assignedDivisionId: string | null;
+            parentId: string | null;
+        }[];
+        lead: {
+            id: string;
+            name: string;
+            email: string;
+            avatarUrl: string | null;
+        } | null;
+        _count: {
+            tasks: number;
+        };
+    } & {
         description: string | null;
         id: string;
         createdAt: Date;
@@ -86,6 +167,9 @@ export declare class MobileController {
         name: string;
         key: string;
         color: string | null;
+        status: string;
+        targetDate: Date | null;
+        leadId: string | null;
         workspaceId: string;
     }>;
     deleteProject(projectId: string): Promise<{
@@ -96,6 +180,9 @@ export declare class MobileController {
         name: string;
         key: string;
         color: string | null;
+        status: string;
+        targetDate: Date | null;
+        leadId: string | null;
         workspaceId: string;
     }>;
     getCycles(userId: string, workspaceId?: string): Promise<MobileCycleDto[]>;
@@ -107,8 +194,8 @@ export declare class MobileController {
         createdAt: Date;
         updatedAt: Date;
         name: string | null;
-        workspaceId: string;
         status: string;
+        workspaceId: string;
         startDate: Date;
         endDate: Date;
     }>;
@@ -119,8 +206,8 @@ export declare class MobileController {
         createdAt: Date;
         updatedAt: Date;
         name: string | null;
-        workspaceId: string;
         status: string;
+        workspaceId: string;
         startDate: Date;
         endDate: Date;
     }>;
@@ -132,7 +219,7 @@ export declare class MobileController {
             name: string;
             key: string;
             color: string | null;
-        };
+        } | null;
         cycle: {
             number: number;
             id: string;
@@ -264,7 +351,7 @@ export declare class MobileController {
                 name: string;
                 key: string;
                 color: string | null;
-            };
+            } | null;
             assignee: {
                 id: string;
                 name: string;
@@ -280,8 +367,8 @@ export declare class MobileController {
             priority: import("@prisma/client").$Enums.TaskPriority;
             identifier: string;
             assigneeId: string | null;
-            workspaceId: string;
             status: import("@prisma/client").$Enums.TaskStatus;
+            workspaceId: string;
             order: number;
             customStatus: string | null;
             dueDate: Date | null;
@@ -291,7 +378,7 @@ export declare class MobileController {
             deletedAt: Date | null;
             triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
             externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
-            projectId: string;
+            projectId: string | null;
             cycleId: string | null;
             creatorId: string;
             requesterDivisionId: string | null;
@@ -391,8 +478,8 @@ export declare class MobileController {
         priority: import("@prisma/client").$Enums.TaskPriority;
         identifier: string;
         assigneeId: string | null;
-        workspaceId: string;
         status: import("@prisma/client").$Enums.TaskStatus;
+        workspaceId: string;
         order: number;
         customStatus: string | null;
         dueDate: Date | null;
@@ -402,7 +489,7 @@ export declare class MobileController {
         deletedAt: Date | null;
         triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
         externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
-        projectId: string;
+        projectId: string | null;
         cycleId: string | null;
         creatorId: string;
         requesterDivisionId: string | null;
@@ -415,7 +502,7 @@ export declare class MobileController {
             name: string;
             key: string;
             color: string | null;
-        };
+        } | null;
         cycle: {
             number: number;
             id: string;
@@ -547,7 +634,7 @@ export declare class MobileController {
                 name: string;
                 key: string;
                 color: string | null;
-            };
+            } | null;
             assignee: {
                 id: string;
                 name: string;
@@ -563,8 +650,8 @@ export declare class MobileController {
             priority: import("@prisma/client").$Enums.TaskPriority;
             identifier: string;
             assigneeId: string | null;
-            workspaceId: string;
             status: import("@prisma/client").$Enums.TaskStatus;
+            workspaceId: string;
             order: number;
             customStatus: string | null;
             dueDate: Date | null;
@@ -574,7 +661,7 @@ export declare class MobileController {
             deletedAt: Date | null;
             triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
             externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
-            projectId: string;
+            projectId: string | null;
             cycleId: string | null;
             creatorId: string;
             requesterDivisionId: string | null;
@@ -674,8 +761,8 @@ export declare class MobileController {
         priority: import("@prisma/client").$Enums.TaskPriority;
         identifier: string;
         assigneeId: string | null;
-        workspaceId: string;
         status: import("@prisma/client").$Enums.TaskStatus;
+        workspaceId: string;
         order: number;
         customStatus: string | null;
         dueDate: Date | null;
@@ -685,7 +772,7 @@ export declare class MobileController {
         deletedAt: Date | null;
         triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
         externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
-        projectId: string;
+        projectId: string | null;
         cycleId: string | null;
         creatorId: string;
         requesterDivisionId: string | null;
@@ -698,7 +785,7 @@ export declare class MobileController {
             name: string;
             key: string;
             color: string | null;
-        };
+        } | null;
         cycle: {
             number: number;
             id: string;
@@ -830,7 +917,7 @@ export declare class MobileController {
                 name: string;
                 key: string;
                 color: string | null;
-            };
+            } | null;
             assignee: {
                 id: string;
                 name: string;
@@ -846,8 +933,8 @@ export declare class MobileController {
             priority: import("@prisma/client").$Enums.TaskPriority;
             identifier: string;
             assigneeId: string | null;
-            workspaceId: string;
             status: import("@prisma/client").$Enums.TaskStatus;
+            workspaceId: string;
             order: number;
             customStatus: string | null;
             dueDate: Date | null;
@@ -857,7 +944,7 @@ export declare class MobileController {
             deletedAt: Date | null;
             triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
             externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
-            projectId: string;
+            projectId: string | null;
             cycleId: string | null;
             creatorId: string;
             requesterDivisionId: string | null;
@@ -957,8 +1044,8 @@ export declare class MobileController {
         priority: import("@prisma/client").$Enums.TaskPriority;
         identifier: string;
         assigneeId: string | null;
-        workspaceId: string;
         status: import("@prisma/client").$Enums.TaskStatus;
+        workspaceId: string;
         order: number;
         customStatus: string | null;
         dueDate: Date | null;
@@ -968,7 +1055,7 @@ export declare class MobileController {
         deletedAt: Date | null;
         triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
         externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
-        projectId: string;
+        projectId: string | null;
         cycleId: string | null;
         creatorId: string;
         requesterDivisionId: string | null;
@@ -981,7 +1068,7 @@ export declare class MobileController {
             name: string;
             key: string;
             color: string | null;
-        };
+        } | null;
         cycle: {
             number: number;
             id: string;
@@ -1113,7 +1200,7 @@ export declare class MobileController {
                 name: string;
                 key: string;
                 color: string | null;
-            };
+            } | null;
             assignee: {
                 id: string;
                 name: string;
@@ -1129,8 +1216,8 @@ export declare class MobileController {
             priority: import("@prisma/client").$Enums.TaskPriority;
             identifier: string;
             assigneeId: string | null;
-            workspaceId: string;
             status: import("@prisma/client").$Enums.TaskStatus;
+            workspaceId: string;
             order: number;
             customStatus: string | null;
             dueDate: Date | null;
@@ -1140,7 +1227,7 @@ export declare class MobileController {
             deletedAt: Date | null;
             triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
             externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
-            projectId: string;
+            projectId: string | null;
             cycleId: string | null;
             creatorId: string;
             requesterDivisionId: string | null;
@@ -1240,8 +1327,8 @@ export declare class MobileController {
         priority: import("@prisma/client").$Enums.TaskPriority;
         identifier: string;
         assigneeId: string | null;
-        workspaceId: string;
         status: import("@prisma/client").$Enums.TaskStatus;
+        workspaceId: string;
         order: number;
         customStatus: string | null;
         dueDate: Date | null;
@@ -1251,7 +1338,7 @@ export declare class MobileController {
         deletedAt: Date | null;
         triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
         externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
-        projectId: string;
+        projectId: string | null;
         cycleId: string | null;
         creatorId: string;
         requesterDivisionId: string | null;
@@ -1264,7 +1351,7 @@ export declare class MobileController {
             name: string;
             key: string;
             color: string | null;
-        };
+        } | null;
         cycle: {
             number: number;
             id: string;
@@ -1396,7 +1483,7 @@ export declare class MobileController {
                 name: string;
                 key: string;
                 color: string | null;
-            };
+            } | null;
             assignee: {
                 id: string;
                 name: string;
@@ -1412,8 +1499,8 @@ export declare class MobileController {
             priority: import("@prisma/client").$Enums.TaskPriority;
             identifier: string;
             assigneeId: string | null;
-            workspaceId: string;
             status: import("@prisma/client").$Enums.TaskStatus;
+            workspaceId: string;
             order: number;
             customStatus: string | null;
             dueDate: Date | null;
@@ -1423,7 +1510,7 @@ export declare class MobileController {
             deletedAt: Date | null;
             triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
             externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
-            projectId: string;
+            projectId: string | null;
             cycleId: string | null;
             creatorId: string;
             requesterDivisionId: string | null;
@@ -1523,8 +1610,8 @@ export declare class MobileController {
         priority: import("@prisma/client").$Enums.TaskPriority;
         identifier: string;
         assigneeId: string | null;
-        workspaceId: string;
         status: import("@prisma/client").$Enums.TaskStatus;
+        workspaceId: string;
         order: number;
         customStatus: string | null;
         dueDate: Date | null;
@@ -1534,7 +1621,7 @@ export declare class MobileController {
         deletedAt: Date | null;
         triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
         externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
-        projectId: string;
+        projectId: string | null;
         cycleId: string | null;
         creatorId: string;
         requesterDivisionId: string | null;
@@ -1547,7 +1634,7 @@ export declare class MobileController {
             name: string;
             key: string;
             color: string | null;
-        };
+        } | null;
         cycle: {
             number: number;
             id: string;
@@ -1679,7 +1766,7 @@ export declare class MobileController {
                 name: string;
                 key: string;
                 color: string | null;
-            };
+            } | null;
             assignee: {
                 id: string;
                 name: string;
@@ -1695,8 +1782,8 @@ export declare class MobileController {
             priority: import("@prisma/client").$Enums.TaskPriority;
             identifier: string;
             assigneeId: string | null;
-            workspaceId: string;
             status: import("@prisma/client").$Enums.TaskStatus;
+            workspaceId: string;
             order: number;
             customStatus: string | null;
             dueDate: Date | null;
@@ -1706,7 +1793,7 @@ export declare class MobileController {
             deletedAt: Date | null;
             triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
             externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
-            projectId: string;
+            projectId: string | null;
             cycleId: string | null;
             creatorId: string;
             requesterDivisionId: string | null;
@@ -1806,8 +1893,8 @@ export declare class MobileController {
         priority: import("@prisma/client").$Enums.TaskPriority;
         identifier: string;
         assigneeId: string | null;
-        workspaceId: string;
         status: import("@prisma/client").$Enums.TaskStatus;
+        workspaceId: string;
         order: number;
         customStatus: string | null;
         dueDate: Date | null;
@@ -1817,7 +1904,7 @@ export declare class MobileController {
         deletedAt: Date | null;
         triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
         externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
-        projectId: string;
+        projectId: string | null;
         cycleId: string | null;
         creatorId: string;
         requesterDivisionId: string | null;
@@ -1830,7 +1917,7 @@ export declare class MobileController {
             name: string;
             key: string;
             color: string | null;
-        };
+        } | null;
         cycle: {
             number: number;
             id: string;
@@ -1962,7 +2049,7 @@ export declare class MobileController {
                 name: string;
                 key: string;
                 color: string | null;
-            };
+            } | null;
             assignee: {
                 id: string;
                 name: string;
@@ -1978,8 +2065,8 @@ export declare class MobileController {
             priority: import("@prisma/client").$Enums.TaskPriority;
             identifier: string;
             assigneeId: string | null;
-            workspaceId: string;
             status: import("@prisma/client").$Enums.TaskStatus;
+            workspaceId: string;
             order: number;
             customStatus: string | null;
             dueDate: Date | null;
@@ -1989,7 +2076,7 @@ export declare class MobileController {
             deletedAt: Date | null;
             triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
             externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
-            projectId: string;
+            projectId: string | null;
             cycleId: string | null;
             creatorId: string;
             requesterDivisionId: string | null;
@@ -2089,8 +2176,8 @@ export declare class MobileController {
         priority: import("@prisma/client").$Enums.TaskPriority;
         identifier: string;
         assigneeId: string | null;
-        workspaceId: string;
         status: import("@prisma/client").$Enums.TaskStatus;
+        workspaceId: string;
         order: number;
         customStatus: string | null;
         dueDate: Date | null;
@@ -2100,7 +2187,7 @@ export declare class MobileController {
         deletedAt: Date | null;
         triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
         externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
-        projectId: string;
+        projectId: string | null;
         cycleId: string | null;
         creatorId: string;
         requesterDivisionId: string | null;
@@ -2122,8 +2209,8 @@ export declare class MobileController {
         priority: import("@prisma/client").$Enums.TaskPriority;
         identifier: string;
         assigneeId: string | null;
-        workspaceId: string;
         status: import("@prisma/client").$Enums.TaskStatus;
+        workspaceId: string;
         order: number;
         customStatus: string | null;
         dueDate: Date | null;
@@ -2133,7 +2220,7 @@ export declare class MobileController {
         deletedAt: Date | null;
         triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
         externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
-        projectId: string;
+        projectId: string | null;
         cycleId: string | null;
         creatorId: string;
         requesterDivisionId: string | null;
@@ -2146,7 +2233,7 @@ export declare class MobileController {
             name: string;
             key: string;
             color: string | null;
-        };
+        } | null;
         cycle: {
             number: number;
             id: string;
@@ -2278,7 +2365,7 @@ export declare class MobileController {
                 name: string;
                 key: string;
                 color: string | null;
-            };
+            } | null;
             assignee: {
                 id: string;
                 name: string;
@@ -2294,8 +2381,8 @@ export declare class MobileController {
             priority: import("@prisma/client").$Enums.TaskPriority;
             identifier: string;
             assigneeId: string | null;
-            workspaceId: string;
             status: import("@prisma/client").$Enums.TaskStatus;
+            workspaceId: string;
             order: number;
             customStatus: string | null;
             dueDate: Date | null;
@@ -2305,7 +2392,7 @@ export declare class MobileController {
             deletedAt: Date | null;
             triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
             externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
-            projectId: string;
+            projectId: string | null;
             cycleId: string | null;
             creatorId: string;
             requesterDivisionId: string | null;
@@ -2405,8 +2492,8 @@ export declare class MobileController {
         priority: import("@prisma/client").$Enums.TaskPriority;
         identifier: string;
         assigneeId: string | null;
-        workspaceId: string;
         status: import("@prisma/client").$Enums.TaskStatus;
+        workspaceId: string;
         order: number;
         customStatus: string | null;
         dueDate: Date | null;
@@ -2416,7 +2503,7 @@ export declare class MobileController {
         deletedAt: Date | null;
         triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
         externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
-        projectId: string;
+        projectId: string | null;
         cycleId: string | null;
         creatorId: string;
         requesterDivisionId: string | null;
@@ -2430,7 +2517,7 @@ export declare class MobileController {
             name: string;
             key: string;
             color: string | null;
-        };
+        } | null;
         cycle: {
             number: number;
             id: string;
@@ -2562,7 +2649,7 @@ export declare class MobileController {
                 name: string;
                 key: string;
                 color: string | null;
-            };
+            } | null;
             assignee: {
                 id: string;
                 name: string;
@@ -2578,8 +2665,8 @@ export declare class MobileController {
             priority: import("@prisma/client").$Enums.TaskPriority;
             identifier: string;
             assigneeId: string | null;
-            workspaceId: string;
             status: import("@prisma/client").$Enums.TaskStatus;
+            workspaceId: string;
             order: number;
             customStatus: string | null;
             dueDate: Date | null;
@@ -2589,7 +2676,7 @@ export declare class MobileController {
             deletedAt: Date | null;
             triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
             externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
-            projectId: string;
+            projectId: string | null;
             cycleId: string | null;
             creatorId: string;
             requesterDivisionId: string | null;
@@ -2689,8 +2776,8 @@ export declare class MobileController {
         priority: import("@prisma/client").$Enums.TaskPriority;
         identifier: string;
         assigneeId: string | null;
-        workspaceId: string;
         status: import("@prisma/client").$Enums.TaskStatus;
+        workspaceId: string;
         order: number;
         customStatus: string | null;
         dueDate: Date | null;
@@ -2700,7 +2787,7 @@ export declare class MobileController {
         deletedAt: Date | null;
         triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
         externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
-        projectId: string;
+        projectId: string | null;
         cycleId: string | null;
         creatorId: string;
         requesterDivisionId: string | null;
@@ -2713,7 +2800,7 @@ export declare class MobileController {
             name: string;
             key: string;
             color: string | null;
-        };
+        } | null;
         cycle: {
             number: number;
             id: string;
@@ -2845,7 +2932,7 @@ export declare class MobileController {
                 name: string;
                 key: string;
                 color: string | null;
-            };
+            } | null;
             assignee: {
                 id: string;
                 name: string;
@@ -2861,8 +2948,8 @@ export declare class MobileController {
             priority: import("@prisma/client").$Enums.TaskPriority;
             identifier: string;
             assigneeId: string | null;
-            workspaceId: string;
             status: import("@prisma/client").$Enums.TaskStatus;
+            workspaceId: string;
             order: number;
             customStatus: string | null;
             dueDate: Date | null;
@@ -2872,7 +2959,7 @@ export declare class MobileController {
             deletedAt: Date | null;
             triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
             externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
-            projectId: string;
+            projectId: string | null;
             cycleId: string | null;
             creatorId: string;
             requesterDivisionId: string | null;
@@ -2972,8 +3059,8 @@ export declare class MobileController {
         priority: import("@prisma/client").$Enums.TaskPriority;
         identifier: string;
         assigneeId: string | null;
-        workspaceId: string;
         status: import("@prisma/client").$Enums.TaskStatus;
+        workspaceId: string;
         order: number;
         customStatus: string | null;
         dueDate: Date | null;
@@ -2983,7 +3070,7 @@ export declare class MobileController {
         deletedAt: Date | null;
         triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
         externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
-        projectId: string;
+        projectId: string | null;
         cycleId: string | null;
         creatorId: string;
         requesterDivisionId: string | null;
@@ -3168,7 +3255,7 @@ export declare class MobileController {
             name: string;
             key: string;
             color: string | null;
-        };
+        } | null;
         cycle: {
             number: number;
             id: string;
@@ -3300,7 +3387,7 @@ export declare class MobileController {
                 name: string;
                 key: string;
                 color: string | null;
-            };
+            } | null;
             assignee: {
                 id: string;
                 name: string;
@@ -3316,8 +3403,8 @@ export declare class MobileController {
             priority: import("@prisma/client").$Enums.TaskPriority;
             identifier: string;
             assigneeId: string | null;
-            workspaceId: string;
             status: import("@prisma/client").$Enums.TaskStatus;
+            workspaceId: string;
             order: number;
             customStatus: string | null;
             dueDate: Date | null;
@@ -3327,7 +3414,7 @@ export declare class MobileController {
             deletedAt: Date | null;
             triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
             externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
-            projectId: string;
+            projectId: string | null;
             cycleId: string | null;
             creatorId: string;
             requesterDivisionId: string | null;
@@ -3427,8 +3514,8 @@ export declare class MobileController {
         priority: import("@prisma/client").$Enums.TaskPriority;
         identifier: string;
         assigneeId: string | null;
-        workspaceId: string;
         status: import("@prisma/client").$Enums.TaskStatus;
+        workspaceId: string;
         order: number;
         customStatus: string | null;
         dueDate: Date | null;
@@ -3438,7 +3525,7 @@ export declare class MobileController {
         deletedAt: Date | null;
         triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
         externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
-        projectId: string;
+        projectId: string | null;
         cycleId: string | null;
         creatorId: string;
         requesterDivisionId: string | null;
@@ -3454,8 +3541,8 @@ export declare class MobileController {
         priority: import("@prisma/client").$Enums.TaskPriority;
         identifier: string;
         assigneeId: string | null;
-        workspaceId: string;
         status: import("@prisma/client").$Enums.TaskStatus;
+        workspaceId: string;
         order: number;
         customStatus: string | null;
         dueDate: Date | null;
@@ -3465,7 +3552,7 @@ export declare class MobileController {
         deletedAt: Date | null;
         triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
         externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
-        projectId: string;
+        projectId: string | null;
         cycleId: string | null;
         creatorId: string;
         requesterDivisionId: string | null;

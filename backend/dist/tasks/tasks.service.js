@@ -322,14 +322,25 @@ let TasksService = class TasksService {
         return task;
     }
     async createTask(userId, data) {
-        const project = await this.prisma.project.findUnique({
-            where: { id: data.projectId },
+        const workspace = await this.prisma.workspace.findUnique({
+            where: { id: data.workspaceId },
+            include: { projects: true },
         });
-        if (!project) {
-            throw new NotFoundException('Project not found');
+        if (!workspace) {
+            throw new NotFoundException('Workspace not found');
+        }
+        const prefix = workspace.ticketPrefix || 'LAB';
+        let targetProjectId = data.projectId || null;
+        if (targetProjectId) {
+            const proj = await this.prisma.project.findUnique({ where: { id: targetProjectId } });
+            if (!proj)
+                targetProjectId = null;
+        }
+        if (!targetProjectId && workspace.projects.length > 0) {
+            targetProjectId = workspace.projects[0].id;
         }
         const existingTasks = await this.prisma.task.findMany({
-            where: { projectId: data.projectId },
+            where: { workspaceId: data.workspaceId },
             select: { identifier: true },
         });
         let maxNumber = 0;
@@ -344,7 +355,7 @@ let TasksService = class TasksService {
                 }
             }
         }
-        const identifier = `${project.key}-${maxNumber + 1}`;
+        const identifier = `${prefix}-${maxNumber + 1}`;
         const lastTask = await this.prisma.task.findFirst({
             where: {
                 workspaceId: data.workspaceId,
@@ -364,7 +375,7 @@ let TasksService = class TasksService {
                 order,
                 dueDate: data.dueDate ? new Date(data.dueDate) : undefined,
                 labels: data.labels || [],
-                projectId: data.projectId,
+                projectId: targetProjectId,
                 workspaceId: data.workspaceId,
                 cycleId: data.cycleId || null,
                 estimate: data.estimate !== undefined ? data.estimate : 1,
@@ -1354,15 +1365,19 @@ let TasksService = class TasksService {
             }
             finalRequesterDivisionId = division.id;
         }
-        let project = await this.prisma.project.findFirst({
-            where: { workspaceId: data.workspaceId },
-            orderBy: { createdAt: 'asc' },
+        const workspace = await this.prisma.workspace.findUnique({
+            where: { id: data.workspaceId },
+            include: { projects: true },
         });
+        if (!workspace)
+            throw new NotFoundException('Workspace not found');
+        const prefix = workspace.ticketPrefix || 'LAB';
+        let project = workspace.projects[0];
         if (!project) {
             project = await this.prisma.project.create({
                 data: {
                     name: 'General',
-                    key: 'REQ',
+                    key: prefix,
                     workspaceId: data.workspaceId,
                 },
             });
@@ -1373,7 +1388,7 @@ let TasksService = class TasksService {
         else if (data.urgency === 'LOW')
             priority = TaskPriority.LOW;
         const existingTasks = await this.prisma.task.findMany({
-            where: { projectId: project.id },
+            where: { workspaceId: data.workspaceId },
             select: { identifier: true },
         });
         let maxNumber = 0;
@@ -1388,7 +1403,7 @@ let TasksService = class TasksService {
                 }
             }
         }
-        const identifier = `${project.key}-${maxNumber + 1}`;
+        const identifier = `${prefix}-${maxNumber + 1}`;
         const lastTask = await this.prisma.task.findFirst({
             where: { workspaceId: data.workspaceId },
             orderBy: { order: 'desc' },

@@ -7,7 +7,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
 let ProjectsService = class ProjectsService {
     prisma;
@@ -18,21 +18,97 @@ let ProjectsService = class ProjectsService {
         return this.prisma.project.findMany({
             where: { workspaceId },
             include: {
+                lead: {
+                    select: { id: true, name: true, email: true, avatarUrl: true },
+                },
                 _count: {
                     select: { tasks: true },
+                },
+                tasks: {
+                    select: {
+                        id: true,
+                        identifier: true,
+                        title: true,
+                        status: true,
+                        priority: true,
+                        estimate: true,
+                        isArchived: true,
+                        dueDate: true,
+                        assignee: {
+                            select: { id: true, name: true, avatarUrl: true },
+                        },
+                    },
+                    orderBy: { createdAt: 'desc' },
                 },
             },
             orderBy: { createdAt: 'asc' },
         });
     }
+    async getProjectById(id) {
+        const project = await this.prisma.project.findUnique({
+            where: { id },
+            include: {
+                lead: {
+                    select: { id: true, name: true, email: true, avatarUrl: true },
+                },
+                _count: {
+                    select: { tasks: true },
+                },
+                tasks: {
+                    include: {
+                        assignee: { select: { id: true, name: true, email: true, avatarUrl: true } },
+                        cycle: { select: { id: true, name: true, number: true, status: true } },
+                    },
+                    orderBy: { createdAt: 'desc' },
+                },
+            },
+        });
+        if (!project) {
+            throw new NotFoundException('Project not found');
+        }
+        return project;
+    }
     async createProject(workspaceId, data) {
+        let key = data.key?.trim().toUpperCase();
+        if (!key) {
+            const words = data.name.trim().split(/\s+/).filter(Boolean);
+            if (words.length >= 2) {
+                key = words.map((w) => w[0]).join('').substring(0, 4).toUpperCase();
+            }
+            else {
+                key = data.name.substring(0, 3).toUpperCase();
+            }
+        }
+        key = key.replace(/[^A-Z0-9]/g, '');
+        if (!key)
+            key = 'PRJ';
+        let uniqueKey = key;
+        let counter = 1;
+        while (await this.prisma.project.findUnique({
+            where: { workspaceId_key: { workspaceId, key: uniqueKey } },
+        })) {
+            uniqueKey = `${key}${counter}`;
+            counter++;
+        }
         return this.prisma.project.create({
             data: {
-                name: data.name,
-                key: data.key.toUpperCase(),
-                description: data.description,
+                name: data.name.trim(),
+                key: uniqueKey,
+                description: data.description?.trim() || null,
                 color: data.color || '#6366f1',
+                status: data.status || 'IN_PROGRESS',
+                targetDate: data.targetDate ? new Date(data.targetDate) : null,
+                leadId: data.leadId || null,
                 workspaceId,
+            },
+            include: {
+                lead: {
+                    select: { id: true, name: true, email: true, avatarUrl: true },
+                },
+                _count: {
+                    select: { tasks: true },
+                },
+                tasks: true,
             },
         });
     }
@@ -44,15 +120,43 @@ let ProjectsService = class ProjectsService {
         if (!existing) {
             throw new NotFoundException('Project not found');
         }
-        const newKey = data.key ? data.key.trim().toUpperCase() : existing.key;
+        let newKey = existing.key;
+        if (data.key) {
+            const cleaned = data.key.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+            if (cleaned && cleaned !== existing.key) {
+                const duplicate = await this.prisma.project.findUnique({
+                    where: { workspaceId_key: { workspaceId: existing.workspaceId, key: cleaned } },
+                });
+                if (duplicate && duplicate.id !== id) {
+                    throw new BadRequestException(`Project key "${cleaned}" already in use`);
+                }
+                newKey = cleaned;
+            }
+        }
         const keyChanged = newKey !== existing.key;
         const updatedProject = await this.prisma.project.update({
             where: { id },
             data: {
-                name: data.name !== undefined ? data.name : existing.name,
+                name: data.name !== undefined ? data.name.trim() : existing.name,
                 key: newKey,
                 description: data.description !== undefined ? data.description : existing.description,
                 color: data.color !== undefined ? data.color : existing.color,
+                status: data.status !== undefined ? data.status : existing.status,
+                targetDate: data.targetDate !== undefined
+                    ? data.targetDate
+                        ? new Date(data.targetDate)
+                        : null
+                    : existing.targetDate,
+                leadId: data.leadId !== undefined ? data.leadId : existing.leadId,
+            },
+            include: {
+                lead: {
+                    select: { id: true, name: true, email: true, avatarUrl: true },
+                },
+                _count: {
+                    select: { tasks: true },
+                },
+                tasks: true,
             },
         });
         if (keyChanged && existing.tasks.length > 0) {
@@ -70,6 +174,20 @@ let ProjectsService = class ProjectsService {
             }
         }
         return updatedProject;
+    }
+    async deleteProject(id) {
+        const existing = await this.prisma.project.findUnique({
+            where: { id },
+            include: {
+                _count: { select: { tasks: true } },
+            },
+        });
+        if (!existing) {
+            throw new NotFoundException('Project not found');
+        }
+        return this.prisma.project.delete({
+            where: { id },
+        });
     }
 };
 ProjectsService = __decorate([

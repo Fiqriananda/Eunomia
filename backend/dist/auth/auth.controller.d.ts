@@ -20,6 +20,9 @@ export declare class AuthController {
                 name: string;
                 key: string;
                 color: string | null;
+                status: string;
+                targetDate: Date | null;
+                leadId: string | null;
                 workspaceId: string;
             }[];
         } & {
@@ -29,6 +32,7 @@ export declare class AuthController {
             name: string;
             slug: string;
             logoUrl: string | null;
+            ticketPrefix: string;
             columnOrder: string[];
             cyclesEnabled: boolean;
         };
@@ -40,6 +44,9 @@ export declare class AuthController {
             name: string;
             key: string;
             color: string | null;
+            status: string;
+            targetDate: Date | null;
+            leadId: string | null;
             workspaceId: string;
         };
     }>;
@@ -60,6 +67,9 @@ export declare class AuthController {
                 name: string;
                 key: string;
                 color: string | null;
+                status: string;
+                targetDate: Date | null;
+                leadId: string | null;
                 workspaceId: string;
             }[];
         } & {
@@ -69,6 +79,7 @@ export declare class AuthController {
             name: string;
             slug: string;
             logoUrl: string | null;
+            ticketPrefix: string;
             columnOrder: string[];
             cyclesEnabled: boolean;
         };
@@ -80,6 +91,9 @@ export declare class AuthController {
             name: string;
             key: string;
             color: string | null;
+            status: string;
+            targetDate: Date | null;
+            leadId: string | null;
             workspaceId: string;
         };
     }>;
@@ -112,6 +126,9 @@ export declare class AuthController {
                     name: string;
                     key: string;
                     color: string | null;
+                    status: string;
+                    targetDate: Date | null;
+                    leadId: string | null;
                     workspaceId: string;
                 }[];
             } & {
@@ -121,6 +138,7 @@ export declare class AuthController {
                 name: string;
                 slug: string;
                 logoUrl: string | null;
+                ticketPrefix: string;
                 columnOrder: string[];
                 cyclesEnabled: boolean;
             };

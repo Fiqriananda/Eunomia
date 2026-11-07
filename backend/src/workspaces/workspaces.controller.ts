@@ -67,7 +67,7 @@ export class WorkspacesController {
   }
 
   @Patch(':id')
-  @ApiOperation({ summary: 'Update workspace settings (e.g. name, cyclesEnabled)' })
+  @ApiOperation({ summary: 'Update workspace settings (e.g. name, cyclesEnabled, ticketPrefix)' })
   @ApiParam({ name: 'id', description: 'Workspace ID' })
   @ApiBody({
     schema: {
@@ -75,16 +75,26 @@ export class WorkspacesController {
       properties: {
         name: { type: 'string', example: 'Acme Corp' },
         cyclesEnabled: { type: 'boolean', example: false },
+        ticketPrefix: { type: 'string', example: 'LAB' },
+        migrateExistingTasks: { type: 'boolean', example: false },
       },
     },
   })
   async updateWorkspace(
     @Param('id') id: string,
     @CurrentUser('id') userId: string,
-    @Body() body: { name?: string; cyclesEnabled?: boolean; logoUrl?: string | null },
+    @Body()
+    body: {
+      name?: string;
+      cyclesEnabled?: boolean;
+      logoUrl?: string | null;
+      ticketPrefix?: string;
+      migrateExistingTasks?: boolean;
+    },
   ) {
     return this.workspacesService.updateWorkspace(id, userId, body);
   }
+
 
   @Post()
   @ApiOperation({ summary: 'Create a new workspace' })

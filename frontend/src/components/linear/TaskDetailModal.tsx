@@ -279,7 +279,7 @@ export function TaskDetailModal({
       setStatus(task.status);
       setPriority(task.priority);
       setAssigneeId(task.assigneeId || null);
-      setProjectId(task.projectId);
+      setProjectId(task.projectId || '');
       setDueDate(task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : '');
       setLabels(task.labels || []);
       setComments(task.comments || []);

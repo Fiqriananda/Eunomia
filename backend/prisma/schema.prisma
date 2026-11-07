@@ -64,6 +64,7 @@ model User {
   taskSubscriptions TaskSubscription[] @relation("UserTaskSubscriptions")
   divisionMemberships DivisionMember[] @relation("UserDivisionMemberships")
   deviceTokens     DeviceToken[]     @relation("UserDeviceTokens")
+  leadProjects     Project[]         @relation("ProjectLead")
 }
 
 model Workspace {
@@ -71,6 +72,7 @@ model Workspace {
   name        String
   slug        String            @unique
   logoUrl     String?
+  ticketPrefix String           @default("LAB")
   columnOrder   String[]          @default([])
   cyclesEnabled Boolean           @default(true)
   createdAt     DateTime          @default(now())
@@ -123,6 +125,10 @@ model Project {
   key         String    // e.g. "LIN", "PROJ"
   description String?
   color       String?   @default("#6366f1")
+  status      String    @default("IN_PROGRESS") // "PLANNED" | "IN_PROGRESS" | "COMPLETED" | "CANCELED"
+  targetDate  DateTime?
+  leadId      String?
+  lead        User?     @relation("ProjectLead", fields: [leadId], references: [id], onDelete: SetNull)
   workspaceId String
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   tasks       Task[]
@@ -165,8 +171,8 @@ model Task {
   isArchived  Boolean      @default(false)
   deletedAt   DateTime?
   
-  projectId   String
-  project     Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId   String?
+  project     Project?     @relation(fields: [projectId], references: [id], onDelete: SetNull)
   
   workspaceId String
   workspace   Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)

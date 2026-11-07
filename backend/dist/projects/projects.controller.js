@@ -10,7 +10,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-import { Controller, Get, Post, Patch, Param, Body, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Param, Body, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse, ApiParam, ApiQuery, ApiBody } from '@nestjs/swagger';
 import { ProjectsService } from './projects.service.js';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard.js';
@@ -22,36 +22,55 @@ let ProjectsController = class ProjectsController {
     async getProjects(workspaceId) {
         return this.projectsService.getProjectsByWorkspace(workspaceId);
     }
+    async getProject(id) {
+        return this.projectsService.getProjectById(id);
+    }
     async createProject(body) {
         return this.projectsService.createProject(body.workspaceId, body);
     }
     async updateProject(id, body) {
         return this.projectsService.updateProject(id, body);
     }
+    async deleteProject(id) {
+        return this.projectsService.deleteProject(id);
+    }
 };
 __decorate([
     Get(),
     ApiOperation({ summary: 'Get all projects within a workspace' }),
     ApiQuery({ name: 'workspaceId', required: true, description: 'Workspace ID' }),
-    ApiResponse({ status: 200, description: 'List of projects with task counts' }),
+    ApiResponse({ status: 200, description: 'List of projects with task counts and epic breakdown' }),
     __param(0, Query('workspaceId')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], ProjectsController.prototype, "getProjects", null);
 __decorate([
+    Get(':id'),
+    ApiOperation({ summary: 'Get a project by ID with detailed task list' }),
+    ApiParam({ name: 'id', description: 'Project ID' }),
+    ApiResponse({ status: 200, description: 'Project detail' }),
+    __param(0, Param('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], ProjectsController.prototype, "getProject", null);
+__decorate([
     Post(),
-    ApiOperation({ summary: 'Create a new project' }),
+    ApiOperation({ summary: 'Create a new project / Epic' }),
     ApiBody({
         schema: {
             type: 'object',
-            required: ['workspaceId', 'name', 'key'],
+            required: ['workspaceId', 'name'],
             properties: {
                 workspaceId: { type: 'string', example: 'ws_123' },
-                name: { type: 'string', example: 'Mobile App' },
-                key: { type: 'string', example: 'MOB' },
-                description: { type: 'string', example: 'Native iOS & Android mobile application' },
+                name: { type: 'string', example: 'PDF Schedule Uploader' },
+                key: { type: 'string', example: 'PDF' },
+                description: { type: 'string', example: 'Automatic PDF schedule parser and uploader' },
                 color: { type: 'string', example: '#6366f1' },
+                status: { type: 'string', example: 'IN_PROGRESS' },
+                targetDate: { type: 'string', example: '2026-12-31' },
+                leadId: { type: 'string', example: 'user_123' },
             },
         },
     }),
@@ -69,10 +88,13 @@ __decorate([
         schema: {
             type: 'object',
             properties: {
-                name: { type: 'string', example: 'Mobile App v2' },
-                key: { type: 'string', example: 'MOB' },
+                name: { type: 'string', example: 'PDF Schedule Uploader v2' },
+                key: { type: 'string', example: 'PDF' },
                 description: { type: 'string', example: 'Updated project description' },
                 color: { type: 'string', example: '#10b981' },
+                status: { type: 'string', example: 'COMPLETED' },
+                targetDate: { type: 'string', example: '2026-12-31' },
+                leadId: { type: 'string', example: 'user_123' },
             },
         },
     }),
@@ -83,6 +105,16 @@ __decorate([
     __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", Promise)
 ], ProjectsController.prototype, "updateProject", null);
+__decorate([
+    Delete(':id'),
+    ApiOperation({ summary: 'Delete a project' }),
+    ApiParam({ name: 'id', description: 'Project ID' }),
+    ApiResponse({ status: 200, description: 'Project deleted' }),
+    __param(0, Param('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], ProjectsController.prototype, "deleteProject", null);
 ProjectsController = __decorate([
     ApiTags('Projects'),
     ApiBearerAuth('JWT-auth'),

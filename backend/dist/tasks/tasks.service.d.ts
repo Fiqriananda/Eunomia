@@ -35,7 +35,7 @@ export declare class TasksService {
             name: string;
             key: string;
             color: string | null;
-        };
+        } | null;
         cycle: {
             number: number;
             id: string;
@@ -167,7 +167,7 @@ export declare class TasksService {
                 name: string;
                 key: string;
                 color: string | null;
-            };
+            } | null;
             assignee: {
                 id: string;
                 name: string;
@@ -183,8 +183,8 @@ export declare class TasksService {
             priority: import("@prisma/client").$Enums.TaskPriority;
             identifier: string;
             assigneeId: string | null;
-            workspaceId: string;
             status: import("@prisma/client").$Enums.TaskStatus;
+            workspaceId: string;
             order: number;
             customStatus: string | null;
             dueDate: Date | null;
@@ -194,7 +194,7 @@ export declare class TasksService {
             deletedAt: Date | null;
             triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
             externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
-            projectId: string;
+            projectId: string | null;
             cycleId: string | null;
             creatorId: string;
             requesterDivisionId: string | null;
@@ -294,8 +294,8 @@ export declare class TasksService {
         priority: import("@prisma/client").$Enums.TaskPriority;
         identifier: string;
         assigneeId: string | null;
-        workspaceId: string;
         status: import("@prisma/client").$Enums.TaskStatus;
+        workspaceId: string;
         order: number;
         customStatus: string | null;
         dueDate: Date | null;
@@ -305,7 +305,7 @@ export declare class TasksService {
         deletedAt: Date | null;
         triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
         externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
-        projectId: string;
+        projectId: string | null;
         cycleId: string | null;
         creatorId: string;
         requesterDivisionId: string | null;
@@ -318,7 +318,7 @@ export declare class TasksService {
             name: string;
             key: string;
             color: string | null;
-        };
+        } | null;
         cycle: {
             number: number;
             id: string;
@@ -450,7 +450,7 @@ export declare class TasksService {
                 name: string;
                 key: string;
                 color: string | null;
-            };
+            } | null;
             assignee: {
                 id: string;
                 name: string;
@@ -466,8 +466,8 @@ export declare class TasksService {
             priority: import("@prisma/client").$Enums.TaskPriority;
             identifier: string;
             assigneeId: string | null;
-            workspaceId: string;
             status: import("@prisma/client").$Enums.TaskStatus;
+            workspaceId: string;
             order: number;
             customStatus: string | null;
             dueDate: Date | null;
@@ -477,7 +477,7 @@ export declare class TasksService {
             deletedAt: Date | null;
             triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
             externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
-            projectId: string;
+            projectId: string | null;
             cycleId: string | null;
             creatorId: string;
             requesterDivisionId: string | null;
@@ -577,8 +577,8 @@ export declare class TasksService {
         priority: import("@prisma/client").$Enums.TaskPriority;
         identifier: string;
         assigneeId: string | null;
-        workspaceId: string;
         status: import("@prisma/client").$Enums.TaskStatus;
+        workspaceId: string;
         order: number;
         customStatus: string | null;
         dueDate: Date | null;
@@ -588,7 +588,7 @@ export declare class TasksService {
         deletedAt: Date | null;
         triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
         externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
-        projectId: string;
+        projectId: string | null;
         cycleId: string | null;
         creatorId: string;
         requesterDivisionId: string | null;
@@ -597,7 +597,7 @@ export declare class TasksService {
     }>;
     createTask(userId: string, data: {
         workspaceId: string;
-        projectId: string;
+        projectId?: string | null;
         title: string;
         description?: string;
         status?: TaskStatus;
@@ -619,7 +619,7 @@ export declare class TasksService {
             name: string;
             key: string;
             color: string | null;
-        };
+        } | null;
         cycle: {
             number: number;
             id: string;
@@ -751,7 +751,7 @@ export declare class TasksService {
                 name: string;
                 key: string;
                 color: string | null;
-            };
+            } | null;
             assignee: {
                 id: string;
                 name: string;
@@ -767,8 +767,8 @@ export declare class TasksService {
             priority: import("@prisma/client").$Enums.TaskPriority;
             identifier: string;
             assigneeId: string | null;
-            workspaceId: string;
             status: import("@prisma/client").$Enums.TaskStatus;
+            workspaceId: string;
             order: number;
             customStatus: string | null;
             dueDate: Date | null;
@@ -778,7 +778,7 @@ export declare class TasksService {
             deletedAt: Date | null;
             triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
             externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
-            projectId: string;
+            projectId: string | null;
             cycleId: string | null;
             creatorId: string;
             requesterDivisionId: string | null;
@@ -878,8 +878,8 @@ export declare class TasksService {
         priority: import("@prisma/client").$Enums.TaskPriority;
         identifier: string;
         assigneeId: string | null;
-        workspaceId: string;
         status: import("@prisma/client").$Enums.TaskStatus;
+        workspaceId: string;
         order: number;
         customStatus: string | null;
         dueDate: Date | null;
@@ -889,7 +889,7 @@ export declare class TasksService {
         deletedAt: Date | null;
         triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
         externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
-        projectId: string;
+        projectId: string | null;
         cycleId: string | null;
         creatorId: string;
         requesterDivisionId: string | null;
@@ -917,7 +917,7 @@ export declare class TasksService {
             name: string;
             key: string;
             color: string | null;
-        };
+        } | null;
         cycle: {
             number: number;
             id: string;
@@ -1049,7 +1049,7 @@ export declare class TasksService {
                 name: string;
                 key: string;
                 color: string | null;
-            };
+            } | null;
             assignee: {
                 id: string;
                 name: string;
@@ -1065,8 +1065,8 @@ export declare class TasksService {
             priority: import("@prisma/client").$Enums.TaskPriority;
             identifier: string;
             assigneeId: string | null;
-            workspaceId: string;
             status: import("@prisma/client").$Enums.TaskStatus;
+            workspaceId: string;
             order: number;
             customStatus: string | null;
             dueDate: Date | null;
@@ -1076,7 +1076,7 @@ export declare class TasksService {
             deletedAt: Date | null;
             triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
             externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
-            projectId: string;
+            projectId: string | null;
             cycleId: string | null;
             creatorId: string;
             requesterDivisionId: string | null;
@@ -1176,8 +1176,8 @@ export declare class TasksService {
         priority: import("@prisma/client").$Enums.TaskPriority;
         identifier: string;
         assigneeId: string | null;
-        workspaceId: string;
         status: import("@prisma/client").$Enums.TaskStatus;
+        workspaceId: string;
         order: number;
         customStatus: string | null;
         dueDate: Date | null;
@@ -1187,7 +1187,7 @@ export declare class TasksService {
         deletedAt: Date | null;
         triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
         externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
-        projectId: string;
+        projectId: string | null;
         cycleId: string | null;
         creatorId: string;
         requesterDivisionId: string | null;
@@ -1205,7 +1205,7 @@ export declare class TasksService {
             name: string;
             key: string;
             color: string | null;
-        };
+        } | null;
         cycle: {
             number: number;
             id: string;
@@ -1337,7 +1337,7 @@ export declare class TasksService {
                 name: string;
                 key: string;
                 color: string | null;
-            };
+            } | null;
             assignee: {
                 id: string;
                 name: string;
@@ -1353,8 +1353,8 @@ export declare class TasksService {
             priority: import("@prisma/client").$Enums.TaskPriority;
             identifier: string;
             assigneeId: string | null;
-            workspaceId: string;
             status: import("@prisma/client").$Enums.TaskStatus;
+            workspaceId: string;
             order: number;
             customStatus: string | null;
             dueDate: Date | null;
@@ -1364,7 +1364,7 @@ export declare class TasksService {
             deletedAt: Date | null;
             triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
             externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
-            projectId: string;
+            projectId: string | null;
             cycleId: string | null;
             creatorId: string;
             requesterDivisionId: string | null;
@@ -1464,8 +1464,8 @@ export declare class TasksService {
         priority: import("@prisma/client").$Enums.TaskPriority;
         identifier: string;
         assigneeId: string | null;
-        workspaceId: string;
         status: import("@prisma/client").$Enums.TaskStatus;
+        workspaceId: string;
         order: number;
         customStatus: string | null;
         dueDate: Date | null;
@@ -1475,7 +1475,7 @@ export declare class TasksService {
         deletedAt: Date | null;
         triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
         externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
-        projectId: string;
+        projectId: string | null;
         cycleId: string | null;
         creatorId: string;
         requesterDivisionId: string | null;
@@ -1510,7 +1510,7 @@ export declare class TasksService {
             name: string;
             key: string;
             color: string | null;
-        };
+        } | null;
         cycle: {
             number: number;
             id: string;
@@ -1642,7 +1642,7 @@ export declare class TasksService {
                 name: string;
                 key: string;
                 color: string | null;
-            };
+            } | null;
             assignee: {
                 id: string;
                 name: string;
@@ -1658,8 +1658,8 @@ export declare class TasksService {
             priority: import("@prisma/client").$Enums.TaskPriority;
             identifier: string;
             assigneeId: string | null;
-            workspaceId: string;
             status: import("@prisma/client").$Enums.TaskStatus;
+            workspaceId: string;
             order: number;
             customStatus: string | null;
             dueDate: Date | null;
@@ -1669,7 +1669,7 @@ export declare class TasksService {
             deletedAt: Date | null;
             triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
             externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
-            projectId: string;
+            projectId: string | null;
             cycleId: string | null;
             creatorId: string;
             requesterDivisionId: string | null;
@@ -1769,8 +1769,8 @@ export declare class TasksService {
         priority: import("@prisma/client").$Enums.TaskPriority;
         identifier: string;
         assigneeId: string | null;
-        workspaceId: string;
         status: import("@prisma/client").$Enums.TaskStatus;
+        workspaceId: string;
         order: number;
         customStatus: string | null;
         dueDate: Date | null;
@@ -1780,7 +1780,7 @@ export declare class TasksService {
         deletedAt: Date | null;
         triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
         externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
-        projectId: string;
+        projectId: string | null;
         cycleId: string | null;
         creatorId: string;
         requesterDivisionId: string | null;
@@ -1793,7 +1793,7 @@ export declare class TasksService {
             name: string;
             key: string;
             color: string | null;
-        };
+        } | null;
         cycle: {
             number: number;
             id: string;
@@ -1925,7 +1925,7 @@ export declare class TasksService {
                 name: string;
                 key: string;
                 color: string | null;
-            };
+            } | null;
             assignee: {
                 id: string;
                 name: string;
@@ -1941,8 +1941,8 @@ export declare class TasksService {
             priority: import("@prisma/client").$Enums.TaskPriority;
             identifier: string;
             assigneeId: string | null;
-            workspaceId: string;
             status: import("@prisma/client").$Enums.TaskStatus;
+            workspaceId: string;
             order: number;
             customStatus: string | null;
             dueDate: Date | null;
@@ -1952,7 +1952,7 @@ export declare class TasksService {
             deletedAt: Date | null;
             triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
             externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
-            projectId: string;
+            projectId: string | null;
             cycleId: string | null;
             creatorId: string;
             requesterDivisionId: string | null;
@@ -2052,8 +2052,8 @@ export declare class TasksService {
         priority: import("@prisma/client").$Enums.TaskPriority;
         identifier: string;
         assigneeId: string | null;
-        workspaceId: string;
         status: import("@prisma/client").$Enums.TaskStatus;
+        workspaceId: string;
         order: number;
         customStatus: string | null;
         dueDate: Date | null;
@@ -2063,7 +2063,7 @@ export declare class TasksService {
         deletedAt: Date | null;
         triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
         externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
-        projectId: string;
+        projectId: string | null;
         cycleId: string | null;
         creatorId: string;
         requesterDivisionId: string | null;
@@ -2079,8 +2079,8 @@ export declare class TasksService {
         priority: import("@prisma/client").$Enums.TaskPriority;
         identifier: string;
         assigneeId: string | null;
-        workspaceId: string;
         status: import("@prisma/client").$Enums.TaskStatus;
+        workspaceId: string;
         order: number;
         customStatus: string | null;
         dueDate: Date | null;
@@ -2090,7 +2090,7 @@ export declare class TasksService {
         deletedAt: Date | null;
         triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
         externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
-        projectId: string;
+        projectId: string | null;
         cycleId: string | null;
         creatorId: string;
         requesterDivisionId: string | null;
@@ -2164,7 +2164,7 @@ export declare class TasksService {
             name: string;
             key: string;
             color: string | null;
-        };
+        } | null;
         cycle: {
             number: number;
             id: string;
@@ -2296,7 +2296,7 @@ export declare class TasksService {
                 name: string;
                 key: string;
                 color: string | null;
-            };
+            } | null;
             assignee: {
                 id: string;
                 name: string;
@@ -2312,8 +2312,8 @@ export declare class TasksService {
             priority: import("@prisma/client").$Enums.TaskPriority;
             identifier: string;
             assigneeId: string | null;
-            workspaceId: string;
             status: import("@prisma/client").$Enums.TaskStatus;
+            workspaceId: string;
             order: number;
             customStatus: string | null;
             dueDate: Date | null;
@@ -2323,7 +2323,7 @@ export declare class TasksService {
             deletedAt: Date | null;
             triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
             externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
-            projectId: string;
+            projectId: string | null;
             cycleId: string | null;
             creatorId: string;
             requesterDivisionId: string | null;
@@ -2423,8 +2423,8 @@ export declare class TasksService {
         priority: import("@prisma/client").$Enums.TaskPriority;
         identifier: string;
         assigneeId: string | null;
-        workspaceId: string;
         status: import("@prisma/client").$Enums.TaskStatus;
+        workspaceId: string;
         order: number;
         customStatus: string | null;
         dueDate: Date | null;
@@ -2434,7 +2434,7 @@ export declare class TasksService {
         deletedAt: Date | null;
         triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
         externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
-        projectId: string;
+        projectId: string | null;
         cycleId: string | null;
         creatorId: string;
         requesterDivisionId: string | null;
@@ -2447,7 +2447,7 @@ export declare class TasksService {
             name: string;
             key: string;
             color: string | null;
-        };
+        } | null;
         cycle: {
             number: number;
             id: string;
@@ -2579,7 +2579,7 @@ export declare class TasksService {
                 name: string;
                 key: string;
                 color: string | null;
-            };
+            } | null;
             assignee: {
                 id: string;
                 name: string;
@@ -2595,8 +2595,8 @@ export declare class TasksService {
             priority: import("@prisma/client").$Enums.TaskPriority;
             identifier: string;
             assigneeId: string | null;
-            workspaceId: string;
             status: import("@prisma/client").$Enums.TaskStatus;
+            workspaceId: string;
             order: number;
             customStatus: string | null;
             dueDate: Date | null;
@@ -2606,7 +2606,7 @@ export declare class TasksService {
             deletedAt: Date | null;
             triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
             externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
-            projectId: string;
+            projectId: string | null;
             cycleId: string | null;
             creatorId: string;
             requesterDivisionId: string | null;
@@ -2706,8 +2706,8 @@ export declare class TasksService {
         priority: import("@prisma/client").$Enums.TaskPriority;
         identifier: string;
         assigneeId: string | null;
-        workspaceId: string;
         status: import("@prisma/client").$Enums.TaskStatus;
+        workspaceId: string;
         order: number;
         customStatus: string | null;
         dueDate: Date | null;
@@ -2717,7 +2717,7 @@ export declare class TasksService {
         deletedAt: Date | null;
         triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
         externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
-        projectId: string;
+        projectId: string | null;
         cycleId: string | null;
         creatorId: string;
         requesterDivisionId: string | null;
@@ -2730,7 +2730,7 @@ export declare class TasksService {
             name: string;
             key: string;
             color: string | null;
-        };
+        } | null;
         cycle: {
             number: number;
             id: string;
@@ -2862,7 +2862,7 @@ export declare class TasksService {
                 name: string;
                 key: string;
                 color: string | null;
-            };
+            } | null;
             assignee: {
                 id: string;
                 name: string;
@@ -2878,8 +2878,8 @@ export declare class TasksService {
             priority: import("@prisma/client").$Enums.TaskPriority;
             identifier: string;
             assigneeId: string | null;
-            workspaceId: string;
             status: import("@prisma/client").$Enums.TaskStatus;
+            workspaceId: string;
             order: number;
             customStatus: string | null;
             dueDate: Date | null;
@@ -2889,7 +2889,7 @@ export declare class TasksService {
             deletedAt: Date | null;
             triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
             externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
-            projectId: string;
+            projectId: string | null;
             cycleId: string | null;
             creatorId: string;
             requesterDivisionId: string | null;
@@ -2989,8 +2989,8 @@ export declare class TasksService {
         priority: import("@prisma/client").$Enums.TaskPriority;
         identifier: string;
         assigneeId: string | null;
-        workspaceId: string;
         status: import("@prisma/client").$Enums.TaskStatus;
+        workspaceId: string;
         order: number;
         customStatus: string | null;
         dueDate: Date | null;
@@ -3000,7 +3000,7 @@ export declare class TasksService {
         deletedAt: Date | null;
         triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
         externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
-        projectId: string;
+        projectId: string | null;
         cycleId: string | null;
         creatorId: string;
         requesterDivisionId: string | null;
@@ -3016,7 +3016,7 @@ export declare class TasksService {
             name: string;
             key: string;
             color: string | null;
-        };
+        } | null;
         cycle: {
             number: number;
             id: string;
@@ -3148,7 +3148,7 @@ export declare class TasksService {
                 name: string;
                 key: string;
                 color: string | null;
-            };
+            } | null;
             assignee: {
                 id: string;
                 name: string;
@@ -3164,8 +3164,8 @@ export declare class TasksService {
             priority: import("@prisma/client").$Enums.TaskPriority;
             identifier: string;
             assigneeId: string | null;
-            workspaceId: string;
             status: import("@prisma/client").$Enums.TaskStatus;
+            workspaceId: string;
             order: number;
             customStatus: string | null;
             dueDate: Date | null;
@@ -3175,7 +3175,7 @@ export declare class TasksService {
             deletedAt: Date | null;
             triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
             externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
-            projectId: string;
+            projectId: string | null;
             cycleId: string | null;
             creatorId: string;
             requesterDivisionId: string | null;
@@ -3275,8 +3275,8 @@ export declare class TasksService {
         priority: import("@prisma/client").$Enums.TaskPriority;
         identifier: string;
         assigneeId: string | null;
-        workspaceId: string;
         status: import("@prisma/client").$Enums.TaskStatus;
+        workspaceId: string;
         order: number;
         customStatus: string | null;
         dueDate: Date | null;
@@ -3286,7 +3286,7 @@ export declare class TasksService {
         deletedAt: Date | null;
         triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
         externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
-        projectId: string;
+        projectId: string | null;
         cycleId: string | null;
         creatorId: string;
         requesterDivisionId: string | null;
@@ -3299,7 +3299,7 @@ export declare class TasksService {
             name: string;
             key: string;
             color: string | null;
-        };
+        } | null;
         cycle: {
             number: number;
             id: string;
@@ -3431,7 +3431,7 @@ export declare class TasksService {
                 name: string;
                 key: string;
                 color: string | null;
-            };
+            } | null;
             assignee: {
                 id: string;
                 name: string;
@@ -3447,8 +3447,8 @@ export declare class TasksService {
             priority: import("@prisma/client").$Enums.TaskPriority;
             identifier: string;
             assigneeId: string | null;
-            workspaceId: string;
             status: import("@prisma/client").$Enums.TaskStatus;
+            workspaceId: string;
             order: number;
             customStatus: string | null;
             dueDate: Date | null;
@@ -3458,7 +3458,7 @@ export declare class TasksService {
             deletedAt: Date | null;
             triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
             externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
-            projectId: string;
+            projectId: string | null;
             cycleId: string | null;
             creatorId: string;
             requesterDivisionId: string | null;
@@ -3558,8 +3558,8 @@ export declare class TasksService {
         priority: import("@prisma/client").$Enums.TaskPriority;
         identifier: string;
         assigneeId: string | null;
-        workspaceId: string;
         status: import("@prisma/client").$Enums.TaskStatus;
+        workspaceId: string;
         order: number;
         customStatus: string | null;
         dueDate: Date | null;
@@ -3569,7 +3569,7 @@ export declare class TasksService {
         deletedAt: Date | null;
         triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
         externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
-        projectId: string;
+        projectId: string | null;
         cycleId: string | null;
         creatorId: string;
         requesterDivisionId: string | null;
@@ -3679,7 +3679,7 @@ export declare class TasksService {
             name: string;
             key: string;
             color: string | null;
-        };
+        } | null;
         cycle: {
             number: number;
             id: string;
@@ -3811,7 +3811,7 @@ export declare class TasksService {
                 name: string;
                 key: string;
                 color: string | null;
-            };
+            } | null;
             assignee: {
                 id: string;
                 name: string;
@@ -3827,8 +3827,8 @@ export declare class TasksService {
             priority: import("@prisma/client").$Enums.TaskPriority;
             identifier: string;
             assigneeId: string | null;
-            workspaceId: string;
             status: import("@prisma/client").$Enums.TaskStatus;
+            workspaceId: string;
             order: number;
             customStatus: string | null;
             dueDate: Date | null;
@@ -3838,7 +3838,7 @@ export declare class TasksService {
             deletedAt: Date | null;
             triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
             externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
-            projectId: string;
+            projectId: string | null;
             cycleId: string | null;
             creatorId: string;
             requesterDivisionId: string | null;
@@ -3938,8 +3938,8 @@ export declare class TasksService {
         priority: import("@prisma/client").$Enums.TaskPriority;
         identifier: string;
         assigneeId: string | null;
-        workspaceId: string;
         status: import("@prisma/client").$Enums.TaskStatus;
+        workspaceId: string;
         order: number;
         customStatus: string | null;
         dueDate: Date | null;
@@ -3949,7 +3949,7 @@ export declare class TasksService {
         deletedAt: Date | null;
         triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
         externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
-        projectId: string;
+        projectId: string | null;
         cycleId: string | null;
         creatorId: string;
         requesterDivisionId: string | null;
@@ -3962,7 +3962,7 @@ export declare class TasksService {
             name: string;
             key: string;
             color: string | null;
-        };
+        } | null;
         cycle: {
             number: number;
             id: string;
@@ -4094,7 +4094,7 @@ export declare class TasksService {
                 name: string;
                 key: string;
                 color: string | null;
-            };
+            } | null;
             assignee: {
                 id: string;
                 name: string;
@@ -4110,8 +4110,8 @@ export declare class TasksService {
             priority: import("@prisma/client").$Enums.TaskPriority;
             identifier: string;
             assigneeId: string | null;
-            workspaceId: string;
             status: import("@prisma/client").$Enums.TaskStatus;
+            workspaceId: string;
             order: number;
             customStatus: string | null;
             dueDate: Date | null;
@@ -4121,7 +4121,7 @@ export declare class TasksService {
             deletedAt: Date | null;
             triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
             externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
-            projectId: string;
+            projectId: string | null;
             cycleId: string | null;
             creatorId: string;
             requesterDivisionId: string | null;
@@ -4221,8 +4221,8 @@ export declare class TasksService {
         priority: import("@prisma/client").$Enums.TaskPriority;
         identifier: string;
         assigneeId: string | null;
-        workspaceId: string;
         status: import("@prisma/client").$Enums.TaskStatus;
+        workspaceId: string;
         order: number;
         customStatus: string | null;
         dueDate: Date | null;
@@ -4232,7 +4232,7 @@ export declare class TasksService {
         deletedAt: Date | null;
         triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
         externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
-        projectId: string;
+        projectId: string | null;
         cycleId: string | null;
         creatorId: string;
         requesterDivisionId: string | null;
@@ -4251,7 +4251,7 @@ export declare class TasksService {
             name: string;
             key: string;
             color: string | null;
-        };
+        } | null;
         cycle: {
             number: number;
             id: string;
@@ -4383,7 +4383,7 @@ export declare class TasksService {
                 name: string;
                 key: string;
                 color: string | null;
-            };
+            } | null;
             assignee: {
                 id: string;
                 name: string;
@@ -4399,8 +4399,8 @@ export declare class TasksService {
             priority: import("@prisma/client").$Enums.TaskPriority;
             identifier: string;
             assigneeId: string | null;
-            workspaceId: string;
             status: import("@prisma/client").$Enums.TaskStatus;
+            workspaceId: string;
             order: number;
             customStatus: string | null;
             dueDate: Date | null;
@@ -4410,7 +4410,7 @@ export declare class TasksService {
             deletedAt: Date | null;
             triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
             externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
-            projectId: string;
+            projectId: string | null;
             cycleId: string | null;
             creatorId: string;
             requesterDivisionId: string | null;
@@ -4510,8 +4510,8 @@ export declare class TasksService {
         priority: import("@prisma/client").$Enums.TaskPriority;
         identifier: string;
         assigneeId: string | null;
-        workspaceId: string;
         status: import("@prisma/client").$Enums.TaskStatus;
+        workspaceId: string;
         order: number;
         customStatus: string | null;
         dueDate: Date | null;
@@ -4521,7 +4521,7 @@ export declare class TasksService {
         deletedAt: Date | null;
         triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
         externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
-        projectId: string;
+        projectId: string | null;
         cycleId: string | null;
         creatorId: string;
         requesterDivisionId: string | null;

@@ -23,8 +23,8 @@ export declare class CyclesService {
         createdAt: Date;
         updatedAt: Date;
         name: string | null;
-        workspaceId: string;
         status: string;
+        workspaceId: string;
         startDate: Date;
         endDate: Date;
     }[]>;
@@ -45,8 +45,8 @@ export declare class CyclesService {
         createdAt: Date;
         updatedAt: Date;
         name: string | null;
-        workspaceId: string;
         status: string;
+        workspaceId: string;
         startDate: Date;
         endDate: Date;
     } | null>;
@@ -67,7 +67,7 @@ export declare class CyclesService {
                 name: string;
                 key: string;
                 color: string | null;
-            };
+            } | null;
             assignee: {
                 id: string;
                 name: string;
@@ -82,8 +82,8 @@ export declare class CyclesService {
             priority: import("@prisma/client").$Enums.TaskPriority;
             identifier: string;
             assigneeId: string | null;
-            workspaceId: string;
             status: import("@prisma/client").$Enums.TaskStatus;
+            workspaceId: string;
             order: number;
             customStatus: string | null;
             dueDate: Date | null;
@@ -93,7 +93,7 @@ export declare class CyclesService {
             deletedAt: Date | null;
             triageStatus: import("@prisma/client").$Enums.TriageStatus | null;
             externalMetadata: import("@prisma/client/runtime/library").JsonValue | null;
-            projectId: string;
+            projectId: string | null;
             cycleId: string | null;
             creatorId: string;
             requesterDivisionId: string | null;
@@ -106,8 +106,8 @@ export declare class CyclesService {
         createdAt: Date;
         updatedAt: Date;
         name: string | null;
-        workspaceId: string;
         status: string;
+        workspaceId: string;
         startDate: Date;
         endDate: Date;
     }>;
@@ -119,8 +119,8 @@ export declare class CyclesService {
         createdAt: Date;
         updatedAt: Date;
         name: string | null;
-        workspaceId: string;
         status: string;
+        workspaceId: string;
         startDate: Date;
         endDate: Date;
     }>;
@@ -131,8 +131,8 @@ export declare class CyclesService {
         createdAt: Date;
         updatedAt: Date;
         name: string | null;
-        workspaceId: string;
         status: string;
+        workspaceId: string;
         startDate: Date;
         endDate: Date;
     }>;

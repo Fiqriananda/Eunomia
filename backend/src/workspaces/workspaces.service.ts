@@ -105,12 +105,18 @@ export class WorkspacesService {
     };
   }
 
-  async createWorkspace(userId: string, data: { name: string }) {
+  async createWorkspace(userId: string, data: { name: string; ticketPrefix?: string }) {
     const slug = `${data.name.toLowerCase().replace(/[^a-z0-9]/g, '')}-${Date.now().toString(36)}`;
+    const prefix =
+      data.ticketPrefix?.trim().toUpperCase().replace(/[^A-Z0-9]/g, '') ||
+      data.name.substring(0, 3).toUpperCase().replace(/[^A-Z0-9]/g, '') ||
+      'LAB';
+
     return this.prisma.workspace.create({
       data: {
         name: data.name,
         slug,
+        ticketPrefix: prefix,
         members: {
           create: {
             userId,
@@ -120,7 +126,7 @@ export class WorkspacesService {
         projects: {
           create: {
             name: 'General',
-            key: data.name.substring(0, 3).toUpperCase() || 'GEN',
+            key: prefix,
             description: 'Default project',
           },
         },
@@ -352,7 +358,13 @@ export class WorkspacesService {
   async updateWorkspace(
     workspaceId: string,
     userId: string,
-    data: { name?: string; cyclesEnabled?: boolean; logoUrl?: string | null },
+    data: {
+      name?: string;
+      cyclesEnabled?: boolean;
+      logoUrl?: string | null;
+      ticketPrefix?: string;
+      migrateExistingTasks?: boolean;
+    },
   ) {
     const membership = await this.prisma.workspaceMember.findUnique({
       where: {
@@ -376,6 +388,14 @@ export class WorkspacesService {
     if (data.cyclesEnabled !== undefined) updateData.cyclesEnabled = data.cyclesEnabled;
     if (data.logoUrl !== undefined) updateData.logoUrl = data.logoUrl;
 
+    let cleanPrefix: string | null = null;
+    if (data.ticketPrefix !== undefined) {
+      cleanPrefix = data.ticketPrefix.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+      if (cleanPrefix) {
+        updateData.ticketPrefix = cleanPrefix;
+      }
+    }
+
     const updated = await this.prisma.workspace.update({
       where: { id: workspaceId },
       data: updateData,
@@ -390,6 +410,22 @@ export class WorkspacesService {
         },
       },
     });
+
+    if (cleanPrefix && data.migrateExistingTasks) {
+      const allTasks = await this.prisma.task.findMany({
+        where: { workspaceId },
+        select: { id: true, identifier: true },
+      });
+      for (const t of allTasks) {
+        let suffix = '1';
+        const match = t.identifier.match(/-(\d+)$/);
+        if (match) suffix = match[1];
+        await this.prisma.task.update({
+          where: { id: t.id },
+          data: { identifier: `${cleanPrefix}-${suffix}` },
+        });
+      }
+    }
 
     return {
       ...updated,

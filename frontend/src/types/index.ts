@@ -28,19 +28,42 @@ export interface Project {
   key: string;
   description?: string | null;
   color?: string | null;
+  status?: 'PLANNED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELED' | string;
+  targetDate?: string | null;
+  leadId?: string | null;
+  lead?: {
+    id: string;
+    name: string;
+    email: string;
+    avatarUrl?: string | null;
+  } | null;
   workspaceId: string;
   createdAt: string;
   updatedAt: string;
+  tasks?: Array<{
+    id: string;
+    identifier: string;
+    title: string;
+    status: TaskStatus;
+    priority: TaskPriority;
+    estimate?: number | null;
+    isArchived?: boolean;
+    dueDate?: string | null;
+    assignee?: { id: string; name: string; avatarUrl?: string | null } | null;
+    cycle?: { id: string; name?: string | null; number: number; status: string } | null;
+  }>;
   _count?: {
     tasks: number;
   };
 }
+
 
 export interface Workspace {
   id: string;
   name: string;
   slug: string;
   logoUrl?: string | null;
+  ticketPrefix?: string;
   columnOrder?: string[];
   cyclesEnabled?: boolean;
   createdAt: string;
@@ -172,7 +195,7 @@ export interface Task {
   order: number;
   dueDate?: string | null;
   labels: string[];
-  projectId: string;
+  projectId?: string | null;
   workspaceId: string;
   creatorId: string;
   assigneeId?: string | null;
@@ -180,7 +203,7 @@ export interface Task {
   estimate?: number;
   isArchived?: boolean;
   deletedAt?: string | null;
-  project?: Project;
+  project?: Project | null;
   cycle?: Cycle | null;
   creator?: User;
   assignee?: User | null;
