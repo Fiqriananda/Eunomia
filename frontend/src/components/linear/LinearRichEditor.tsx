@@ -57,17 +57,63 @@ function markdownToHtml(md: string, membersList: WorkspaceMember[] = []): string
   let inCodeBlock = false;
   let codeBuffer: string[] = [];
   let codeBlockLang = '';
-  let inList = false;
-  let inOrderedList = false;
 
-  const closeList = () => {
-    if (inList) {
-      htmlLines.push('</ul>');
-      inList = false;
+  interface ListLevel {
+    type: 'ul' | 'ol';
+    depth: number;
+  }
+  const listStack: ListLevel[] = [];
+
+  const closeAllLists = () => {
+    while (listStack.length > 0) {
+      const item = listStack.pop()!;
+      htmlLines.push(item.type === 'ul' ? '</ul>' : '</ol>');
     }
-    if (inOrderedList) {
-      htmlLines.push('</ol>');
-      inOrderedList = false;
+  };
+
+  const adjustListLevel = (targetType: 'ul' | 'ol', indentSpaces: number) => {
+    const normalizedDepth = Math.floor(indentSpaces / 2) * 2;
+    if (listStack.length === 0) {
+      listStack.push({ type: targetType, depth: normalizedDepth });
+      htmlLines.push(
+        targetType === 'ul'
+          ? '<ul class="list-disc list-inside space-y-1 my-1.5">'
+          : '<ol class="list-decimal list-inside space-y-1 my-1.5">',
+      );
+      return;
+    }
+
+    const current = listStack[listStack.length - 1];
+    if (current.depth === normalizedDepth && current.type === targetType) {
+      return;
+    }
+
+    if (normalizedDepth > current.depth) {
+      listStack.push({ type: targetType, depth: normalizedDepth });
+      const level = listStack.length;
+      const bulletClass = level === 2 ? 'list-[circle]' : 'list-[square]';
+      htmlLines.push(
+        targetType === 'ul'
+          ? `<ul class="${bulletClass} list-inside ml-5 space-y-1 my-0.5">`
+          : `<ol class="list-decimal list-inside ml-5 space-y-1 my-0.5">`,
+      );
+      return;
+    }
+
+    while (listStack.length > 0 && listStack[listStack.length - 1].depth > normalizedDepth) {
+      const item = listStack.pop()!;
+      htmlLines.push(item.type === 'ul' ? '</ul>' : '</ol>');
+    }
+
+    if (listStack.length > 0 && listStack[listStack.length - 1].type !== targetType) {
+      const item = listStack.pop()!;
+      htmlLines.push(item.type === 'ul' ? '</ul>' : '</ol>');
+      listStack.push({ type: targetType, depth: normalizedDepth });
+      htmlLines.push(
+        targetType === 'ul'
+          ? '<ul class="list-disc list-inside space-y-1 my-1.5">'
+          : '<ol class="list-decimal list-inside space-y-1 my-1.5">',
+      );
     }
   };
 
@@ -92,7 +138,7 @@ function markdownToHtml(md: string, membersList: WorkspaceMember[] = []): string
         inCodeBlock = false;
         codeBlockLang = '';
       } else {
-        closeList();
+        closeAllLists();
         inCodeBlock = true;
         const matchLang = trimmed.slice(3).trim();
         codeBlockLang = matchLang || '';
@@ -107,14 +153,14 @@ function markdownToHtml(md: string, membersList: WorkspaceMember[] = []): string
 
     // Horizontal Rule: --- or *** or ___
     if (/^(\*\*\*|---|___)$/.test(trimmed)) {
-      closeList();
+      closeAllLists();
       htmlLines.push('<hr class="my-4 border-t border-border/60" />');
       continue;
     }
 
     // Headings: # to ######
     if (trimmed.startsWith('###### ')) {
-      closeList();
+      closeAllLists();
       htmlLines.push(
         `<h6 class="text-xs font-semibold text-zinc-400 uppercase tracking-wider mt-3 mb-1">${formatInline(
           trimmed.slice(7),
@@ -124,7 +170,7 @@ function markdownToHtml(md: string, membersList: WorkspaceMember[] = []): string
       continue;
     }
     if (trimmed.startsWith('##### ')) {
-      closeList();
+      closeAllLists();
       htmlLines.push(
         `<h5 class="text-xs font-semibold text-zinc-300 mt-3 mb-1">${formatInline(
           trimmed.slice(6),
@@ -134,7 +180,7 @@ function markdownToHtml(md: string, membersList: WorkspaceMember[] = []): string
       continue;
     }
     if (trimmed.startsWith('#### ')) {
-      closeList();
+      closeAllLists();
       htmlLines.push(
         `<h4 class="text-sm font-semibold text-zinc-100 mt-3.5 mb-1.5">${formatInline(
           trimmed.slice(5),
@@ -144,7 +190,7 @@ function markdownToHtml(md: string, membersList: WorkspaceMember[] = []): string
       continue;
     }
     if (trimmed.startsWith('### ')) {
-      closeList();
+      closeAllLists();
       htmlLines.push(
         `<h3 class="text-base font-semibold text-zinc-100 mt-3 mb-1">${formatInline(
           trimmed.slice(4),
@@ -154,7 +200,7 @@ function markdownToHtml(md: string, membersList: WorkspaceMember[] = []): string
       continue;
     }
     if (trimmed.startsWith('## ')) {
-      closeList();
+      closeAllLists();
       htmlLines.push(
         `<h2 class="text-lg font-bold text-zinc-100 mt-3.5 mb-1.5">${formatInline(
           trimmed.slice(3),
@@ -164,7 +210,7 @@ function markdownToHtml(md: string, membersList: WorkspaceMember[] = []): string
       continue;
     }
     if (trimmed.startsWith('# ')) {
-      closeList();
+      closeAllLists();
       htmlLines.push(
         `<h1 class="text-xl font-bold text-zinc-100 mt-4 mb-2 pb-1 border-b border-border/40">${formatInline(
           trimmed.slice(2),
@@ -176,7 +222,7 @@ function markdownToHtml(md: string, membersList: WorkspaceMember[] = []): string
 
     // Blockquote
     if (trimmed.startsWith('> ')) {
-      closeList();
+      closeAllLists();
       htmlLines.push(
         `<blockquote class="border-l-2 border-indigo-500/60 pl-3 my-2 text-zinc-400 italic">${formatInline(
           trimmed.slice(2),
@@ -187,9 +233,9 @@ function markdownToHtml(md: string, membersList: WorkspaceMember[] = []): string
     }
 
     // Checklists: - [ ] or - [x]
-    const checklistMatch = trimmed.match(/^[-*+]\s*\[([ xX])\]\s*(.*)$/);
+    const checklistMatch = trimmed.match(/^[-*+•]\s*\[([ xX])\]\s*(.*)$/);
     if (checklistMatch) {
-      closeList();
+      closeAllLists();
       const isChecked = checklistMatch[1].toLowerCase() === 'x';
       const label = checklistMatch[2];
       const isIndented = /^\s{2,}/.test(rawLine);
@@ -206,40 +252,28 @@ function markdownToHtml(md: string, membersList: WorkspaceMember[] = []): string
       continue;
     }
 
-    // Bullet lists: - or * or +
-    const ulMatch = trimmed.match(/^[-*+]\s+(.*)$/);
+    // Bullet lists: - or * or + or •
+    const ulMatch = rawLine.match(/^(\s*)([-*+•])\s+(.*)$/);
     if (ulMatch) {
-      if (inOrderedList) closeList();
-      if (!inList) {
-        htmlLines.push('<ul class="list-disc list-inside space-y-1 my-1.5">');
-        inList = true;
-      }
-      const isIndented = /^\s{2,}/.test(rawLine);
-      htmlLines.push(
-        `<li class="${isIndented ? 'ml-5 list-circle' : ''}">${formatInline(
-          ulMatch[1],
-          membersList,
-        )}</li>`,
-      );
+      const indent = ulMatch[1].replace(/\t/g, '  ').length;
+      adjustListLevel('ul', indent);
+      htmlLines.push(`<li>${formatInline(ulMatch[3], membersList)}</li>`);
       continue;
     }
 
     // Ordered lists: 1. 2. etc.
-    const olMatch = trimmed.match(/^(\d+)\.\s+(.*)$/);
+    const olMatch = rawLine.match(/^(\s*)(\d+)\.\s+(.*)$/);
     if (olMatch) {
-      if (inList) closeList();
-      if (!inOrderedList) {
-        htmlLines.push('<ol class="list-decimal list-inside space-y-1 my-1.5">');
-        inOrderedList = true;
-      }
-      htmlLines.push(`<li>${formatInline(olMatch[2], membersList)}</li>`);
+      const indent = olMatch[1].replace(/\t/g, '  ').length;
+      adjustListLevel('ol', indent);
+      htmlLines.push(`<li>${formatInline(olMatch[3], membersList)}</li>`);
       continue;
     }
 
     // Images: ![alt](url)
     const imgMatch = trimmed.match(/^!\[(.*?)\]\((.*?)\)$/);
     if (imgMatch) {
-      closeList();
+      closeAllLists();
       const rawUrl = imgMatch[2].trim();
       const resolvedUrl = resolveMediaUrl(rawUrl);
       const altText = escapeHtml(imgMatch[1] || 'image');
@@ -259,11 +293,23 @@ function markdownToHtml(md: string, membersList: WorkspaceMember[] = []): string
       continue;
     }
 
-    closeList();
-
     if (!trimmed) {
+      let nextIsList = false;
+      for (let j = i + 1; j < lines.length; j++) {
+        const nextTrim = lines[j].trim();
+        if (!nextTrim) continue;
+        if (/^(\s*)([-*+•]|\d+\.)\s+/.test(lines[j])) {
+          nextIsList = true;
+        }
+        break;
+      }
+      if (listStack.length > 0 && nextIsList) {
+        continue;
+      }
+      closeAllLists();
       htmlLines.push('<p><br></p>');
     } else {
+      closeAllLists();
       htmlLines.push(
         `<p class="my-1 text-sm leading-relaxed text-zinc-200">${formatInline(
           trimmed,
@@ -286,7 +332,7 @@ function markdownToHtml(md: string, membersList: WorkspaceMember[] = []): string
     );
   }
 
-  closeList();
+  closeAllLists();
   return htmlLines.join('');
 }
 
@@ -417,7 +463,7 @@ function formatInline(text: string, membersList: WorkspaceMember[] = []): string
 /**
  * Converts DOM tree inside contentEditable back into clean Markdown string
  */
-function htmlToMarkdown(node: Node): string {
+function htmlToMarkdown(node: Node, listDepth = 0): string {
   if (node.nodeType === Node.TEXT_NODE) {
     return node.textContent || '';
   }
@@ -454,14 +500,89 @@ function htmlToMarkdown(node: Node): string {
       input?.checked || el.getAttribute('data-checked') === 'true';
     const labelEl = el.querySelector('.task-label');
     const labelMd = labelEl
-      ? Array.from(labelEl.childNodes).map(htmlToMarkdown).join('').trim()
+      ? Array.from(labelEl.childNodes).map((n) => htmlToMarkdown(n, listDepth)).join('').trim()
       : (el.textContent || '').trim();
-    const isIndented = el.classList.contains('ml-5');
+    const isIndented = el.classList.contains('ml-5') || listDepth > 0;
     const prefix = isIndented ? '  ' : '';
     return `${prefix}- [${isChecked ? 'x' : ' '}] ${labelMd}\n`;
   }
 
-  const childrenMd = Array.from(el.childNodes).map(htmlToMarkdown).join('');
+  // Handle Lists (ul / ol) recursively with listDepth
+  if (tag === 'ul' || tag === 'ol') {
+    const isOrdered = tag === 'ol';
+    let childIndex = 1;
+    const listItems: string[] = [];
+
+    for (const child of Array.from(el.childNodes)) {
+      if (child.nodeType !== Node.ELEMENT_NODE && child.nodeType !== Node.TEXT_NODE) continue;
+
+      if (child.nodeType === Node.ELEMENT_NODE) {
+        const childEl = child as HTMLElement;
+        const childTag = childEl.tagName.toLowerCase();
+
+        if (childTag === 'li') {
+          const inlineNodes: Node[] = [];
+          const nestedListNodes: HTMLElement[] = [];
+
+          for (const sub of Array.from(childEl.childNodes)) {
+            if (
+              sub.nodeType === Node.ELEMENT_NODE &&
+              ((sub as HTMLElement).tagName.toLowerCase() === 'ul' ||
+                (sub as HTMLElement).tagName.toLowerCase() === 'ol')
+            ) {
+              nestedListNodes.push(sub as HTMLElement);
+            } else {
+              inlineNodes.push(sub);
+            }
+          }
+
+          const indentSpaces = '  '.repeat(listDepth);
+          const rawInline = inlineNodes
+            .map((n) => htmlToMarkdown(n, listDepth))
+            .join('')
+            .trim();
+          const cleanInline = rawInline
+            .replace(/^[-*+•]\s+/, '')
+            .replace(/^\d+\.\s+/, '');
+
+          const bullet = isOrdered ? `${childIndex++}. ` : '- ';
+          let itemText = `${indentSpaces}${bullet}${cleanInline}\n`;
+
+          for (const nestedList of nestedListNodes) {
+            itemText += htmlToMarkdown(nestedList, listDepth + 1);
+          }
+
+          listItems.push(itemText);
+        } else if (childTag === 'ul' || childTag === 'ol') {
+          listItems.push(htmlToMarkdown(childEl, listDepth + 1));
+        } else {
+          const text = htmlToMarkdown(child, listDepth).trim();
+          if (text) {
+            const indentSpaces = '  '.repeat(listDepth);
+            listItems.push(`${indentSpaces}- ${text}\n`);
+          }
+        }
+      }
+    }
+
+    return listDepth === 0 ? `\n${listItems.join('')}\n` : listItems.join('');
+  }
+
+  if (tag === 'li') {
+    const parentTag = el.parentElement?.tagName.toLowerCase();
+    const isIndented = el.classList.contains('ml-5') || listDepth > 0;
+    const prefix = isIndented ? '  ' : '';
+    const childrenMd = Array.from(el.childNodes).map((n) => htmlToMarkdown(n, listDepth)).join('');
+    const cleanContent = childrenMd.trim().replace(/^[-*+•]\s+/, '');
+    if (parentTag === 'ol') {
+      const index = Array.from(el.parentElement?.children || []).indexOf(el) + 1;
+      const textWithoutNum = cleanContent.replace(/^\d+\.\s+/, '');
+      return `${prefix}${index}. ${textWithoutNum}\n`;
+    }
+    return `${prefix}- ${cleanContent}\n`;
+  }
+
+  const childrenMd = Array.from(el.childNodes).map((n) => htmlToMarkdown(n, listDepth)).join('');
 
   switch (tag) {
     case 'h1':
@@ -541,23 +662,6 @@ function htmlToMarkdown(node: Node): string {
       return childrenMd;
     case 'div':
       return `\n${childrenMd}`;
-    case 'ul':
-      return `\n${childrenMd}\n`;
-    case 'ol':
-      return `\n${childrenMd}\n`;
-    case 'li': {
-      const parentTag = el.parentElement?.tagName.toLowerCase();
-      const isIndented = el.classList.contains('ml-5');
-      const prefix = isIndented ? '  ' : '';
-      const cleanContent = childrenMd.trim().replace(/^[-*+]\s+/, '');
-      if (parentTag === 'ol') {
-        const index =
-          Array.from(el.parentElement?.children || []).indexOf(el) + 1;
-        const textWithoutNum = cleanContent.replace(/^\d+\.\s+/, '');
-        return `${prefix}${index}. ${textWithoutNum}\n`;
-      }
-      return `${prefix}- ${cleanContent}\n`;
-    }
     case 'p':
       return `\n${childrenMd}\n`;
     case 'br':
@@ -791,7 +895,29 @@ export function LinearRichEditor({
       }
     }
 
-    // Auto markdown shortcuts: '- ' or '* ' -> Bullet list, '1. ' -> Ordered list
+    // Tab / Shift+Tab indent/outdent navigation in lists
+    if (e.key === 'Tab' && mentionQuery === null) {
+      const sel = window.getSelection();
+      if (sel && sel.rangeCount && editorRef.current?.contains(sel.anchorNode)) {
+        const anchorEl =
+          sel.anchorNode instanceof HTMLElement
+            ? sel.anchorNode
+            : sel.anchorNode?.parentElement;
+        const li = anchorEl?.closest('li');
+        if (li) {
+          e.preventDefault();
+          if (e.shiftKey) {
+            document.execCommand('outdent', false);
+          } else {
+            document.execCommand('indent', false);
+          }
+          syncMarkdown();
+          return;
+        }
+      }
+    }
+
+    // Auto markdown shortcuts: '- ' or '* ' or '• ' -> Bullet list, '1. ' -> Ordered list, `code` + Space
     if (e.key === ' ') {
       const sel = window.getSelection();
       if (sel && sel.isCollapsed && sel.rangeCount) {
@@ -802,7 +928,7 @@ export function LinearRichEditor({
           const offset = range.startOffset;
           const textBefore = text.slice(0, offset);
 
-          if ((textBefore === '-' || textBefore === '*') && offset === 1) {
+          if ((textBefore === '-' || textBefore === '*' || textBefore === '•') && offset === 1) {
             e.preventDefault();
             const remainingText = text.slice(offset);
             node.textContent = remainingText;
@@ -814,6 +940,38 @@ export function LinearRichEditor({
             const remainingText = text.slice(offset);
             node.textContent = remainingText;
             document.execCommand('insertOrderedList', false);
+            syncMarkdown();
+            return;
+          }
+
+          // Inline code auto-format: `something` + Space -> <code>badge</code>
+          const codeMatch = textBefore.match(/(?:^|\s)`([^`\n]+)`$/);
+          if (codeMatch) {
+            e.preventDefault();
+            const fullMatch = codeMatch[0];
+            const codeContent = codeMatch[1];
+            const matchStart = offset - fullMatch.length + (fullMatch.startsWith(' ') ? 1 : 0);
+
+            const rangeToReplace = document.createRange();
+            rangeToReplace.setStart(node, matchStart);
+            rangeToReplace.setEnd(node, offset);
+            rangeToReplace.deleteContents();
+
+            const codeEl = document.createElement('code');
+            codeEl.className =
+              'px-1.5 py-0.5 rounded bg-[#181926] text-indigo-300 font-mono text-xs border border-border/40';
+            codeEl.textContent = codeContent;
+
+            const spaceNode = document.createTextNode('\u00A0');
+            rangeToReplace.insertNode(spaceNode);
+            rangeToReplace.insertNode(codeEl);
+
+            const newRange = document.createRange();
+            newRange.setStartAfter(spaceNode);
+            newRange.collapse(true);
+            sel.removeAllRanges();
+            sel.addRange(newRange);
+
             syncMarkdown();
             return;
           }
@@ -990,21 +1148,26 @@ export function LinearRichEditor({
     const plainText = e.clipboardData?.getData('text/plain');
     if (!plainText) return;
 
+    // Normalize unicode bullets and linebreaks
+    const normalizedText = plainText
+      .replace(/^[ \t]*•[ \t]+/gm, '- ')
+      .replace(/\r\n/g, '\n');
+
     // Detect if pasted text contains markdown structures or multiple formatted blocks
     const isMarkdown =
-      /(?:^|\n)(?:#{1,6}\s|[-*+]\s*\[[ xX]\]|[-*+]\s+|\d+\.\s+|>{1,2}\s+|```|---|___|\*\*\*)/m.test(
-        plainText,
+      /(?:^|\n)(?:#{1,6}\s|[-*+•]\s*\[[ xX]\]|[-*+•]\s+|\d+\.\s+|>{1,2}\s+|```|---|___|\*\*\*)/m.test(
+        normalizedText,
       ) ||
-      /\*\*[^*]+\*\*/.test(plainText) ||
-      /\+\+[^+]+\+\+/.test(plainText) ||
-      /`[^`]+`/.test(plainText) ||
-      /\[[^\]]+\]\([^)]+\)/.test(plainText);
+      /\*\*[^*]+\*\*/.test(normalizedText) ||
+      /\+\+[^+]+\+\+/.test(normalizedText) ||
+      /`[^`]+`/.test(normalizedText) ||
+      /\[[^\]]+\]\([^)]+\)/.test(normalizedText);
 
     if (isMarkdown) {
       e.preventDefault();
 
       // Convert Markdown string to clean WYSIWYG HTML elements
-      const html = markdownToHtml(plainText, members);
+      const html = markdownToHtml(normalizedText, members);
 
       if (!editorRef.current) return;
 
@@ -1106,25 +1269,48 @@ export function LinearRichEditor({
     const selectedText = range.toString();
 
     if (selectedText.trim()) {
-      const lines = selectedText
-        .split('\n')
-        .map((l) => l.trim())
-        .filter(Boolean);
+      const lines = selectedText.split('\n');
+      const hasContent = lines.some((l) => l.trim().length > 0);
 
-      if (lines.length > 1) {
-        const ul = document.createElement('ul');
-        ul.className = 'list-disc list-inside space-y-1 my-1.5';
+      if (hasContent && lines.length > 1) {
+        const rootUl = document.createElement('ul');
+        rootUl.className = 'list-disc list-inside space-y-1 my-1.5';
+        let currentParentLi: HTMLElement | null = null;
+        let currentNestedUl: HTMLElement | null = null;
+
         for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed) continue;
+
+          // Check if line is indented (starts with 2+ spaces or tab)
+          const isIndented = /^(\s{2,}|\t)/.test(line);
+          const cleanLine = trimmed
+            .replace(/^[-*+•]\s+/, '')
+            .replace(/^\d+\.\s+/, '');
+
           const li = document.createElement('li');
-          const cleanLine = line.replace(/^[-*+]\s+/, '');
           li.innerHTML = formatInline(cleanLine, members);
-          ul.appendChild(li);
+
+          if (isIndented && currentParentLi) {
+            if (!currentNestedUl) {
+              currentNestedUl = document.createElement('ul');
+              currentNestedUl.className =
+                'list-[circle] list-inside ml-5 space-y-1 my-0.5';
+              currentParentLi.appendChild(currentNestedUl);
+            }
+            currentNestedUl.appendChild(li);
+          } else {
+            rootUl.appendChild(li);
+            currentParentLi = li;
+            currentNestedUl = null;
+          }
         }
+
         range.deleteContents();
-        range.insertNode(ul);
+        range.insertNode(rootUl);
 
         const newRange = document.createRange();
-        newRange.setStartAfter(ul);
+        newRange.setStartAfter(rootUl);
         newRange.collapse(true);
         sel.removeAllRanges();
         sel.addRange(newRange);
@@ -1334,7 +1520,7 @@ export function LinearRichEditor({
         onPaste={handlePaste}
         onBlur={onBlur}
         data-placeholder={placeholder}
-        className="outline-none min-h-[120px] py-1 text-sm text-zinc-100 leading-relaxed font-sans cursor-text empty:before:content-[attr(data-placeholder)] empty:before:text-zinc-600 empty:before:pointer-events-none focus:outline-none [&_ul]:list-disc [&_ul]:list-inside [&_ul]:space-y-1 [&_ul]:my-1.5 [&_ol]:list-decimal [&_ol]:list-inside [&_ol]:space-y-1 [&_ol]:my-1.5 [&_li]:leading-relaxed"
+        className="outline-none min-h-[120px] py-1 text-sm text-zinc-100 leading-relaxed font-sans cursor-text empty:before:content-[attr(data-placeholder)] empty:before:text-zinc-600 empty:before:pointer-events-none focus:outline-none [&_ul]:list-disc [&_ul]:list-inside [&_ul]:space-y-1 [&_ul]:my-1.5 [&_ul_ul]:list-[circle] [&_ul_ul]:ml-5 [&_ul_ul]:my-0.5 [&_ul_ul_ul]:list-[square] [&_ul_ul_ul]:ml-5 [&_ol]:list-decimal [&_ol]:list-inside [&_ol]:space-y-1 [&_ol]:my-1.5 [&_ol_ol]:list-[lower-alpha] [&_ol_ol]:ml-5 [&_li]:leading-relaxed"
       />
 
       {/* Subtle hover attach image button in corner */}
