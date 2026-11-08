@@ -179,8 +179,30 @@ export function ListView({
                         <PriorityIcon priority={task.priority} />
                       </div>
 
-                      <div className="w-6 h-6 flex items-center justify-center">
-                        {task.assignee ? (
+                      <div className="flex items-center justify-end">
+                        {task.assignees && task.assignees.length > 0 ? (
+                          <div className="flex -space-x-1.5 overflow-hidden items-center">
+                            {task.assignees.slice(0, 3).map((a) => (
+                              <img
+                                key={a.id || a.userId}
+                                src={
+                                  a.user?.avatarUrl ||
+                                  `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
+                                    a.user?.name || 'User',
+                                  )}`
+                                }
+                                alt={a.user?.name || 'User'}
+                                className="w-5 h-5 rounded-full object-cover ring-1 ring-border"
+                                title={`Assigned to ${a.user?.name}`}
+                              />
+                            ))}
+                            {task.assignees.length > 3 && (
+                              <span className="inline-flex items-center justify-center w-5 h-5 rounded-full ring-1 ring-border bg-zinc-700 text-[9px] font-medium text-white">
+                                +{task.assignees.length - 3}
+                              </span>
+                            )}
+                          </div>
+                        ) : task.assignee ? (
                           <img
                             src={
                               task.assignee.avatarUrl ||

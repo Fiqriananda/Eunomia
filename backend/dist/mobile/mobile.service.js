@@ -1147,7 +1147,10 @@ let MobileService = class MobileService {
         const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
         const [membersRaw, tasksRaw, projectsRaw, cyclesRaw] = await Promise.all([
             this.prisma.workspaceMember.findMany({
-                where: { workspaceId },
+                where: {
+                    workspaceId,
+                    role: { not: WorkspaceRole.STAKEHOLDER },
+                },
                 include: {
                     user: {
                         select: { id: true, name: true, email: true, avatarUrl: true },
@@ -1164,6 +1167,7 @@ let MobileService = class MobileService {
                     status: true,
                     priority: true,
                     assigneeId: true,
+                    assignees: { select: { userId: true } },
                     projectId: true,
                     cycleId: true,
                     createdAt: true,
@@ -1185,6 +1189,7 @@ let MobileService = class MobileService {
                 take: 5,
             }),
         ]);
+        const isAssigned = (t, uId) => t.assigneeId === uId || (t.assignees && t.assignees.some((a) => a.userId === uId));
         let filteredTasks = tasksRaw;
         if (period === 'this_week') {
             filteredTasks = tasksRaw.filter((t) => t.createdAt >= oneWeekAgo || (t.status === TaskStatus.DONE && t.updatedAt >= oneWeekAgo));
@@ -1200,13 +1205,13 @@ let MobileService = class MobileService {
         const completedThisWeek = tasksRaw.filter((t) => t.status === TaskStatus.DONE && t.updatedAt >= oneWeekAgo).length;
         const completedThisMonth = tasksRaw.filter((t) => t.status === TaskStatus.DONE && t.updatedAt >= oneMonthAgo).length;
         const memberStats = membersRaw.map((m) => {
-            const userTasks = filteredTasks.filter((t) => t.assigneeId === m.userId);
+            const userTasks = filteredTasks.filter((t) => isAssigned(t, m.userId));
             const mAssigned = userTasks.length;
             const mDone = userTasks.filter((t) => t.status === TaskStatus.DONE).length;
             const mInProgress = userTasks.filter((t) => t.status === TaskStatus.IN_PROGRESS).length;
             const mRate = mAssigned > 0 ? Math.round((mDone / mAssigned) * 100) : 0;
-            const mWeekDone = tasksRaw.filter((t) => t.assigneeId === m.userId && t.status === TaskStatus.DONE && t.updatedAt >= oneWeekAgo).length;
-            const mMonthDone = tasksRaw.filter((t) => t.assigneeId === m.userId && t.status === TaskStatus.DONE && t.updatedAt >= oneMonthAgo).length;
+            const mWeekDone = tasksRaw.filter((t) => isAssigned(t, m.userId) && t.status === TaskStatus.DONE && t.updatedAt >= oneWeekAgo).length;
+            const mMonthDone = tasksRaw.filter((t) => isAssigned(t, m.userId) && t.status === TaskStatus.DONE && t.updatedAt >= oneMonthAgo).length;
             let performanceGrade = 'NEEDS_FOCUS';
             if (mRate >= 80 && mDone >= 3) {
                 performanceGrade = 'EXCELLENT';

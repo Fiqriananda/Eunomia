@@ -23,6 +23,14 @@ const taskIncludeConfig = {
     assignee: {
         select: { id: true, name: true, email: true, avatarUrl: true },
     },
+    assignees: {
+        include: {
+            user: {
+                select: { id: true, name: true, email: true, avatarUrl: true },
+            },
+        },
+        orderBy: { createdAt: 'asc' },
+    },
     creator: {
         select: { id: true, name: true, email: true, avatarUrl: true },
     },
@@ -39,6 +47,13 @@ const taskIncludeConfig = {
         include: {
             assignee: {
                 select: { id: true, name: true, email: true, avatarUrl: true },
+            },
+            assignees: {
+                include: {
+                    user: {
+                        select: { id: true, name: true, email: true, avatarUrl: true },
+                    },
+                },
             },
             project: {
                 select: { id: true, name: true, key: true, color: true },
@@ -272,8 +287,15 @@ let TasksService = class TasksService {
             where.status = status;
         if (priority)
             where.priority = priority;
-        if (assigneeId)
-            where.assigneeId = assigneeId;
+        if (assigneeId) {
+            where.AND = where.AND || [];
+            where.AND.push({
+                OR: [
+                    { assigneeId },
+                    { assignees: { some: { userId: assigneeId } } },
+                ],
+            });
+        }
         if (requesterDivisionId)
             where.requesterDivisionId = requesterDivisionId;
         if (assignedDivisionId)
@@ -364,6 +386,9 @@ let TasksService = class TasksService {
             orderBy: { order: 'desc' },
         });
         const order = lastTask ? lastTask.order + 1000 : 1000;
+        const rawAssigneeIds = data.assigneeIds || (data.assigneeId ? [data.assigneeId] : []);
+        const assigneeIds = Array.from(new Set(rawAssigneeIds.filter(Boolean)));
+        const primaryAssigneeId = assigneeIds[0] || data.assigneeId || null;
         const newTask = await this.prisma.task.create({
             data: {
                 identifier,
@@ -380,7 +405,7 @@ let TasksService = class TasksService {
                 cycleId: data.cycleId || null,
                 estimate: data.estimate !== undefined ? data.estimate : 1,
                 creatorId: userId,
-                assigneeId: data.assigneeId || null,
+                assigneeId: primaryAssigneeId,
                 requesterDivisionId: data.requesterDivisionId || null,
                 assignedDivisionId: data.assignedDivisionId || null,
                 triageStatus: data.triageStatus || 'APPROVED_BACKLOG',
@@ -399,76 +424,92 @@ let TasksService = class TasksService {
                 },
             });
         }
-        if (data.assigneeId && data.assigneeId !== userId) {
-            const creator = await this.prisma.user.findUnique({
-                where: { id: userId },
-                select: { name: true, avatarUrl: true },
+        if (assigneeIds.length > 0) {
+            await this.prisma.taskAssignee.createMany({
+                data: assigneeIds.map((uid) => ({ taskId: newTask.id, userId: uid })),
+                skipDuplicates: true,
             });
-            await this.prisma.inboxNotification.create({
-                data: {
-                    userId: data.assigneeId,
-                    actorId: userId,
+        }
+        const creator = await this.prisma.user.findUnique({
+            where: { id: userId },
+            select: { name: true, avatarUrl: true },
+        });
+        for (const aId of assigneeIds) {
+            if (aId !== userId) {
+                await this.prisma.inboxNotification.create({
+                    data: {
+                        userId: aId,
+                        actorId: userId,
+                        taskId: newTask.id,
+                        type: 'ASSIGNED',
+                        title: `${creator?.name || 'Someone'} assigned you to ${newTask.identifier}`,
+                        body: newTask.title,
+                    },
+                }).catch((err) => console.error('Failed to create assignment notification:', err));
+                const assigneeUser = await this.prisma.user.findUnique({
+                    where: { id: aId },
+                    select: { email: true, name: true },
+                });
+                if (assigneeUser) {
+                    this.emailService
+                        .sendAssignmentNotification({
+                        recipientEmail: assigneeUser.email,
+                        recipientName: assigneeUser.name,
+                        actorName: creator?.name || 'A team member',
+                        actorAvatar: creator?.avatarUrl,
+                        taskIdentifier: newTask.identifier,
+                        taskTitle: newTask.title,
+                        taskId: newTask.id,
+                        taskDescription: newTask.description,
+                        taskStatus: newTask.customStatus || newTask.status,
+                        taskPriority: newTask.priority,
+                        projectName: newTask.project?.name,
+                        projectKey: newTask.project?.key,
+                        cycleName: newTask.cycle?.name,
+                        dueDate: newTask.dueDate,
+                        labels: newTask.labels,
+                        estimate: newTask.estimate,
+                    })
+                        .catch((err) => console.error('Failed to send assignment email:', err));
+                }
+                this.notificationsService
+                    .notifyTaskAssigned({
                     taskId: newTask.id,
-                    type: 'ASSIGNED',
-                    title: `${creator?.name || 'Someone'} assigned you to ${newTask.identifier}`,
-                    body: newTask.title,
-                },
-            });
-            const assigneeUser = await this.prisma.user.findUnique({
-                where: { id: data.assigneeId },
-                select: { email: true, name: true },
-            });
-            if (assigneeUser) {
-                this.emailService
-                    .sendAssignmentNotification({
-                    recipientEmail: assigneeUser.email,
-                    recipientName: assigneeUser.name,
-                    actorName: creator?.name || 'A team member',
-                    actorAvatar: creator?.avatarUrl,
-                    taskIdentifier: newTask.identifier,
+                    identifier: newTask.identifier,
                     taskTitle: newTask.title,
-                    taskId: newTask.id,
-                    taskDescription: newTask.description,
-                    taskStatus: newTask.customStatus || newTask.status,
-                    taskPriority: newTask.priority,
-                    projectName: newTask.project?.name,
-                    projectKey: newTask.project?.key,
-                    cycleName: newTask.cycle?.name,
-                    dueDate: newTask.dueDate,
-                    labels: newTask.labels,
-                    estimate: newTask.estimate,
+                    actorName: creator?.name || 'A team member',
+                    assigneeId: aId,
                 })
-                    .catch((err) => console.error('Failed to send assignment email:', err));
+                    .catch((err) => console.error('Failed to send task assignment push notification:', err));
             }
-            this.notificationsService
-                .notifyTaskAssigned({
-                taskId: newTask.id,
-                identifier: newTask.identifier,
-                taskTitle: newTask.title,
-                actorName: creator?.name || 'A team member',
-                assigneeId: data.assigneeId,
-            })
-                .catch((err) => console.error('Failed to send task assignment push notification:', err));
+            await this.prisma.taskSubscription.upsert({
+                where: { taskId_userId: { taskId: newTask.id, userId: aId } },
+                create: { taskId: newTask.id, userId: aId },
+                update: {},
+            });
         }
         await this.prisma.taskSubscription.upsert({
             where: { taskId_userId: { taskId: newTask.id, userId } },
             create: { taskId: newTask.id, userId },
             update: {},
         });
-        if (data.assigneeId) {
-            await this.prisma.taskSubscription.upsert({
-                where: { taskId_userId: { taskId: newTask.id, userId: data.assigneeId } },
-                create: { taskId: newTask.id, userId: data.assigneeId },
-                update: {},
-            });
-        }
-        this.eventsGateway.emitTaskCreated(newTask.workspaceId, newTask);
-        return newTask;
+        const fullNewTask = await this.prisma.task.findUnique({
+            where: { id: newTask.id },
+            include: taskIncludeConfig,
+        });
+        this.eventsGateway.emitTaskCreated(newTask.workspaceId, fullNewTask || newTask);
+        return fullNewTask || newTask;
     }
     async updateTask(id, data, userId) {
         const currentTask = await this.prisma.task.findUnique({
             where: { id },
-            include: { assignee: true, parent: true, project: true, cycle: true },
+            include: {
+                assignee: true,
+                assignees: { include: { user: true } },
+                parent: true,
+                project: true,
+                cycle: true,
+            },
         });
         if (!currentTask) {
             throw new NotFoundException(`Task with ID ${id} not found`);
@@ -481,6 +522,7 @@ let TasksService = class TasksService {
                 if (data.status !== undefined ||
                     data.customStatus !== undefined ||
                     data.assigneeId !== undefined ||
+                    data.assigneeIds !== undefined ||
                     data.estimate !== undefined ||
                     data.cycleId !== undefined ||
                     data.isArchived !== undefined) {
@@ -492,6 +534,16 @@ let TasksService = class TasksService {
             }
         }
         const updateData = { ...data };
+        let nextAssigneeIds = undefined;
+        if (data.assigneeIds !== undefined) {
+            nextAssigneeIds = Array.from(new Set(data.assigneeIds.filter(Boolean)));
+            updateData.assigneeId = nextAssigneeIds[0] || null;
+            delete updateData.assigneeIds;
+        }
+        else if (data.assigneeId !== undefined) {
+            nextAssigneeIds = data.assigneeId ? [data.assigneeId] : [];
+            updateData.assigneeId = data.assigneeId;
+        }
         if (data.dueDate !== undefined) {
             updateData.dueDate = data.dueDate ? new Date(data.dueDate) : null;
         }
@@ -533,36 +585,35 @@ let TasksService = class TasksService {
                     },
                 });
             }
-            if (data.assigneeId !== undefined && data.assigneeId !== currentTask.assigneeId) {
-                if (data.assigneeId) {
+            if (nextAssigneeIds !== undefined) {
+                const currentUids = currentTask.assignees?.map((a) => a.userId) || (currentTask.assigneeId ? [currentTask.assigneeId] : []);
+                const toAdd = nextAssigneeIds.filter((uid) => !currentUids.includes(uid));
+                const toRemove = currentUids.filter((uid) => !nextAssigneeIds.includes(uid));
+                if (toRemove.length > 0) {
+                    await this.prisma.taskAssignee.deleteMany({
+                        where: { taskId: id, userId: { in: toRemove } },
+                    });
+                }
+                if (toAdd.length > 0) {
+                    await this.prisma.taskAssignee.createMany({
+                        data: toAdd.map((uid) => ({ taskId: id, userId: uid })),
+                        skipDuplicates: true,
+                    });
+                }
+                const actor = await this.prisma.user.findUnique({
+                    where: { id: userId },
+                    select: { name: true, avatarUrl: true },
+                });
+                for (const aId of toAdd) {
                     await this.prisma.taskSubscription.upsert({
-                        where: { taskId_userId: { taskId: id, userId: data.assigneeId } },
-                        create: { taskId: id, userId: data.assigneeId },
+                        where: { taskId_userId: { taskId: id, userId: aId } },
+                        create: { taskId: id, userId: aId },
                         update: {},
                     });
-                    const newAssignee = await this.prisma.user.findUnique({
-                        where: { id: data.assigneeId },
-                        select: { name: true },
-                    });
-                    const newName = newAssignee?.name || 'Someone';
-                    await this.prisma.taskActivity.create({
-                        data: {
-                            type: 'ASSIGNEE_CHANGE',
-                            fromValue: currentTask.assignee?.name || null,
-                            toValue: newName,
-                            details: `re-assigned to ${newName}`,
-                            taskId: id,
-                            userId,
-                        },
-                    });
-                    if (data.assigneeId !== userId) {
-                        const actor = await this.prisma.user.findUnique({
-                            where: { id: userId },
-                            select: { name: true, avatarUrl: true },
-                        });
+                    if (aId !== userId) {
                         const notif = await this.prisma.inboxNotification.create({
                             data: {
-                                userId: data.assigneeId,
+                                userId: aId,
                                 actorId: userId,
                                 taskId: id,
                                 type: 'ASSIGNED',
@@ -570,9 +621,9 @@ let TasksService = class TasksService {
                                 body: currentTask.title,
                             },
                         });
-                        this.eventsGateway.emitNotification(data.assigneeId, notif);
+                        this.eventsGateway.emitNotification(aId, notif);
                         const assigneeUser = await this.prisma.user.findUnique({
-                            where: { id: data.assigneeId },
+                            where: { id: aId },
                             select: { email: true, name: true },
                         });
                         if (assigneeUser) {
@@ -609,18 +660,27 @@ let TasksService = class TasksService {
                             identifier: currentTask.identifier,
                             taskTitle: currentTask.title,
                             actorName: actor?.name || 'A team member',
-                            assigneeId: data.assigneeId,
+                            assigneeId: aId,
                         })
                             .catch((err) => console.error('Failed to send task assignment push notification:', err));
                     }
                 }
-                else {
+                if (toAdd.length > 0 || toRemove.length > 0) {
+                    const addedUsers = toAdd.length > 0
+                        ? await this.prisma.user.findMany({ where: { id: { in: toAdd } }, select: { name: true } })
+                        : [];
+                    const addedNames = addedUsers.map((u) => u.name).join(', ');
+                    const details = nextAssigneeIds.length === 0
+                        ? 'unassigned all members'
+                        : toAdd.length > 0 && toRemove.length === 0
+                            ? `assigned to ${addedNames}`
+                            : `updated assignees`;
                     await this.prisma.taskActivity.create({
                         data: {
                             type: 'ASSIGNEE_CHANGE',
                             fromValue: currentTask.assignee?.name || null,
-                            toValue: 'Unassigned',
-                            details: 'unassigned this issue',
+                            toValue: addedNames || 'Unassigned',
+                            details,
                             taskId: id,
                             userId,
                         },
@@ -638,14 +698,11 @@ let TasksService = class TasksService {
         if (data.priority !== undefined && data.priority !== currentTask.priority) {
             changes.push({ field: 'Priority', from: currentTask.priority, to: data.priority });
         }
-        if (data.assigneeId !== undefined && data.assigneeId !== currentTask.assigneeId) {
-            const newAssigneeUser = data.assigneeId
-                ? await this.prisma.user.findUnique({ where: { id: data.assigneeId }, select: { name: true } })
-                : null;
+        if (nextAssigneeIds !== undefined) {
             changes.push({
                 field: 'Assignee',
                 from: currentTask.assignee?.name || 'Unassigned',
-                to: newAssigneeUser?.name || 'Unassigned',
+                to: nextAssigneeIds.length > 0 ? `${nextAssigneeIds.length} assignees` : 'Unassigned',
             });
         }
         if (data.title !== undefined && data.title !== currentTask.title) {
@@ -671,7 +728,10 @@ let TasksService = class TasksService {
         if (changes.length > 0) {
             const summaryTitle = changes.map((c) => `${c.field} updated`).join(', ');
             const excludeIds = [];
-            if (data.assigneeId && data.assigneeId !== userId) {
+            if (nextAssigneeIds) {
+                excludeIds.push(...nextAssigneeIds.filter((id) => id !== userId));
+            }
+            else if (data.assigneeId && data.assigneeId !== userId) {
                 excludeIds.push(data.assigneeId);
             }
             this.notifySubscribersOfTaskUpdate(id, userId, changes, summaryTitle, excludeIds).catch((err) => console.error('Failed to notify subscribers of task update:', err));

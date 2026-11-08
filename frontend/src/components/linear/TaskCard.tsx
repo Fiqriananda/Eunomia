@@ -61,7 +61,32 @@ export function TaskCard({
         </div>
 
         <div className="flex items-center gap-1 shrink-0">
-          {task.assignee ? (
+          {task.assignees && task.assignees.length > 0 ? (
+            <div className="flex -space-x-1.5 overflow-hidden items-center">
+              {task.assignees.slice(0, 3).map((a) => (
+                <div
+                  key={a.id || a.userId}
+                  className="w-4 h-4 rounded-full bg-gradient-to-tr from-rose-500 to-amber-500 text-white font-bold text-[8px] flex items-center justify-center ring-1 ring-[#191a24]"
+                  title={`Assigned to ${a.user?.name || 'Team member'}`}
+                >
+                  {a.user?.avatarUrl ? (
+                    <img
+                      src={a.user.avatarUrl}
+                      alt={a.user.name}
+                      className="w-full h-full rounded-full object-cover"
+                    />
+                  ) : (
+                    (a.user?.name || 'U').slice(0, 2).toUpperCase()
+                  )}
+                </div>
+              ))}
+              {task.assignees.length > 3 && (
+                <span className="inline-flex items-center justify-center w-4 h-4 rounded-full ring-1 ring-[#191a24] bg-zinc-700 text-[8px] font-medium text-white">
+                  +{task.assignees.length - 3}
+                </span>
+              )}
+            </div>
+          ) : task.assignee ? (
             <div
               className="w-4 h-4 rounded-full bg-gradient-to-tr from-rose-500 to-amber-500 text-white font-bold text-[9px] flex items-center justify-center ring-1 ring-background"
               title={`Assigned to ${task.assignee.name}`}

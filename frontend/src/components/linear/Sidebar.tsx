@@ -74,6 +74,8 @@ export function Sidebar({
   const [isCreatingWs, setIsCreatingWs] = useState(false);
   const [newWsName, setNewWsName] = useState('');
   const [isCreatingLoading, setIsCreatingLoading] = useState(false);
+  const [isWorkspaceCollapsed, setIsWorkspaceCollapsed] = useState(false);
+  const [isMoreOpen, setIsMoreOpen] = useState(currentTab === 'trash');
   const wsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -326,297 +328,306 @@ export function Sidebar({
               className="p-1.5 rounded hover:bg-secondary text-zinc-400 hover:text-white transition-colors"
               title="New Issue (C)"
             >
-              <Plus className="w-4 h-4" />
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                <path d="M18.375 2.625a1 1 0 0 1 3 3l-9.013 9.014a2 2 0 0 1-.853.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z" />
+              </svg>
             </button>
           </div>
         </div>
 
-        {/* Navigation Items (Matching screenshot) */}
+        {/* Navigation Items (Matching Linear minimalist sidebar) */}
         <div className="p-2 space-y-0.5">
+          {/* Inbox */}
           <button
             onClick={() => handleTabSelect('inbox')}
             className={cn(
-              'w-full flex items-center justify-between px-2.5 py-1.5 rounded-md transition-colors text-left font-medium',
+              'w-full flex items-center justify-between px-2.5 py-1.5 rounded-md transition-colors text-left font-medium text-xs',
               currentTab === 'inbox'
-                ? 'bg-secondary text-white'
-                : 'text-zinc-400 hover:text-zinc-200 hover:bg-secondary/40',
+                ? 'bg-secondary text-white shadow-sm'
+                : 'text-zinc-400 hover:text-zinc-200 hover:bg-secondary/40'
             )}
           >
             <div className="flex items-center gap-2.5">
-              <Inbox className={cn('w-4 h-4', currentTab === 'inbox' ? 'text-indigo-400' : 'text-zinc-400')} />
+              <Inbox
+                className={cn(
+                  'w-4 h-4',
+                  currentTab === 'inbox' ? 'text-indigo-400' : 'text-zinc-400'
+                )}
+              />
               <span>Inbox</span>
             </div>
             {unreadInboxCount > 0 && (
-              <span className="text-[10px] font-semibold text-white bg-indigo-600 px-1.5 py-0.2 rounded-full min-w-[18px] text-center shadow-sm">
+              <span className="text-[11px] font-mono text-zinc-400 font-medium">
                 {unreadInboxCount}
               </span>
             )}
           </button>
 
+          {/* My issues */}
           <button
             onClick={() => handleTabSelect('all')}
             className={cn(
-              'w-full flex items-center justify-between px-2.5 py-1.5 rounded-md transition-colors text-left font-medium',
-              currentTab === 'all'
-                ? 'bg-secondary text-white'
-                : 'text-zinc-400 hover:text-zinc-200 hover:bg-secondary/40',
+              'w-full flex items-center justify-between px-2.5 py-1.5 rounded-md transition-colors text-left font-medium text-xs',
+              currentTab === 'all' || currentTab === 'active' || currentTab === 'backlog'
+                ? 'bg-secondary text-white shadow-sm'
+                : 'text-zinc-400 hover:text-zinc-200 hover:bg-secondary/40'
             )}
           >
             <div className="flex items-center gap-2.5">
-              <ListTodo className="w-4 h-4 text-zinc-400" />
-              <span>All Issues</span>
+              <svg
+                className={cn(
+                  'w-4 h-4 shrink-0',
+                  currentTab === 'all' || currentTab === 'active' || currentTab === 'backlog'
+                    ? 'text-indigo-400'
+                    : 'text-zinc-400'
+                )}
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M4 8V6a2 2 0 0 1 2-2h2" />
+                <path d="M4 16v2a2 2 0 0 0 2 2h2" />
+                <path d="M16 4h2a2 2 0 0 1 2 2v2" />
+                <path d="M16 20h2a2 2 0 0 0 2-2v-2" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+              <span>My issues</span>
             </div>
-            <span className="text-[10px] font-mono text-zinc-500 bg-zinc-800/60 px-1.5 py-0.2 rounded">
-              {taskCounts.all}
-            </span>
-          </button>
-
-          <button
-            onClick={() => handleTabSelect('active')}
-            className={cn(
-              'w-full flex items-center justify-between px-2.5 py-1.5 rounded-md transition-colors text-left font-medium',
-              currentTab === 'active'
-                ? 'bg-secondary text-white'
-                : 'text-zinc-400 hover:text-zinc-200 hover:bg-secondary/40',
+            {taskCounts.all > 0 && (
+              <span className="text-[11px] font-mono text-zinc-500 font-medium">
+                {taskCounts.all}
+              </span>
             )}
-          >
-            <div className="flex items-center gap-2.5">
-              <Activity className="w-4 h-4 text-amber-400" />
-              <span>Active Issues</span>
-            </div>
-            <span className="text-[10px] font-mono text-zinc-500 bg-zinc-800/60 px-1.5 py-0.2 rounded">
-              {taskCounts.active}
-            </span>
           </button>
 
-          <button
-            onClick={() => handleTabSelect('backlog')}
-            className={cn(
-              'w-full flex items-center justify-between px-2.5 py-1.5 rounded-md transition-colors text-left font-medium',
-              currentTab === 'backlog'
-                ? 'bg-secondary text-white'
-                : 'text-zinc-400 hover:text-zinc-200 hover:bg-secondary/40',
-            )}
-          >
-            <div className="flex items-center gap-2.5">
-              <Clock className="w-4 h-4 text-zinc-500" />
-              <span>Backlog</span>
-            </div>
-            <span className="text-[10px] font-mono text-zinc-500 bg-zinc-800/60 px-1.5 py-0.2 rounded">
-              {taskCounts.backlog}
-            </span>
-          </button>
-
-          {/* Cross-Division Triage (For Admin & Dev Members) */}
-          {workspace?.role !== 'STAKEHOLDER' && (
+          {/* Reviews / Requests */}
+          {workspace?.role !== 'STAKEHOLDER' ? (
             <button
               onClick={() => handleTabSelect('triage')}
               className={cn(
-                'w-full flex items-center justify-between px-2.5 py-1.5 rounded-md transition-colors text-left font-medium',
+                'w-full flex items-center justify-between px-2.5 py-1.5 rounded-md transition-colors text-left font-medium text-xs',
                 currentTab === 'triage'
-                  ? 'bg-secondary text-white'
-                  : 'text-zinc-400 hover:text-zinc-200 hover:bg-secondary/40',
+                  ? 'bg-secondary text-white shadow-sm'
+                  : 'text-zinc-400 hover:text-zinc-200 hover:bg-secondary/40'
               )}
             >
               <div className="flex items-center gap-2.5">
-                <Inbox className={cn('w-4 h-4', currentTab === 'triage' ? 'text-amber-400' : 'text-zinc-400')} />
-                <span>Triage Requests</span>
-              </div>
-              {triageCount > 0 ? (
-                <span className="text-[10px] font-mono font-bold text-amber-300 bg-amber-500/20 border border-amber-500/30 px-1.5 py-0.2 rounded">
-                  {triageCount}
-                </span>
-              ) : (
-                <span className="text-[10px] font-mono text-zinc-600">0</span>
-              )}
-            </button>
-          )}
-
-          {/* Cross-Division Tracker (For Stakeholders or general roadmap view) */}
-          <button
-            onClick={() => handleTabSelect('requests')}
-            className={cn(
-              'w-full flex items-center justify-between px-2.5 py-1.5 rounded-md transition-colors text-left font-medium',
-              currentTab === 'requests'
-                ? 'bg-secondary text-white'
-                : 'text-zinc-400 hover:text-zinc-200 hover:bg-secondary/40',
-            )}
-          >
-            <div className="flex items-center gap-2.5">
-              <FileText className={cn('w-4 h-4', currentTab === 'requests' ? 'text-indigo-400' : 'text-zinc-400')} />
-              <span>{workspace?.role === 'STAKEHOLDER' ? 'My Division Requests' : 'Division Requests'}</span>
-            </div>
-            <span className="text-[10px] font-medium text-indigo-400 bg-indigo-500/10 px-1.5 py-0.2 rounded">
-              Tracker
-            </span>
-          </button>
-
-          {workspace?.cyclesEnabled !== false && (
-            <button
-              onClick={() => handleTabSelect('cycles')}
-              className={cn(
-                'w-full flex items-center justify-between px-2.5 py-1.5 rounded-md transition-colors text-left font-medium',
-                currentTab === 'cycles'
-                  ? 'bg-secondary text-white'
-                  : 'text-zinc-400 hover:text-zinc-200 hover:bg-secondary/40',
-              )}
-            >
-              <div className="flex items-center gap-2.5">
-                <RotateCw className={cn('w-4 h-4', currentTab === 'cycles' ? 'text-indigo-400' : 'text-zinc-400')} />
-                <span>Cycles</span>
-              </div>
-              <span className="text-[10px] font-mono text-indigo-400 bg-indigo-500/10 px-1.5 py-0.2 rounded font-medium">
-                Sprint
-              </span>
-            </button>
-          )}
-
-          <button
-            onClick={() => handleTabSelect('team')}
-            className={cn(
-              'w-full flex items-center justify-between px-2.5 py-1.5 rounded-md transition-colors text-left font-medium',
-              currentTab === 'team'
-                ? 'bg-secondary text-white'
-                : 'text-zinc-400 hover:text-zinc-200 hover:bg-secondary/40',
-            )}
-          >
-            <div className="flex items-center gap-2.5">
-              <Users className={cn('w-4 h-4', currentTab === 'team' ? 'text-indigo-400' : 'text-zinc-400')} />
-              <span>Team Members</span>
-            </div>
-            <span className="text-[10px] font-mono text-zinc-400 bg-zinc-800/80 px-1.5 py-0.2 rounded font-medium">
-              {workspace?.members?.length || 1}
-            </span>
-          </button>
-
-          <button
-            onClick={() => handleTabSelect('trash')}
-            className={cn(
-              'w-full flex items-center justify-between px-2.5 py-1.5 rounded-md transition-colors text-left font-medium',
-              currentTab === 'trash'
-                ? 'bg-secondary text-white'
-                : 'text-zinc-400 hover:text-zinc-200 hover:bg-secondary/40',
-            )}
-          >
-            <div className="flex items-center gap-2.5">
-              <Trash2 className={cn('w-4 h-4', currentTab === 'trash' ? 'text-red-400' : 'text-zinc-500')} />
-              <span>Trash</span>
-            </div>
-            {taskCounts.trash !== undefined && taskCounts.trash > 0 && (
-              <span className="text-[10px] font-mono text-red-400 bg-red-500/10 px-1.5 py-0.2 rounded">
-                {taskCounts.trash}
-              </span>
-            )}
-          </button>
-        </div>
-
-        {/* Projects (Epics) Section */}
-        <div className="p-2 pt-3 border-t border-border/40 space-y-1">
-          <div className="px-2.5 py-1 text-[10px] font-semibold text-zinc-500 uppercase tracking-wider flex items-center justify-between">
-            <button
-              onClick={() => {
-                setProject(null);
-                handleTabSelect('projects');
-              }}
-              className="hover:text-zinc-300 transition-colors flex items-center gap-1"
-            >
-              <span>Projects (Epics)</span>
-            </button>
-            {onOpenCreateProject && (
-              <button
-                onClick={onOpenCreateProject}
-                title="Create new project / epic"
-                className="text-zinc-400 hover:text-white p-0.5 rounded hover:bg-zinc-800 transition-colors"
-              >
-                <Plus className="w-3.5 h-3.5" />
-              </button>
-            )}
-          </div>
-
-          <button
-            onClick={() => {
-              setProject(null);
-              handleTabSelect('projects');
-            }}
-            className={cn(
-              'w-full flex items-center justify-between px-2.5 py-1.5 rounded-md transition-colors text-left text-xs',
-              currentTab === 'projects' && project === null
-                ? 'bg-secondary text-white font-medium'
-                : 'text-zinc-400 hover:text-zinc-200 hover:bg-secondary/40',
-            )}
-          >
-            <div className="flex items-center gap-2">
-              <FolderKanban className={cn("w-3.5 h-3.5", currentTab === 'projects' ? 'text-indigo-400' : 'text-zinc-500')} />
-              <span>All Projects & Epics</span>
-            </div>
-            <span className="text-[10px] font-mono text-zinc-500 bg-zinc-800/60 px-1.5 py-0.2 rounded">
-              {projects.length}
-            </span>
-          </button>
-
-          {projects.map((p) => (
-            <button
-              key={p.id}
-              onClick={() => {
-                handleProjectSelect(p);
-                handleTabSelect('projects');
-              }}
-              className={cn(
-                'w-full flex items-center justify-between px-2.5 py-1.5 rounded-md transition-colors text-left text-xs',
-                project?.id === p.id
-                  ? 'text-primary font-medium bg-secondary/50'
-                  : 'text-zinc-400 hover:text-zinc-200 hover:bg-secondary/40',
-              )}
-            >
-              <div className="flex items-center gap-2 truncate">
-                <span
-                  className="w-2 h-2 rounded-full shrink-0"
-                  style={{ backgroundColor: p.color || '#5e6ad2' }}
+                <GitPullRequest
+                  className={cn(
+                    'w-4 h-4',
+                    currentTab === 'triage' ? 'text-amber-400' : 'text-zinc-400'
+                  )}
                 />
-                <span className="truncate">{p.name}</span>
+                <span>Reviews</span>
               </div>
-              <span className="text-[10px] font-mono text-zinc-600 shrink-0">{p.key}</span>
+              {triageCount > 0 && (
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shadow-[0_0_6px_rgba(251,191,36,0.8)]" />
+              )}
             </button>
-          ))}
+          ) : (
+            <button
+              onClick={() => handleTabSelect('requests')}
+              className={cn(
+                'w-full flex items-center justify-between px-2.5 py-1.5 rounded-md transition-colors text-left font-medium text-xs',
+                currentTab === 'requests'
+                  ? 'bg-secondary text-white shadow-sm'
+                  : 'text-zinc-400 hover:text-zinc-200 hover:bg-secondary/40'
+              )}
+            >
+              <div className="flex items-center gap-2.5">
+                <FileText
+                  className={cn(
+                    'w-4 h-4',
+                    currentTab === 'requests' ? 'text-indigo-400' : 'text-zinc-400'
+                  )}
+                />
+                <span>My Requests</span>
+              </div>
+            </button>
+          )}
         </div>
 
-        {/* Team & Members Section (With Invite Button!) */}
-        <div className="p-2 pt-3 border-t border-border/40 space-y-1">
-          <div className="px-2.5 py-1 text-[10px] font-semibold text-zinc-500 uppercase tracking-wider flex items-center justify-between">
-            <span>Your Team</span>
+        {/* Workspace Section (Clean & Collapsible) */}
+        <div className="p-2 pt-1 space-y-0.5">
+          <div className="px-2.5 py-1.5 flex items-center justify-between text-xs font-medium text-zinc-400 select-none">
             <button
-              onClick={() => handleTabSelect('team')}
-              className="text-[10px] text-indigo-400 hover:text-indigo-300 font-medium lowercase hover:underline"
+              onClick={() => setIsWorkspaceCollapsed(!isWorkspaceCollapsed)}
+              className="flex items-center gap-1.5 hover:text-zinc-200 transition-colors"
             >
-              view all
+              <span>Workspace</span>
+              <ChevronDown
+                className={cn(
+                  'w-3 h-3 text-zinc-500 transition-transform duration-200',
+                  isWorkspaceCollapsed && '-rotate-90'
+                )}
+              />
             </button>
           </div>
 
-          <button
-            onClick={() => handleTabSelect('team')}
-            className={cn(
-              'w-full flex items-center justify-between px-2.5 py-1.5 rounded-md transition-colors text-left text-xs',
-              currentTab === 'team'
-                ? 'bg-secondary text-white font-medium'
-                : 'text-zinc-400 hover:text-zinc-200 hover:bg-secondary/40',
-            )}
-          >
-            <div className="flex items-center gap-2">
-              <Users className="w-3.5 h-3.5 text-zinc-400" />
-              <span>Team Roster</span>
-            </div>
-            <span className="text-[10px] font-mono text-zinc-500">
-              {workspace?.members?.length || 1}
-            </span>
-          </button>
+          {!isWorkspaceCollapsed && (
+            <div className="space-y-0.5">
+              {/* Projects */}
+              <button
+                onClick={() => {
+                  setProject(null);
+                  handleTabSelect('projects');
+                }}
+                className={cn(
+                  'w-full flex items-center justify-between px-2.5 py-1.5 rounded-md transition-colors text-left font-medium text-xs',
+                  currentTab === 'projects'
+                    ? 'bg-secondary text-white shadow-sm'
+                    : 'text-zinc-400 hover:text-zinc-200 hover:bg-secondary/40'
+                )}
+              >
+                <div className="flex items-center gap-2.5">
+                  <svg
+                    className={cn(
+                      'w-4 h-4 shrink-0',
+                      currentTab === 'projects' ? 'text-indigo-400' : 'text-zinc-400'
+                    )}
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+                    <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+                    <line x1="12" y1="22.08" x2="12" y2="12" />
+                  </svg>
+                  <span>Projects</span>
+                </div>
+                {projects.length > 0 && (
+                  <span className="text-[11px] font-mono text-zinc-500 font-medium">
+                    {projects.length}
+                  </span>
+                )}
+              </button>
 
-          <button
-            onClick={handleInviteClick}
-            className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md text-primary hover:bg-primary/10 transition-colors text-left font-medium text-xs"
-          >
-            <UserPlus className="w-3.5 h-3.5" />
-            <span>+ Invite Teammate</span>
-          </button>
+              {/* Cycles */}
+              {workspace?.cyclesEnabled !== false && (
+                <button
+                  onClick={() => handleTabSelect('cycles')}
+                  className={cn(
+                    'w-full flex items-center justify-between px-2.5 py-1.5 rounded-md transition-colors text-left font-medium text-xs',
+                    currentTab === 'cycles'
+                      ? 'bg-secondary text-white shadow-sm'
+                      : 'text-zinc-400 hover:text-zinc-200 hover:bg-secondary/40'
+                  )}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <RotateCw
+                      className={cn(
+                        'w-4 h-4',
+                        currentTab === 'cycles' ? 'text-indigo-400' : 'text-zinc-400'
+                      )}
+                    />
+                    <span>Cycles</span>
+                  </div>
+                </button>
+              )}
+
+              {/* Team */}
+              <button
+                onClick={() => handleTabSelect('team')}
+                className={cn(
+                  'w-full flex items-center justify-between px-2.5 py-1.5 rounded-md transition-colors text-left font-medium text-xs',
+                  currentTab === 'team'
+                    ? 'bg-secondary text-white shadow-sm'
+                    : 'text-zinc-400 hover:text-zinc-200 hover:bg-secondary/40'
+                )}
+              >
+                <div className="flex items-center gap-2.5">
+                  <Users
+                    className={cn(
+                      'w-4 h-4',
+                      currentTab === 'team' ? 'text-indigo-400' : 'text-zinc-400'
+                    )}
+                  />
+                  <span>Team</span>
+                </div>
+                <span className="text-[11px] font-mono text-zinc-500 font-medium">
+                  {workspace?.members?.length || 1}
+                </span>
+              </button>
+
+              {/* More (Dropdown / Expandable) */}
+              <div>
+                <button
+                  onClick={() => setIsMoreOpen(!isMoreOpen)}
+                  className={cn(
+                    'w-full flex items-center justify-between px-2.5 py-1.5 rounded-md transition-colors text-left font-medium text-xs',
+                    isMoreOpen || currentTab === 'trash'
+                      ? 'text-white bg-secondary/50'
+                      : 'text-zinc-400 hover:text-zinc-200 hover:bg-secondary/40'
+                  )}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <MoreHorizontal className="w-4 h-4 text-zinc-400" />
+                    <span>More</span>
+                  </div>
+                  <ChevronDown
+                    className={cn(
+                      'w-3 h-3 text-zinc-500 transition-transform duration-200',
+                      isMoreOpen && 'rotate-180'
+                    )}
+                  />
+                </button>
+
+                {isMoreOpen && (
+                  <div className="mt-1 ml-4 pl-2 border-l border-border/50 space-y-0.5">
+                    {workspace?.role !== 'STAKEHOLDER' && (
+                      <button
+                        onClick={() => handleTabSelect('requests')}
+                        className={cn(
+                          'w-full flex items-center gap-2 px-2 py-1.5 rounded text-xs transition-colors text-left',
+                          currentTab === 'requests'
+                            ? 'text-white bg-secondary/60'
+                            : 'text-zinc-400 hover:text-zinc-200 hover:bg-secondary/30'
+                        )}
+                      >
+                        <FileText className="w-3.5 h-3.5 text-zinc-400" />
+                        <span>Division Requests</span>
+                      </button>
+                    )}
+
+                    <button
+                      onClick={() => handleTabSelect('trash')}
+                      className={cn(
+                        'w-full flex items-center justify-between px-2 py-1.5 rounded text-xs transition-colors text-left',
+                        currentTab === 'trash'
+                          ? 'text-rose-400 bg-secondary/60'
+                          : 'text-zinc-400 hover:text-rose-400 hover:bg-secondary/30'
+                      )}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span>Trash</span>
+                      </div>
+                      {taskCounts.trash !== undefined && taskCounts.trash > 0 && (
+                        <span className="text-[10px] font-mono text-rose-400">
+                          {taskCounts.trash}
+                        </span>
+                      )}
+                    </button>
+
+                    <button
+                      onClick={handleInviteClick}
+                      className="w-full flex items-center gap-2 px-2 py-1.5 rounded text-xs text-indigo-400 hover:text-indigo-300 hover:bg-indigo-500/10 transition-colors text-left"
+                    >
+                      <UserPlus className="w-3.5 h-3.5" />
+                      <span>Invite Teammates</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

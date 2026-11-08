@@ -65,6 +65,7 @@ model User {
   divisionMemberships DivisionMember[] @relation("UserDivisionMemberships")
   deviceTokens     DeviceToken[]     @relation("UserDeviceTokens")
   leadProjects     Project[]         @relation("ProjectLead")
+  assignedTaskAssignees TaskAssignee[] @relation("UserTaskAssignees")
 }
 
 model Workspace {
@@ -185,6 +186,7 @@ model Task {
   
   assigneeId  String?
   assignee    User?        @relation("AssignedTasks", fields: [assigneeId], references: [id])
+  assignees   TaskAssignee[]
 
   // Cross-Division Request Intake & Triage
   requesterDivisionId String?
@@ -415,3 +417,17 @@ model DeviceToken {
 
   @@index([userId])
 }
+
+model TaskAssignee {
+  id        String   @id @default(uuid())
+  taskId    String
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation("UserTaskAssignees", fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([taskId, userId])
+  @@index([taskId])
+  @@index([userId])
+}
+
