@@ -115,7 +115,7 @@ export function AdminPerformanceView({
     avgTasksPerMember: 0,
   };
 
-  const members: any[] = data?.members || [];
+  const members: any[] = (data?.members || []).filter((m: any) => m.role !== 'STAKEHOLDER');
   const projects: any[] = data?.projects || [];
   const cycles: any[] = data?.cycles || [];
   const recentDoneTasks: any[] = data?.recentDoneTasks || [];
@@ -179,7 +179,7 @@ export function AdminPerformanceView({
         {/* Main completion card */}
         <div className="lg:col-span-2 bg-gradient-to-br from-[#181a24] to-[#101117] border border-border/70 rounded-2xl p-6 relative overflow-hidden shadow-xl">
           <div className="absolute right-0 top-0 translate-x-12 -translate-y-8 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 relative z-10">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 relative z-[1]">
             <div className="space-y-3">
               <div className="flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]" />

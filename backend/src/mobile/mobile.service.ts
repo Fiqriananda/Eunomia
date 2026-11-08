@@ -1342,7 +1342,10 @@ export class MobileService {
 
     const [membersRaw, tasksRaw, projectsRaw, cyclesRaw] = await Promise.all([
       this.prisma.workspaceMember.findMany({
-        where: { workspaceId },
+        where: {
+          workspaceId,
+          role: { not: WorkspaceRole.STAKEHOLDER },
+        },
         include: {
           user: {
             select: { id: true, name: true, email: true, avatarUrl: true },
@@ -1359,6 +1362,7 @@ export class MobileService {
           status: true,
           priority: true,
           assigneeId: true,
+          assignees: { select: { userId: true } },
           projectId: true,
           cycleId: true,
           createdAt: true,
@@ -1380,6 +1384,9 @@ export class MobileService {
         take: 5,
       }),
     ]);
+
+    const isAssigned = (t: any, uId: string) =>
+      t.assigneeId === uId || (t.assignees && t.assignees.some((a: any) => a.userId === uId));
 
     let filteredTasks = tasksRaw;
     if (period === 'this_week') {
@@ -1409,17 +1416,17 @@ export class MobileService {
 
     // Member performance leaderboard based on finished/done tasks
     const memberStats = membersRaw.map((m) => {
-      const userTasks = filteredTasks.filter((t) => t.assigneeId === m.userId);
+      const userTasks = filteredTasks.filter((t) => isAssigned(t, m.userId));
       const mAssigned = userTasks.length;
       const mDone = userTasks.filter((t) => t.status === TaskStatus.DONE).length;
       const mInProgress = userTasks.filter((t) => t.status === TaskStatus.IN_PROGRESS).length;
       const mRate = mAssigned > 0 ? Math.round((mDone / mAssigned) * 100) : 0;
 
       const mWeekDone = tasksRaw.filter(
-        (t) => t.assigneeId === m.userId && t.status === TaskStatus.DONE && t.updatedAt >= oneWeekAgo,
+        (t) => isAssigned(t, m.userId) && t.status === TaskStatus.DONE && t.updatedAt >= oneWeekAgo,
       ).length;
       const mMonthDone = tasksRaw.filter(
-        (t) => t.assigneeId === m.userId && t.status === TaskStatus.DONE && t.updatedAt >= oneMonthAgo,
+        (t) => isAssigned(t, m.userId) && t.status === TaskStatus.DONE && t.updatedAt >= oneMonthAgo,
       ).length;
 
       let performanceGrade: 'EXCELLENT' | 'HIGH' | 'ON_TRACK' | 'NEEDS_FOCUS' = 'NEEDS_FOCUS';

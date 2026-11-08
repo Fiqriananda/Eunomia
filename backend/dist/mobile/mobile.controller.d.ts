@@ -325,6 +325,19 @@ export declare class MobileController {
             email: string;
             avatarUrl: string | null;
         } | null;
+        assignees: ({
+            user: {
+                id: string;
+                name: string;
+                email: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            userId: string;
+            createdAt: Date;
+            taskId: string;
+        })[];
         requesterDivision: {
             id: string;
             name: string;
@@ -358,6 +371,19 @@ export declare class MobileController {
                 email: string;
                 avatarUrl: string | null;
             } | null;
+            assignees: ({
+                user: {
+                    id: string;
+                    name: string;
+                    email: string;
+                    avatarUrl: string | null;
+                };
+            } & {
+                id: string;
+                userId: string;
+                createdAt: Date;
+                taskId: string;
+            })[];
         } & {
             description: string | null;
             title: string;
@@ -608,6 +634,19 @@ export declare class MobileController {
             email: string;
             avatarUrl: string | null;
         } | null;
+        assignees: ({
+            user: {
+                id: string;
+                name: string;
+                email: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            userId: string;
+            createdAt: Date;
+            taskId: string;
+        })[];
         requesterDivision: {
             id: string;
             name: string;
@@ -641,6 +680,19 @@ export declare class MobileController {
                 email: string;
                 avatarUrl: string | null;
             } | null;
+            assignees: ({
+                user: {
+                    id: string;
+                    name: string;
+                    email: string;
+                    avatarUrl: string | null;
+                };
+            } & {
+                id: string;
+                userId: string;
+                createdAt: Date;
+                taskId: string;
+            })[];
         } & {
             description: string | null;
             title: string;
@@ -891,6 +943,19 @@ export declare class MobileController {
             email: string;
             avatarUrl: string | null;
         } | null;
+        assignees: ({
+            user: {
+                id: string;
+                name: string;
+                email: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            userId: string;
+            createdAt: Date;
+            taskId: string;
+        })[];
         requesterDivision: {
             id: string;
             name: string;
@@ -924,6 +989,19 @@ export declare class MobileController {
                 email: string;
                 avatarUrl: string | null;
             } | null;
+            assignees: ({
+                user: {
+                    id: string;
+                    name: string;
+                    email: string;
+                    avatarUrl: string | null;
+                };
+            } & {
+                id: string;
+                userId: string;
+                createdAt: Date;
+                taskId: string;
+            })[];
         } & {
             description: string | null;
             title: string;
@@ -1174,6 +1252,19 @@ export declare class MobileController {
             email: string;
             avatarUrl: string | null;
         } | null;
+        assignees: ({
+            user: {
+                id: string;
+                name: string;
+                email: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            userId: string;
+            createdAt: Date;
+            taskId: string;
+        })[];
         requesterDivision: {
             id: string;
             name: string;
@@ -1207,6 +1298,19 @@ export declare class MobileController {
                 email: string;
                 avatarUrl: string | null;
             } | null;
+            assignees: ({
+                user: {
+                    id: string;
+                    name: string;
+                    email: string;
+                    avatarUrl: string | null;
+                };
+            } & {
+                id: string;
+                userId: string;
+                createdAt: Date;
+                taskId: string;
+            })[];
         } & {
             description: string | null;
             title: string;
@@ -1457,6 +1561,19 @@ export declare class MobileController {
             email: string;
             avatarUrl: string | null;
         } | null;
+        assignees: ({
+            user: {
+                id: string;
+                name: string;
+                email: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            userId: string;
+            createdAt: Date;
+            taskId: string;
+        })[];
         requesterDivision: {
             id: string;
             name: string;
@@ -1490,6 +1607,19 @@ export declare class MobileController {
                 email: string;
                 avatarUrl: string | null;
             } | null;
+            assignees: ({
+                user: {
+                    id: string;
+                    name: string;
+                    email: string;
+                    avatarUrl: string | null;
+                };
+            } & {
+                id: string;
+                userId: string;
+                createdAt: Date;
+                taskId: string;
+            })[];
         } & {
             description: string | null;
             title: string;
@@ -1740,6 +1870,19 @@ export declare class MobileController {
             email: string;
             avatarUrl: string | null;
         } | null;
+        assignees: ({
+            user: {
+                id: string;
+                name: string;
+                email: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            userId: string;
+            createdAt: Date;
+            taskId: string;
+        })[];
         requesterDivision: {
             id: string;
             name: string;
@@ -1773,6 +1916,19 @@ export declare class MobileController {
                 email: string;
                 avatarUrl: string | null;
             } | null;
+            assignees: ({
+                user: {
+                    id: string;
+                    name: string;
+                    email: string;
+                    avatarUrl: string | null;
+                };
+            } & {
+                id: string;
+                userId: string;
+                createdAt: Date;
+                taskId: string;
+            })[];
         } & {
             description: string | null;
             title: string;
@@ -2023,6 +2179,19 @@ export declare class MobileController {
             email: string;
             avatarUrl: string | null;
         } | null;
+        assignees: ({
+            user: {
+                id: string;
+                name: string;
+                email: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            userId: string;
+            createdAt: Date;
+            taskId: string;
+        })[];
         requesterDivision: {
             id: string;
             name: string;
@@ -2056,6 +2225,19 @@ export declare class MobileController {
                 email: string;
                 avatarUrl: string | null;
             } | null;
+            assignees: ({
+                user: {
+                    id: string;
+                    name: string;
+                    email: string;
+                    avatarUrl: string | null;
+                };
+            } & {
+                id: string;
+                userId: string;
+                createdAt: Date;
+                taskId: string;
+            })[];
         } & {
             description: string | null;
             title: string;
@@ -2339,6 +2521,19 @@ export declare class MobileController {
             email: string;
             avatarUrl: string | null;
         } | null;
+        assignees: ({
+            user: {
+                id: string;
+                name: string;
+                email: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            userId: string;
+            createdAt: Date;
+            taskId: string;
+        })[];
         requesterDivision: {
             id: string;
             name: string;
@@ -2372,6 +2567,19 @@ export declare class MobileController {
                 email: string;
                 avatarUrl: string | null;
             } | null;
+            assignees: ({
+                user: {
+                    id: string;
+                    name: string;
+                    email: string;
+                    avatarUrl: string | null;
+                };
+            } & {
+                id: string;
+                userId: string;
+                createdAt: Date;
+                taskId: string;
+            })[];
         } & {
             description: string | null;
             title: string;
@@ -2623,6 +2831,19 @@ export declare class MobileController {
             email: string;
             avatarUrl: string | null;
         } | null;
+        assignees: ({
+            user: {
+                id: string;
+                name: string;
+                email: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            userId: string;
+            createdAt: Date;
+            taskId: string;
+        })[];
         requesterDivision: {
             id: string;
             name: string;
@@ -2656,6 +2877,19 @@ export declare class MobileController {
                 email: string;
                 avatarUrl: string | null;
             } | null;
+            assignees: ({
+                user: {
+                    id: string;
+                    name: string;
+                    email: string;
+                    avatarUrl: string | null;
+                };
+            } & {
+                id: string;
+                userId: string;
+                createdAt: Date;
+                taskId: string;
+            })[];
         } & {
             description: string | null;
             title: string;
@@ -2906,6 +3140,19 @@ export declare class MobileController {
             email: string;
             avatarUrl: string | null;
         } | null;
+        assignees: ({
+            user: {
+                id: string;
+                name: string;
+                email: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            userId: string;
+            createdAt: Date;
+            taskId: string;
+        })[];
         requesterDivision: {
             id: string;
             name: string;
@@ -2939,6 +3186,19 @@ export declare class MobileController {
                 email: string;
                 avatarUrl: string | null;
             } | null;
+            assignees: ({
+                user: {
+                    id: string;
+                    name: string;
+                    email: string;
+                    avatarUrl: string | null;
+                };
+            } & {
+                id: string;
+                userId: string;
+                createdAt: Date;
+                taskId: string;
+            })[];
         } & {
             description: string | null;
             title: string;
@@ -3361,6 +3621,19 @@ export declare class MobileController {
             email: string;
             avatarUrl: string | null;
         } | null;
+        assignees: ({
+            user: {
+                id: string;
+                name: string;
+                email: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            userId: string;
+            createdAt: Date;
+            taskId: string;
+        })[];
         requesterDivision: {
             id: string;
             name: string;
@@ -3394,6 +3667,19 @@ export declare class MobileController {
                 email: string;
                 avatarUrl: string | null;
             } | null;
+            assignees: ({
+                user: {
+                    id: string;
+                    name: string;
+                    email: string;
+                    avatarUrl: string | null;
+                };
+            } & {
+                id: string;
+                userId: string;
+                createdAt: Date;
+                taskId: string;
+            })[];
         } & {
             description: string | null;
             title: string;

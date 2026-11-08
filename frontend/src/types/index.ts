@@ -207,6 +207,8 @@ export interface Task {
   cycle?: Cycle | null;
   creator?: User;
   assignee?: User | null;
+  assignees?: TaskAssignee[];
+  assigneeIds?: string[];
   requesterDivisionId?: string | null;
   requesterDivision?: Division | null;
   assignedDivisionId?: string | null;
@@ -244,6 +246,14 @@ export interface Task {
   subscribers?: TaskSubscription[];
   createdAt: string;
   updatedAt: string;
+}
+
+export interface TaskAssignee {
+  id: string;
+  taskId: string;
+  userId: string;
+  user: User;
+  createdAt?: string;
 }
 
 export interface TaskSubscription {

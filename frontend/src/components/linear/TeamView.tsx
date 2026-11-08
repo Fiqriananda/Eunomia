@@ -51,7 +51,7 @@ export function TeamView({
   const [members, setMembers] = useState<WorkspaceMember[]>(workspace.members || []);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [roleFilter, setRoleFilter] = useState<'ALL' | 'OWNER' | 'ADMIN' | 'MEMBER'>('ALL');
+  const [roleFilter, setRoleFilter] = useState<'ALL' | 'OWNER' | 'ADMIN' | 'MEMBER' | 'STAKEHOLDER'>('ALL');
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'ROSTER' | 'PERFORMANCE'>('ROSTER');
 
@@ -164,7 +164,7 @@ export function TeamView({
   const adminCount = members.filter((m) => m.role === 'ADMIN').length;
   const totalAssignedTasks = tasks.filter((t) => t.assigneeId && !t.isArchived).length;
 
-  const handleRoleChange = async (memberId: string, newRole: 'ADMIN' | 'MEMBER') => {
+  const handleRoleChange = async (memberId: string, newRole: 'ADMIN' | 'MEMBER' | 'STAKEHOLDER') => {
     try {
       setUpdatingMemberId(memberId);
       await api.workspaces.updateMemberRole(workspace.id, memberId, newRole);
@@ -202,7 +202,7 @@ export function TeamView({
   return (
     <div className="flex-1 flex flex-col h-full bg-[#090a0f] text-zinc-100 overflow-y-auto">
       {/* Top Header */}
-      <div className="border-b border-border/60 bg-[#0c0d14]/80 backdrop-blur px-4 sm:px-6 py-4 sm:py-6 sticky top-0 z-10">
+      <div className="border-b border-border/60 bg-[#0c0d14] px-4 sm:px-6 py-4 sm:py-6 sticky top-0 z-30 shadow-md">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2.5">
@@ -340,7 +340,7 @@ export function TeamView({
 
           {/* Role Filter Tabs */}
           <div className="flex items-center gap-1 bg-[#090a0f] p-1 rounded-lg border border-border/60 w-full sm:w-auto overflow-x-auto">
-            {(['ALL', 'OWNER', 'ADMIN', 'MEMBER'] as const).map((r) => (
+            {(['ALL', 'OWNER', 'ADMIN', 'MEMBER', 'STAKEHOLDER'] as const).map((r) => (
               <button
                 key={r}
                 onClick={() => setRoleFilter(r)}
@@ -350,7 +350,11 @@ export function TeamView({
                     : 'text-zinc-400 hover:text-zinc-200 hover:bg-secondary/40'
                 }`}
               >
-                {r === 'ALL' ? 'All Roles' : r.charAt(0) + r.slice(1).toLowerCase() + 's'}
+                {r === 'ALL'
+                  ? 'All Roles'
+                  : r === 'STAKEHOLDER'
+                  ? 'Stakeholders'
+                  : r.charAt(0) + r.slice(1).toLowerCase() + 's'}
               </button>
             ))}
           </div>
@@ -550,11 +554,13 @@ export function TeamView({
                                   value={member.role}
                                   disabled={updatingMemberId === member.id}
                                   onChange={(e) =>
-                                    handleRoleChange(member.id, e.target.value as 'ADMIN' | 'MEMBER')
+                                    handleRoleChange(member.id, e.target.value as 'ADMIN' | 'MEMBER' | 'STAKEHOLDER')
                                   }
                                   className={`appearance-none text-[11px] font-medium rounded-md px-2.5 py-1 pr-6 cursor-pointer border transition-colors ${
                                     isAdmin
                                       ? 'bg-indigo-500/10 text-indigo-300 border-indigo-500/30 hover:border-indigo-500/60'
+                                      : member.role === 'STAKEHOLDER'
+                                      ? 'bg-zinc-800/80 text-zinc-300 border-zinc-700 hover:border-zinc-500'
                                       : 'bg-zinc-800/60 text-zinc-300 border-border/80 hover:border-zinc-500'
                                   }`}
                                 >
@@ -564,6 +570,9 @@ export function TeamView({
                                   <option value="ADMIN" className="bg-[#12131d] text-indigo-300">
                                     Admin
                                   </option>
+                                  <option value="STAKEHOLDER" className="bg-[#12131d] text-zinc-400">
+                                    Stakeholder
+                                  </option>
                                 </select>
                                 <ChevronDown className="w-3 h-3 text-zinc-400 absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                               </div>
@@ -572,6 +581,8 @@ export function TeamView({
                                 className={`inline-flex items-center gap-1.5 px-2.5 py-0.8 rounded-full text-[10px] font-semibold ${
                                   isAdmin
                                     ? 'bg-indigo-500/10 text-indigo-300 border border-indigo-500/30'
+                                    : member.role === 'STAKEHOLDER'
+                                    ? 'bg-zinc-800/80 text-zinc-400 border border-zinc-700'
                                     : 'bg-zinc-800/60 text-zinc-400 border border-border/60'
                                 }`}
                               >

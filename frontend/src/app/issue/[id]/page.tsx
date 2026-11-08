@@ -144,6 +144,7 @@ function IssueDetailContent() {
   const [sections, setSections] = useState<WorkflowSection[]>([]);
   const [priority, setPriority] = useState<TaskPriority>('NO_PRIORITY');
   const [assigneeId, setAssigneeId] = useState<string | null>(null);
+  const [assigneeIds, setAssigneeIds] = useState<string[]>([]);
   const [projectId, setProjectId] = useState<string>('');
   const [dueDate, setDueDate] = useState<string>('');
   const [labels, setLabels] = useState<string[]>([]);
@@ -176,6 +177,18 @@ function IssueDetailContent() {
     const q = labelSearch.toLowerCase();
     return allWorkspaceLabels.filter((lbl) => lbl.toLowerCase().includes(q));
   }, [allWorkspaceLabels, labelSearch]);
+
+  const currentAssignees = useMemo(() => {
+    if (assigneeIds.length === 0) return [];
+    return assigneeIds.map((id) => {
+      const member = members.find((m) => m.userId === id);
+      if (member?.user) return member.user;
+      const taskAssignee = task?.assignees?.find((a: any) => a.userId === id);
+      if (taskAssignee?.user) return taskAssignee.user;
+      if (task?.assignee && task.assignee.id === id) return task.assignee;
+      return { id, name: 'Team member', email: '' };
+    });
+  }, [assigneeIds, members, task]);
 
   const handleToggleLabel = (lbl: string) => {
     const updated = labels.includes(lbl) ? labels.filter((l) => l !== lbl) : [...labels, lbl];
@@ -273,7 +286,7 @@ function IssueDetailContent() {
   const descTextareaRef = useRef<HTMLTextAreaElement>(null);
   const subIssuesRef = useRef<HTMLDivElement>(null);
   const relatedIssuesRef = useRef<HTMLDivElement>(null);
-  const [showParentPicker, setShowParentPicker] = useState(false);
+  const dateInputRef = useRef<HTMLInputElement>(null);
   const [parentSearch, setParentSearch] = useState('');
   const [isUploadingDescImage, setIsUploadingDescImage] = useState(false);
   const [isUploadingCommentImage, setIsUploadingCommentImage] = useState(false);
@@ -328,8 +341,8 @@ function IssueDetailContent() {
         setActiveDropdown(null);
       }
     };
-    document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   // Real-time WebSockets listeners for live collaboration
@@ -424,7 +437,11 @@ function IssueDetailContent() {
         setStatus(updatedTask.status);
         setCustomStatus(updatedTask.customStatus || null);
         setPriority(updatedTask.priority);
-        setAssigneeId(updatedTask.assigneeId || null);
+        const socketAssigneeIds = updatedTask.assignees && updatedTask.assignees.length > 0
+          ? updatedTask.assignees.map((a: any) => a.userId)
+          : (updatedTask.assigneeId ? [updatedTask.assigneeId] : []);
+        setAssigneeIds(socketAssigneeIds);
+        setAssigneeId(socketAssigneeIds[0] || null);
         if (updatedTask.cycleId !== undefined) setCycleId(updatedTask.cycleId || null);
         if (updatedTask.estimate !== undefined) setEstimate(updatedTask.estimate || 1);
         if (updatedTask.dueDate !== undefined) {
@@ -594,7 +611,11 @@ function IssueDetailContent() {
         setStatus(fetchedTask.status);
         setCustomStatus(fetchedTask.customStatus || null);
         setPriority(fetchedTask.priority);
-        setAssigneeId(fetchedTask.assigneeId || null);
+        const initialAssigneeIds = fetchedTask.assignees && fetchedTask.assignees.length > 0
+          ? fetchedTask.assignees.map((a: any) => a.userId)
+          : (fetchedTask.assigneeId ? [fetchedTask.assigneeId] : []);
+        setAssigneeIds(initialAssigneeIds);
+        setAssigneeId(initialAssigneeIds[0] || null);
         setProjectId(fetchedTask.projectId || '');
         setCycleId(fetchedTask.cycleId || null);
         setEstimate(fetchedTask.estimate || 1);
@@ -840,16 +861,30 @@ function IssueDetailContent() {
     triggerSave({ priority: newPriority });
   };
 
-  const handleAssigneeChange = async (newAssigneeId: string | null) => {
+  const handleAssigneesChange = async (nextIds: string[]) => {
+    const uniqueIds = Array.from(new Set(nextIds.filter(Boolean)));
+    setAssigneeIds(uniqueIds);
+    setAssigneeId(uniqueIds[0] || null);
+
     if (task) {
-      const newMember = newAssigneeId ? members.find((m) => m.userId === newAssigneeId) : null;
-      const newName = newMember?.user?.name || (newAssigneeId ? 'Someone' : null);
+      const names = uniqueIds
+        .map((id) => members.find((m) => m.userId === id)?.user?.name)
+        .filter(Boolean);
+      const details =
+        uniqueIds.length === 0
+          ? 'unassigned all members'
+          : `assigned to ${names.join(', ')}`;
+
       const optimisticAct: TaskActivity = {
         id: `opt-${Date.now()}`,
         type: 'ASSIGNEE_CHANGE',
-        fromValue: assigneeId ? members.find((m) => m.userId === assigneeId)?.user?.name || null : null,
-        toValue: newName,
-        details: newName ? `re-assigned to ${newName}` : 'unassigned this issue',
+        fromValue:
+          assigneeIds
+            .map((id) => members.find((m) => m.userId === id)?.user?.name)
+            .filter(Boolean)
+            .join(', ') || null,
+        toValue: names.join(', ') || 'Unassigned',
+        details,
         taskId: task.id,
         userId: user?.id || 'me',
         user: user || { id: 'me', name: 'You', email: '' },
@@ -858,9 +893,27 @@ function IssueDetailContent() {
       setActivities((prev) => [optimisticAct, ...prev]);
     }
 
-    setAssigneeId(newAssigneeId);
+    triggerSave({
+      assigneeIds: uniqueIds,
+      assigneeId: uniqueIds[0] || null,
+    });
+  };
+
+  const handleToggleAssignee = (targetUserId: string) => {
+    const isSelected = assigneeIds.includes(targetUserId);
+    const next = isSelected
+      ? assigneeIds.filter((id) => id !== targetUserId)
+      : [...assigneeIds, targetUserId];
+    handleAssigneesChange(next);
+  };
+
+  const handleAssigneeChange = async (newAssigneeId: string | null) => {
+    if (!newAssigneeId) {
+      handleAssigneesChange([]);
+    } else {
+      handleAssigneesChange([newAssigneeId]);
+    }
     setActiveDropdown(null);
-    triggerSave({ assigneeId: newAssigneeId });
   };
 
   const handleProjectChange = async (newProjectId: string) => {
@@ -958,6 +1011,16 @@ function IssueDetailContent() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [activeDropdown, task]);
 
+  const formatDueDate = (dateStr: string) => {
+    if (!dateStr) return '';
+    const parts = dateStr.split('T')[0].split('-');
+    if (parts.length === 3) {
+      const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+      return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+    return new Date(dateStr).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+  };
+
   const handleDueDateChange = async (newDate: string) => {
     setDueDate(newDate);
     triggerSave({ dueDate: newDate ? new Date(newDate).toISOString() : null });
@@ -1034,9 +1097,9 @@ function IssueDetailContent() {
   const isSubscribed = useMemo(() => {
     if (!user) return false;
     const hasSub = subscribers.some((s) => s.userId === user.id || s.user?.id === user.id);
-    const isAssignee = assigneeId === user.id;
+    const isAssignee = assigneeIds.includes(user.id) || assigneeId === user.id;
     return hasSub || isAssignee;
-  }, [subscribers, user, assigneeId]);
+  }, [subscribers, user, assigneeIds, assigneeId]);
 
   const handleToggleSubscribe = async () => {
     if (!task || !user || isSubscribing) return;
@@ -1772,7 +1835,7 @@ function IssueDetailContent() {
   };
 
   const activeProject = projects.find((p) => p.id === projectId) || task.project;
-  const currentAssignee = members.find((m) => m.userId === assigneeId)?.user || task.assignee;
+  const currentAssignee = currentAssignees[0] || (task.assignee ? task.assignee : null);
 
   return (
     <div className="min-h-screen bg-[#090a0f] text-foreground flex flex-col font-sans select-text">
@@ -3222,7 +3285,7 @@ function IssueDetailContent() {
                 )}
               </div>
 
-              {/* Assignee Row (Matching Linear: [Avatar] Muhammad Fiqri Ananda Hakin) */}
+              {/* Assignee Row (Linear-style multi-assignee support with stacked avatars) */}
               <div className="property-dropdown-container relative">
                 <button
                   type="button"
@@ -3236,45 +3299,73 @@ function IssueDetailContent() {
                     workspace?.role === 'STAKEHOLDER' ? 'cursor-not-allowed opacity-80' : 'cursor-pointer group'
                   )}
                 >
-                  <div className="flex items-center gap-2.5">
-                    {currentAssignee ? (
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    {currentAssignees.length === 0 ? (
+                      <>
+                        <UserIcon className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+                        <span className="text-zinc-500">··· Assign</span>
+                      </>
+                    ) : currentAssignees.length === 1 ? (
                       <>
                         <img
                           src={
-                            currentAssignee.avatarUrl ||
+                            currentAssignees[0].avatarUrl ||
                             `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
-                              currentAssignee.name,
+                              currentAssignees[0].name,
                             )}`
                           }
                           alt=""
-                          className="w-4 h-4 rounded-full object-cover shrink-0"
+                          className="w-4 h-4 rounded-full object-cover shrink-0 ring-1 ring-[#191a24]"
                         />
                         <span className="text-zinc-300 font-medium group-hover:text-white truncate">
-                          {currentAssignee.name}
+                          {currentAssignees[0].name}
                         </span>
                       </>
                     ) : (
                       <>
-                        <UserIcon className="w-3.5 h-3.5 text-zinc-500" />
-                        <span className="text-zinc-500">··· Assign</span>
+                        <div className="flex -space-x-1.5 overflow-hidden shrink-0 items-center">
+                          {currentAssignees.slice(0, 3).map((u) => (
+                            <img
+                              key={u.id}
+                              src={
+                                u.avatarUrl ||
+                                `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
+                                  u.name,
+                                )}`
+                              }
+                              alt={u.name}
+                              title={u.name}
+                              className="inline-block w-4 h-4 rounded-full ring-1 ring-[#191a24] object-cover"
+                            />
+                          ))}
+                          {currentAssignees.length > 3 && (
+                            <span className="inline-flex items-center justify-center w-4 h-4 rounded-full ring-1 ring-[#191a24] bg-zinc-700 text-[8px] font-medium text-white">
+                              +{currentAssignees.length - 3}
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-zinc-300 font-medium group-hover:text-white truncate">
+                          {currentAssignees.map((u) => u.name.split(' ')[0]).join(', ')}
+                        </span>
                       </>
                     )}
                   </div>
                 </button>
 
                 {activeDropdown === 'assignee' && (
-                  <div className="absolute top-full left-0 mt-1.5 w-60 rounded-xl border border-[#2b2c3a] bg-[#191a24] shadow-[0_12px_36px_rgba(0,0,0,0.75)] p-1 z-50 animate-in fade-in-0 zoom-in-95 duration-100">
+                  <div className="absolute top-full left-0 mt-1.5 w-64 rounded-xl border border-[#2b2c3a] bg-[#191a24] shadow-[0_12px_36px_rgba(0,0,0,0.75)] p-1 z-50 animate-in fade-in-0 zoom-in-95 duration-100 max-h-72 overflow-y-auto">
                     <div className="flex items-center justify-between px-2.5 py-1.5 text-xs text-zinc-400 font-normal border-b border-[#2b2c3a]/70 mb-1">
-                      <span>Assign to...</span>
+                      <span>Assign members{assigneeIds.length > 0 ? ` (${assigneeIds.length})` : ''}</span>
                       <kbd className="px-1.5 py-0.5 rounded bg-zinc-800 text-[10px] font-mono text-zinc-400 border border-zinc-700/60">
                         A
                       </kbd>
                     </div>
                     <button
-                      onClick={() => handleAssigneeChange(null)}
+                      type="button"
+                      onClick={() => handleAssigneesChange([])}
                       className={cn(
                         'w-full flex items-center justify-between px-2.5 py-1.5 text-xs rounded-lg transition-colors',
-                        assigneeId === null
+                        assigneeIds.length === 0
                           ? 'bg-[#282a38] text-white font-medium'
                           : 'text-zinc-400 hover:bg-[#232432] hover:text-white',
                       )}
@@ -3284,40 +3375,51 @@ function IssueDetailContent() {
                         <span>Unassigned</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        {assigneeId === null && <Check className="w-3.5 h-3.5 text-white stroke-[2.5]" />}
+                        {assigneeIds.length === 0 && <Check className="w-3.5 h-3.5 text-white stroke-[2.5]" />}
                         <span className="text-[11px] font-mono text-zinc-500">-</span>
                       </div>
                     </button>
-                    {members.map((m, idx) => (
-                      <button
-                        key={m.userId}
-                        onClick={() => handleAssigneeChange(m.userId)}
-                        className={cn(
-                          'w-full flex items-center justify-between px-2.5 py-1.5 text-xs rounded-lg transition-colors',
-                          m.userId === assigneeId
-                            ? 'bg-[#282a38] text-white font-medium'
-                            : 'text-zinc-300 hover:bg-[#232432] hover:text-white',
-                        )}
-                      >
-                        <div className="flex items-center gap-2.5 truncate min-w-0">
-                          <img
-                            src={
-                              m.user.avatarUrl ||
-                              `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
-                                m.user.name,
-                              )}`
-                            }
-                            alt=""
-                            className="w-4 h-4 rounded-full object-cover shrink-0"
-                          />
-                          <span className="truncate">{m.user.name}</span>
-                        </div>
-                        <div className="flex items-center gap-2 shrink-0">
-                          {m.userId === assigneeId && <Check className="w-3.5 h-3.5 text-white stroke-[2.5]" />}
-                          <span className="text-[11px] font-mono text-zinc-500">{idx + 1}</span>
-                        </div>
-                      </button>
-                    ))}
+                    {members.map((m, idx) => {
+                      const isSelected = assigneeIds.includes(m.userId);
+                      return (
+                        <button
+                          key={m.userId}
+                          type="button"
+                          onClick={() => handleToggleAssignee(m.userId)}
+                          className={cn(
+                            'w-full flex items-center justify-between px-2.5 py-1.5 text-xs rounded-lg transition-colors',
+                            isSelected
+                              ? 'bg-[#282a38] text-white font-medium'
+                              : 'text-zinc-300 hover:bg-[#232432] hover:text-white',
+                          )}
+                        >
+                          <div className="flex items-center gap-2.5 truncate min-w-0">
+                            <div
+                              className={cn(
+                                'w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 transition-colors',
+                                isSelected
+                                  ? 'bg-indigo-600 border-indigo-500'
+                                  : 'border-zinc-600 bg-[#12131c]',
+                              )}
+                            >
+                              {isSelected && <Check className="w-2.5 h-2.5 text-white stroke-[3]" />}
+                            </div>
+                            <img
+                              src={
+                                m.user.avatarUrl ||
+                                `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
+                                  m.user.name,
+                                )}`
+                              }
+                              alt=""
+                              className="w-4 h-4 rounded-full object-cover shrink-0"
+                            />
+                            <span className="truncate">{m.user.name}</span>
+                          </div>
+                          <span className="text-[11px] font-mono text-zinc-500 shrink-0">{idx + 1}</span>
+                        </button>
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -3345,21 +3447,50 @@ function IssueDetailContent() {
               )}
 
               {/* Due Date Property Row */}
-              <div className="property-dropdown-container relative">
-                <label className="w-full flex items-center justify-between py-1.5 px-2 rounded-md hover:bg-[#1a1b26] transition-colors cursor-pointer group text-left text-xs">
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <Calendar className="w-3.5 h-3.5 text-zinc-500 group-hover:text-zinc-300 shrink-0" />
-                    <span className={cn("truncate", dueDate ? "text-zinc-300 group-hover:text-white" : "text-zinc-500")}>
-                      {dueDate ? new Date(dueDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : '··· Set due date'}
-                    </span>
-                  </div>
-                  <input
-                    type="date"
-                    value={dueDate}
-                    onChange={(e) => handleDueDateChange(e.target.value)}
-                    className="opacity-0 absolute inset-0 w-full h-full cursor-pointer"
-                  />
-                </label>
+              <div className="property-dropdown-container relative flex items-center justify-between py-1.5 px-2 rounded-md hover:bg-[#1a1b26] transition-colors text-xs group">
+                <div
+                  onClick={() => {
+                    if (dateInputRef.current) {
+                      try {
+                        dateInputRef.current.showPicker();
+                      } catch {
+                        dateInputRef.current.focus();
+                      }
+                    }
+                  }}
+                  className="flex items-center gap-2.5 min-w-0 flex-1 cursor-pointer"
+                >
+                  <Calendar className="w-3.5 h-3.5 text-zinc-500 group-hover:text-zinc-300 shrink-0" />
+                  <span className={cn("truncate", dueDate ? "text-zinc-300 group-hover:text-white font-medium" : "text-zinc-500")}>
+                    {dueDate ? formatDueDate(dueDate) : '··· Set due date'}
+                  </span>
+                </div>
+                {dueDate && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDueDateChange('');
+                    }}
+                    className="p-1 rounded hover:bg-rose-500/15 text-zinc-500 hover:text-rose-400 transition-colors shrink-0 z-10"
+                    title="Clear due date"
+                  >
+                    <X className="w-3 h-3 stroke-[2.5]" />
+                  </button>
+                )}
+                <input
+                  ref={dateInputRef}
+                  type="date"
+                  value={dueDate}
+                  onChange={(e) => handleDueDateChange(e.target.value)}
+                  onClick={(e) => {
+                    try {
+                      e.currentTarget.showPicker();
+                    } catch {}
+                  }}
+                  className="opacity-0 absolute inset-0 w-full h-full cursor-pointer z-0 [color-scheme:dark]"
+                  tabIndex={-1}
+                />
               </div>
 
               {/* Cycle (Sprint) Property Row */}
@@ -3506,8 +3637,8 @@ function IssueDetailContent() {
                   <>
                     <button
                       type="button"
-                      onClick={() => setShowParentPicker(!showParentPicker)}
-                      className="w-full flex items-center justify-between py-1.5 px-2 rounded-md hover:bg-[#1a1b26] transition-colors cursor-pointer group text-left"
+                      onClick={() => setActiveDropdown(activeDropdown === 'parent' ? null : 'parent')}
+                      className="w-full flex items-center justify-between py-1.5 px-2 rounded-md hover:bg-[#1a1b26] transition-colors cursor-pointer group text-left text-xs"
                     >
                       <div className="flex items-center gap-2.5 text-zinc-500 group-hover:text-zinc-300">
                         <GitFork className="w-3.5 h-3.5 rotate-180" />
@@ -3515,7 +3646,7 @@ function IssueDetailContent() {
                       </div>
                     </button>
 
-                    {showParentPicker && (
+                    {activeDropdown === 'parent' && (
                       <div className="absolute top-full left-0 mt-1.5 w-64 rounded-xl border border-[#2b2c3a] bg-[#191a24] shadow-[0_12px_36px_rgba(0,0,0,0.75)] p-2 z-50 animate-in fade-in-0 zoom-in-95 duration-100">
                         <div className="relative mb-2">
                           <Search className="w-3.5 h-3.5 text-zinc-500 absolute left-2 top-2" />
@@ -3559,7 +3690,7 @@ function IssueDetailContent() {
                                         }
                                       : null,
                                   );
-                                  setShowParentPicker(false);
+                                  setActiveDropdown(null);
                                   setParentSearch('');
                                 }}
                                 className="w-full flex items-center justify-between px-2 py-1.5 rounded hover:bg-[#20212f] text-left text-xs text-zinc-300 hover:text-white transition-colors"

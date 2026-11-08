@@ -141,6 +141,19 @@ export declare class TasksService {
             email: string;
             avatarUrl: string | null;
         } | null;
+        assignees: ({
+            user: {
+                id: string;
+                name: string;
+                email: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            userId: string;
+            createdAt: Date;
+            taskId: string;
+        })[];
         requesterDivision: {
             id: string;
             name: string;
@@ -174,6 +187,19 @@ export declare class TasksService {
                 email: string;
                 avatarUrl: string | null;
             } | null;
+            assignees: ({
+                user: {
+                    id: string;
+                    name: string;
+                    email: string;
+                    avatarUrl: string | null;
+                };
+            } & {
+                id: string;
+                userId: string;
+                createdAt: Date;
+                taskId: string;
+            })[];
         } & {
             description: string | null;
             title: string;
@@ -424,6 +450,19 @@ export declare class TasksService {
             email: string;
             avatarUrl: string | null;
         } | null;
+        assignees: ({
+            user: {
+                id: string;
+                name: string;
+                email: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            userId: string;
+            createdAt: Date;
+            taskId: string;
+        })[];
         requesterDivision: {
             id: string;
             name: string;
@@ -457,6 +496,19 @@ export declare class TasksService {
                 email: string;
                 avatarUrl: string | null;
             } | null;
+            assignees: ({
+                user: {
+                    id: string;
+                    name: string;
+                    email: string;
+                    avatarUrl: string | null;
+                };
+            } & {
+                id: string;
+                userId: string;
+                createdAt: Date;
+                taskId: string;
+            })[];
         } & {
             description: string | null;
             title: string;
@@ -604,6 +656,7 @@ export declare class TasksService {
         customStatus?: string | null;
         priority?: TaskPriority;
         assigneeId?: string;
+        assigneeIds?: string[];
         dueDate?: string;
         labels?: string[];
         parentId?: string | null;
@@ -725,6 +778,19 @@ export declare class TasksService {
             email: string;
             avatarUrl: string | null;
         } | null;
+        assignees: ({
+            user: {
+                id: string;
+                name: string;
+                email: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            userId: string;
+            createdAt: Date;
+            taskId: string;
+        })[];
         requesterDivision: {
             id: string;
             name: string;
@@ -758,6 +824,19 @@ export declare class TasksService {
                 email: string;
                 avatarUrl: string | null;
             } | null;
+            assignees: ({
+                user: {
+                    id: string;
+                    name: string;
+                    email: string;
+                    avatarUrl: string | null;
+                };
+            } & {
+                id: string;
+                userId: string;
+                createdAt: Date;
+                taskId: string;
+            })[];
         } & {
             description: string | null;
             title: string;
@@ -903,6 +982,7 @@ export declare class TasksService {
         customStatus?: string | null;
         priority?: TaskPriority;
         assigneeId?: string | null;
+        assigneeIds?: string[];
         dueDate?: string | null;
         labels?: string[];
         projectId?: string;
@@ -1023,6 +1103,19 @@ export declare class TasksService {
             email: string;
             avatarUrl: string | null;
         } | null;
+        assignees: ({
+            user: {
+                id: string;
+                name: string;
+                email: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            userId: string;
+            createdAt: Date;
+            taskId: string;
+        })[];
         requesterDivision: {
             id: string;
             name: string;
@@ -1056,6 +1149,19 @@ export declare class TasksService {
                 email: string;
                 avatarUrl: string | null;
             } | null;
+            assignees: ({
+                user: {
+                    id: string;
+                    name: string;
+                    email: string;
+                    avatarUrl: string | null;
+                };
+            } & {
+                id: string;
+                userId: string;
+                createdAt: Date;
+                taskId: string;
+            })[];
         } & {
             description: string | null;
             title: string;
@@ -1311,6 +1417,19 @@ export declare class TasksService {
             email: string;
             avatarUrl: string | null;
         } | null;
+        assignees: ({
+            user: {
+                id: string;
+                name: string;
+                email: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            userId: string;
+            createdAt: Date;
+            taskId: string;
+        })[];
         requesterDivision: {
             id: string;
             name: string;
@@ -1344,6 +1463,19 @@ export declare class TasksService {
                 email: string;
                 avatarUrl: string | null;
             } | null;
+            assignees: ({
+                user: {
+                    id: string;
+                    name: string;
+                    email: string;
+                    avatarUrl: string | null;
+                };
+            } & {
+                id: string;
+                userId: string;
+                createdAt: Date;
+                taskId: string;
+            })[];
         } & {
             description: string | null;
             title: string;
@@ -1616,6 +1748,19 @@ export declare class TasksService {
             email: string;
             avatarUrl: string | null;
         } | null;
+        assignees: ({
+            user: {
+                id: string;
+                name: string;
+                email: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            userId: string;
+            createdAt: Date;
+            taskId: string;
+        })[];
         requesterDivision: {
             id: string;
             name: string;
@@ -1649,6 +1794,19 @@ export declare class TasksService {
                 email: string;
                 avatarUrl: string | null;
             } | null;
+            assignees: ({
+                user: {
+                    id: string;
+                    name: string;
+                    email: string;
+                    avatarUrl: string | null;
+                };
+            } & {
+                id: string;
+                userId: string;
+                createdAt: Date;
+                taskId: string;
+            })[];
         } & {
             description: string | null;
             title: string;
@@ -1899,6 +2057,19 @@ export declare class TasksService {
             email: string;
             avatarUrl: string | null;
         } | null;
+        assignees: ({
+            user: {
+                id: string;
+                name: string;
+                email: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            userId: string;
+            createdAt: Date;
+            taskId: string;
+        })[];
         requesterDivision: {
             id: string;
             name: string;
@@ -1932,6 +2103,19 @@ export declare class TasksService {
                 email: string;
                 avatarUrl: string | null;
             } | null;
+            assignees: ({
+                user: {
+                    id: string;
+                    name: string;
+                    email: string;
+                    avatarUrl: string | null;
+                };
+            } & {
+                id: string;
+                userId: string;
+                createdAt: Date;
+                taskId: string;
+            })[];
         } & {
             description: string | null;
             title: string;
@@ -2155,6 +2339,7 @@ export declare class TasksService {
         customStatus?: string | null;
         priority?: TaskPriority;
         assigneeId?: string;
+        assigneeIds?: string[];
         dueDate?: string;
         labels?: string[];
         projectId?: string;
@@ -2270,6 +2455,19 @@ export declare class TasksService {
             email: string;
             avatarUrl: string | null;
         } | null;
+        assignees: ({
+            user: {
+                id: string;
+                name: string;
+                email: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            userId: string;
+            createdAt: Date;
+            taskId: string;
+        })[];
         requesterDivision: {
             id: string;
             name: string;
@@ -2303,6 +2501,19 @@ export declare class TasksService {
                 email: string;
                 avatarUrl: string | null;
             } | null;
+            assignees: ({
+                user: {
+                    id: string;
+                    name: string;
+                    email: string;
+                    avatarUrl: string | null;
+                };
+            } & {
+                id: string;
+                userId: string;
+                createdAt: Date;
+                taskId: string;
+            })[];
         } & {
             description: string | null;
             title: string;
@@ -2553,6 +2764,19 @@ export declare class TasksService {
             email: string;
             avatarUrl: string | null;
         } | null;
+        assignees: ({
+            user: {
+                id: string;
+                name: string;
+                email: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            userId: string;
+            createdAt: Date;
+            taskId: string;
+        })[];
         requesterDivision: {
             id: string;
             name: string;
@@ -2586,6 +2810,19 @@ export declare class TasksService {
                 email: string;
                 avatarUrl: string | null;
             } | null;
+            assignees: ({
+                user: {
+                    id: string;
+                    name: string;
+                    email: string;
+                    avatarUrl: string | null;
+                };
+            } & {
+                id: string;
+                userId: string;
+                createdAt: Date;
+                taskId: string;
+            })[];
         } & {
             description: string | null;
             title: string;
@@ -2836,6 +3073,19 @@ export declare class TasksService {
             email: string;
             avatarUrl: string | null;
         } | null;
+        assignees: ({
+            user: {
+                id: string;
+                name: string;
+                email: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            userId: string;
+            createdAt: Date;
+            taskId: string;
+        })[];
         requesterDivision: {
             id: string;
             name: string;
@@ -2869,6 +3119,19 @@ export declare class TasksService {
                 email: string;
                 avatarUrl: string | null;
             } | null;
+            assignees: ({
+                user: {
+                    id: string;
+                    name: string;
+                    email: string;
+                    avatarUrl: string | null;
+                };
+            } & {
+                id: string;
+                userId: string;
+                createdAt: Date;
+                taskId: string;
+            })[];
         } & {
             description: string | null;
             title: string;
@@ -3122,6 +3385,19 @@ export declare class TasksService {
             email: string;
             avatarUrl: string | null;
         } | null;
+        assignees: ({
+            user: {
+                id: string;
+                name: string;
+                email: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            userId: string;
+            createdAt: Date;
+            taskId: string;
+        })[];
         requesterDivision: {
             id: string;
             name: string;
@@ -3155,6 +3431,19 @@ export declare class TasksService {
                 email: string;
                 avatarUrl: string | null;
             } | null;
+            assignees: ({
+                user: {
+                    id: string;
+                    name: string;
+                    email: string;
+                    avatarUrl: string | null;
+                };
+            } & {
+                id: string;
+                userId: string;
+                createdAt: Date;
+                taskId: string;
+            })[];
         } & {
             description: string | null;
             title: string;
@@ -3405,6 +3694,19 @@ export declare class TasksService {
             email: string;
             avatarUrl: string | null;
         } | null;
+        assignees: ({
+            user: {
+                id: string;
+                name: string;
+                email: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            userId: string;
+            createdAt: Date;
+            taskId: string;
+        })[];
         requesterDivision: {
             id: string;
             name: string;
@@ -3438,6 +3740,19 @@ export declare class TasksService {
                 email: string;
                 avatarUrl: string | null;
             } | null;
+            assignees: ({
+                user: {
+                    id: string;
+                    name: string;
+                    email: string;
+                    avatarUrl: string | null;
+                };
+            } & {
+                id: string;
+                userId: string;
+                createdAt: Date;
+                taskId: string;
+            })[];
         } & {
             description: string | null;
             title: string;
@@ -3785,6 +4100,19 @@ export declare class TasksService {
             email: string;
             avatarUrl: string | null;
         } | null;
+        assignees: ({
+            user: {
+                id: string;
+                name: string;
+                email: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            userId: string;
+            createdAt: Date;
+            taskId: string;
+        })[];
         requesterDivision: {
             id: string;
             name: string;
@@ -3818,6 +4146,19 @@ export declare class TasksService {
                 email: string;
                 avatarUrl: string | null;
             } | null;
+            assignees: ({
+                user: {
+                    id: string;
+                    name: string;
+                    email: string;
+                    avatarUrl: string | null;
+                };
+            } & {
+                id: string;
+                userId: string;
+                createdAt: Date;
+                taskId: string;
+            })[];
         } & {
             description: string | null;
             title: string;
@@ -4068,6 +4409,19 @@ export declare class TasksService {
             email: string;
             avatarUrl: string | null;
         } | null;
+        assignees: ({
+            user: {
+                id: string;
+                name: string;
+                email: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            userId: string;
+            createdAt: Date;
+            taskId: string;
+        })[];
         requesterDivision: {
             id: string;
             name: string;
@@ -4101,6 +4455,19 @@ export declare class TasksService {
                 email: string;
                 avatarUrl: string | null;
             } | null;
+            assignees: ({
+                user: {
+                    id: string;
+                    name: string;
+                    email: string;
+                    avatarUrl: string | null;
+                };
+            } & {
+                id: string;
+                userId: string;
+                createdAt: Date;
+                taskId: string;
+            })[];
         } & {
             description: string | null;
             title: string;
@@ -4357,6 +4724,19 @@ export declare class TasksService {
             email: string;
             avatarUrl: string | null;
         } | null;
+        assignees: ({
+            user: {
+                id: string;
+                name: string;
+                email: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            userId: string;
+            createdAt: Date;
+            taskId: string;
+        })[];
         requesterDivision: {
             id: string;
             name: string;
@@ -4390,6 +4770,19 @@ export declare class TasksService {
                 email: string;
                 avatarUrl: string | null;
             } | null;
+            assignees: ({
+                user: {
+                    id: string;
+                    name: string;
+                    email: string;
+                    avatarUrl: string | null;
+                };
+            } & {
+                id: string;
+                userId: string;
+                createdAt: Date;
+                taskId: string;
+            })[];
         } & {
             description: string | null;
             title: string;

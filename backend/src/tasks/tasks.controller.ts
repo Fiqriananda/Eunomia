@@ -152,6 +152,7 @@ export class TasksController {
       customStatus?: string | null;
       priority?: TaskPriority;
       assigneeId?: string;
+      assigneeIds?: string[];
       dueDate?: string;
       labels?: string[];
       parentId?: string | null;
@@ -176,6 +177,7 @@ export class TasksController {
       customStatus?: string | null;
       priority?: TaskPriority;
       assigneeId?: string | null;
+      assigneeIds?: string[];
       dueDate?: string | null;
       labels?: string[];
       projectId?: string;
@@ -203,6 +205,7 @@ export class TasksController {
       customStatus?: string | null;
       priority?: TaskPriority;
       assigneeId?: string;
+      assigneeIds?: string[];
       dueDate?: string;
       labels?: string[];
       projectId?: string;
