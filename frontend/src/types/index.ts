@@ -124,11 +124,14 @@ export interface Attachment {
   createdAt: string;
 }
 
+export type SectionProgress = 'dashed' | '0/4' | '1/4' | '1/2' | '3/4' | '1/1' | 'canceled';
+
 export interface WorkflowSection {
   id: string;
   name: string;
   key: string;
   color?: string;
+  progress?: SectionProgress | string | null;
   order?: number;
   category?: TaskStatus;
   workspaceId: string;

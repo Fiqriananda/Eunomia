@@ -21,6 +21,15 @@ import {
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
+export class ApiError extends Error {
+  status: number;
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+  }
+}
+
 class ApiClient {
   private getAuthHeader(): Record<string, string> {
     if (typeof window === 'undefined') return {};
@@ -42,7 +51,7 @@ class ApiClient {
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({ message: res.statusText }));
-      throw new Error(err.message || 'An error occurred during request');
+      throw new ApiError(err.message || 'An error occurred during request', res.status);
     }
 
     return res.json();
@@ -131,10 +140,19 @@ class ApiClient {
       this.request<WorkflowSection[]>(`/workspaces/${workspaceId}/sections`),
     createSection: (
       workspaceId: string,
-      data: { name: string; key?: string; color?: string; category?: TaskStatus },
+      data: { name: string; key?: string; color?: string; progress?: string; category?: TaskStatus },
     ) =>
       this.request<WorkflowSection>(`/workspaces/${workspaceId}/sections`, {
         method: 'POST',
+        body: JSON.stringify(data),
+      }),
+    updateSection: (
+      workspaceId: string,
+      sectionIdOrKey: string,
+      data: { name?: string; color?: string; progress?: string; category?: TaskStatus },
+    ) =>
+      this.request<WorkflowSection>(`/workspaces/${workspaceId}/sections/${sectionIdOrKey}`, {
+        method: 'PATCH',
         body: JSON.stringify(data),
       }),
     deleteSection: (workspaceId: string, sectionId: string) =>

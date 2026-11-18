@@ -50,6 +50,20 @@ import { StatusIcon } from './StatusIcon';
 import { PriorityIcon } from './PriorityIcon';
 import { MarkdownRenderer, resolveMediaUrl } from '../ui/MarkdownRenderer';
 import { LinearRichEditor } from './LinearRichEditor';
+import { FileUploader } from './FileUploader';
+
+function formatTimeAgo(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const minutes = Math.floor(diff / 60000);
+  if (minutes < 1) return 'now';
+  if (minutes < 60) return `${minutes}min`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h`;
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `${days}d`;
+  const months = Math.floor(days / 30);
+  return `${months}mo`;
+}
 
 interface InboxViewProps {
   onUnreadCountChange?: (count: number) => void;
@@ -62,7 +76,18 @@ export function InboxView({ onUnreadCountChange, onOpenMobileNav }: InboxViewPro
 
   // Root container ref for horizontal resizing
   const containerRef = useRef<HTMLDivElement>(null);
-  const [listWidth, setListWidth] = useState<number>(340);
+  const [listWidth, setListWidth] = useState<number>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('linear_inbox_width');
+      if (saved) {
+        const val = parseInt(saved, 10);
+        if (!isNaN(val) && val >= 260 && val <= 650) {
+          return val;
+        }
+      }
+    }
+    return 340;
+  });
   const [isResizing, setIsResizing] = useState(false);
 
   // Notifications State
@@ -200,10 +225,78 @@ export function InboxView({ onUnreadCountChange, onOpenMobileNav }: InboxViewPro
     }
   }, [onUnreadCountChange]);
 
+  // Load task details when notification is selected
+  const handleSelectNotification = useCallback(
+    async (notif: InboxNotification) => {
+      setSelectedNotifId(notif.id);
+      setMobileShowDetail(true);
+
+      if (!notif.isRead) {
+        try {
+          await api.inbox.markAsRead(notif.id);
+          setNotifications((prev) =>
+            prev.map((n) =>
+              n.id === notif.id
+                ? { ...n, isRead: true, readAt: new Date().toISOString() }
+                : n,
+            ),
+          );
+          setUnreadCount((prev) => {
+            const next = Math.max(0, prev - 1);
+            if (onUnreadCountChange) onUnreadCountChange(next);
+            return next;
+          });
+        } catch (err) {
+          console.error('Failed to mark notification as read:', err);
+        }
+      }
+
+      if (notif.taskId) {
+        setTaskLoading(true);
+        try {
+          const task = await api.tasks.getById(notif.taskId);
+          setSelectedTask(task);
+          setTaskTitle(task.title || '');
+          setTaskDesc(task.description || '');
+          setTaskLabels(task.labels || []);
+          setIsActivitiesExpanded(false);
+          if (user && task.subscribers) {
+            setIsSubscribed(
+              task.subscribers.some((s: { userId?: string }) => s.userId === user.id),
+            );
+          }
+        } catch (err) {
+          console.error('Failed to load task details:', err);
+          setSelectedTask(null);
+        } finally {
+          setTaskLoading(false);
+        }
+      } else {
+        setSelectedTask(null);
+      }
+    },
+    [onUnreadCountChange, user],
+  );
+
   useEffect(() => {
-    fetchInbox();
-    const interval = setInterval(fetchInbox, 10000);
-    return () => clearInterval(interval);
+    let cancelled = false;
+    const load = async () => {
+      try {
+        await fetchInbox();
+      } catch {
+        // ignore
+      }
+    };
+    void load();
+    const interval = setInterval(() => {
+      if (!cancelled) {
+        void fetchInbox();
+      }
+    }, 10000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
   }, [fetchInbox]);
 
   // Filter notifications
@@ -217,53 +310,13 @@ export function InboxView({ onUnreadCountChange, onOpenMobileNav }: InboxViewPro
   // Automatically select first notification
   useEffect(() => {
     if (filteredNotifications.length > 0 && !selectedNotifId) {
-      handleSelectNotification(filteredNotifications[0]);
+      const first = filteredNotifications[0];
+      const timer = setTimeout(() => {
+        void handleSelectNotification(first);
+      }, 0);
+      return () => clearTimeout(timer);
     }
-  }, [filteredNotifications, selectedNotifId]);
-
-  // Load task details when notification is selected
-  const handleSelectNotification = async (notif: InboxNotification) => {
-    setSelectedNotifId(notif.id);
-    setMobileShowDetail(true);
-
-    if (!notif.isRead) {
-      try {
-        await api.inbox.markAsRead(notif.id);
-        setNotifications((prev) =>
-          prev.map((n) => (n.id === notif.id ? { ...n, isRead: true, readAt: new Date().toISOString() } : n)),
-        );
-        setUnreadCount((prev) => {
-          const next = Math.max(0, prev - 1);
-          if (onUnreadCountChange) onUnreadCountChange(next);
-          return next;
-        });
-      } catch (err) {
-        console.error('Failed to mark notification as read:', err);
-      }
-    }
-
-    if (notif.taskId) {
-      setTaskLoading(true);
-      try {
-        const task = await api.tasks.getById(notif.taskId);
-        setSelectedTask(task);
-        setTaskTitle(task.title || '');
-        setTaskDesc(task.description || '');
-        setTaskLabels(task.labels || []);
-        setIsActivitiesExpanded(false);
-        if (user && task.subscribers) {
-          setIsSubscribed(task.subscribers.some((s: any) => s.userId === user.id));
-        }
-      } catch (err) {
-        console.error('Failed to load task details:', err);
-        setSelectedTask(null);
-      } finally {
-        setTaskLoading(false);
-      }
-    } else {
-      setSelectedTask(null);
-    }
-  };
+  }, [filteredNotifications, selectedNotifId, handleSelectNotification]);
 
   // Save Task Updates Helper
   const saveTaskUpdates = async (
@@ -650,25 +703,13 @@ export function InboxView({ onUnreadCountChange, onOpenMobileNav }: InboxViewPro
           attachments: [...(prev.attachments || []), attachment],
         };
       });
-    } catch (err: any) {
-      alert(err.message || 'Failed to upload attachment');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to upload attachment';
+      alert(msg);
     } finally {
       setIsUploadingFile(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
-  };
-
-  const formatTimeAgo = (dateStr: string) => {
-    const diff = Date.now() - new Date(dateStr).getTime();
-    const minutes = Math.floor(diff / 60000);
-    if (minutes < 1) return 'now';
-    if (minutes < 60) return `${minutes}min`;
-    const hours = Math.floor(minutes / 60);
-    if (hours < 24) return `${hours}h`;
-    const days = Math.floor(hours / 24);
-    if (days < 30) return `${days}d`;
-    const months = Math.floor(days / 30);
-    return `${months}mo`;
   };
 
   const renderNotificationBadge = (type: string) => {
@@ -1239,62 +1280,6 @@ export function InboxView({ onUnreadCountChange, onOpenMobileNav }: InboxViewPro
                     placeholder="Add description, bullet points, context..."
                     className="min-h-[90px]"
                   />
-
-                  {/* Attachments / Video Player */}
-                  {selectedTask.attachments && selectedTask.attachments.length > 0 && (
-                    <div className="space-y-2 pt-1">
-                      {selectedTask.attachments.map((att) => {
-                        const isVideo =
-                          att.mimeType?.startsWith('video/') || att.url?.match(/\.(mp4|webm|mov)$/i);
-                        const isImage =
-                          att.mimeType?.startsWith('image/') ||
-                          att.url?.match(/\.(png|jpg|jpeg|gif|webp|svg)$/i);
-
-                        if (isVideo) {
-                          return (
-                            <div
-                              key={att.id}
-                              className="rounded-xl overflow-hidden border border-[#202234] bg-black"
-                            >
-                              <video
-                                src={resolveMediaUrl(att.url)}
-                                controls
-                                className="w-full max-h-[360px] object-contain"
-                              />
-                            </div>
-                          );
-                        }
-
-                        if (isImage) {
-                          return (
-                            <div
-                              key={att.id}
-                              className="rounded-xl overflow-hidden border border-[#202234]"
-                            >
-                              <img
-                                src={resolveMediaUrl(att.url)}
-                                alt={att.originalName}
-                                className="w-full max-h-[360px] object-contain bg-black/40"
-                              />
-                            </div>
-                          );
-                        }
-
-                        return (
-                          <a
-                            key={att.id}
-                            href={resolveMediaUrl(att.url)}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#141522] border border-[#232538] text-xs text-zinc-300 hover:text-white"
-                          >
-                            <Paperclip className="w-3.5 h-3.5 text-zinc-400" />
-                            <span>{att.originalName}</span>
-                          </a>
-                        );
-                      })}
-                    </div>
-                  )}
                 </div>
 
                 {/* 4. Sub-issues Section (Interactive with inline creation) */}
@@ -1373,7 +1358,49 @@ export function InboxView({ onUnreadCountChange, onOpenMobileNav }: InboxViewPro
                   )}
                 </div>
 
-                {/* 5. Activity & Comments Section */}
+                {/* 5. Attachments & Uploads Section */}
+                <div className="space-y-3 pt-4 border-t border-[#1a1b26]">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-semibold text-zinc-400 uppercase tracking-wider text-[10px] flex items-center gap-1.5">
+                      <Paperclip className="w-3.5 h-3.5 text-zinc-500" />
+                      <span>
+                        Attachments & Uploads{' '}
+                        {selectedTask.attachments && selectedTask.attachments.length > 0
+                          ? `(${selectedTask.attachments.length})`
+                          : ''}
+                      </span>
+                    </span>
+                  </div>
+
+                  <FileUploader
+                    taskId={selectedTask.id}
+                    attachments={selectedTask.attachments || []}
+                    onUploadSuccess={(att) => {
+                      setSelectedTask((prev) =>
+                        prev
+                          ? {
+                              ...prev,
+                              attachments: [...(prev.attachments || []), att],
+                            }
+                          : null,
+                      );
+                    }}
+                    onDeleteSuccess={(id) => {
+                      setSelectedTask((prev) =>
+                        prev
+                          ? {
+                              ...prev,
+                              attachments: (prev.attachments || []).filter(
+                                (a) => a.id !== id,
+                              ),
+                            }
+                          : null,
+                      );
+                    }}
+                  />
+                </div>
+
+                {/* 6. Activity & Comments Section */}
                 <div className="space-y-4 pt-4 border-t border-[#1a1b26]">
                   <div className="flex items-center justify-between text-xs">
                     <span className="font-semibold text-zinc-200">Activity</span>
