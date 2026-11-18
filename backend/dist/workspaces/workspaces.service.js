@@ -277,7 +277,13 @@ let WorkspacesService = class WorkspacesService {
     }
     async createWorkspaceSection(workspaceId, data) {
         const rawKey = data.key || data.name.toUpperCase().replace(/[^A-Z0-9]/g, '_');
-        const key = rawKey.trim().toUpperCase() || `SECTION_${Date.now()}`;
+        let key = rawKey.trim().toUpperCase() || `SECTION_${Date.now()}`;
+        const existing = await this.prisma.workflowSection.findUnique({
+            where: { workspaceId_key: { workspaceId, key } },
+        });
+        if (existing) {
+            key = `${key}_${Date.now().toString(36).toUpperCase()}`;
+        }
         const lastSection = await this.prisma.workflowSection.findFirst({
             where: { workspaceId },
             orderBy: { order: 'desc' },
@@ -289,10 +295,54 @@ let WorkspacesService = class WorkspacesService {
                 name: data.name.trim(),
                 key,
                 color: data.color || '#8b5cf6',
+                progress: data.progress || '1/2',
                 category: data.category || 'IN_PROGRESS',
                 order,
             },
         });
+    }
+    async updateWorkspaceSection(workspaceId, sectionIdOrKey, data) {
+        const builtInDefaults = {
+            BACKLOG: { name: 'Backlog', color: '#71717a', progress: 'dashed' },
+            TODO: { name: 'Todo', color: '#d4d4d8', progress: '0/4' },
+            IN_PROGRESS: { name: 'In Progress', color: '#eab308', progress: '1/2' },
+            DONE: { name: 'Done', color: '#6366f1', progress: '1/1' },
+            CANCELED: { name: 'Canceled', color: '#71717a', progress: 'canceled' },
+        };
+        let section = await this.prisma.workflowSection.findUnique({
+            where: { id: sectionIdOrKey },
+        });
+        if (!section || section.workspaceId !== workspaceId) {
+            section = await this.prisma.workflowSection.findUnique({
+                where: { workspaceId_key: { workspaceId, key: sectionIdOrKey } },
+            });
+        }
+        if (section && section.workspaceId === workspaceId) {
+            return this.prisma.workflowSection.update({
+                where: { id: section.id },
+                data: {
+                    ...(data.name !== undefined ? { name: data.name.trim() } : {}),
+                    ...(data.color !== undefined ? { color: data.color } : {}),
+                    ...(data.progress !== undefined ? { progress: data.progress } : {}),
+                    ...(data.category !== undefined ? { category: data.category } : {}),
+                },
+            });
+        }
+        if (builtInDefaults[sectionIdOrKey]) {
+            const def = builtInDefaults[sectionIdOrKey];
+            return this.prisma.workflowSection.create({
+                data: {
+                    workspaceId,
+                    key: sectionIdOrKey,
+                    name: data.name?.trim() || def.name,
+                    color: data.color || def.color,
+                    progress: data.progress || def.progress,
+                    category: sectionIdOrKey,
+                    order: 0,
+                },
+            });
+        }
+        throw new NotFoundException('Section not found');
     }
     async deleteWorkspaceSection(workspaceId, sectionId) {
         const section = await this.prisma.workflowSection.findUnique({
