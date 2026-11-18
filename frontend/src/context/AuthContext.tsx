@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, Workspace, Project } from '../types';
-import { api } from '../lib/api';
+import { api, ApiError } from '../lib/api';
 import { SocketProvider } from './SocketContext';
 
 interface AuthContextType {
@@ -69,16 +69,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setProject(activeProj);
       }
     } catch (err) {
-      console.error('Failed to restore session:', err);
+      const isUnauthorized =
+        (err instanceof ApiError && err.status === 401) ||
+        (err instanceof Error && err.message.toLowerCase().includes('unauthorized'));
+      if (!isUnauthorized) {
+        console.warn('Failed to restore session:', err);
+      }
       localStorage.removeItem('linear_token');
+      localStorage.removeItem('linear_active_ws');
+      localStorage.removeItem('linear_active_proj');
       setUser(null);
+      setWorkspaceState(null);
+      setProject(null);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    initAuth();
+    void (async () => {
+      await initAuth();
+    })();
   }, []);
 
   const setWorkspace = async (ws: Workspace) => {

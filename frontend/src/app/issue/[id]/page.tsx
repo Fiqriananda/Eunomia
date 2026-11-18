@@ -3120,18 +3120,19 @@ function IssueDetailContent() {
                   )}
                 >
                   {(() => {
-                    const currentCustomSection = customStatus
+                    const currentSection = customStatus
                       ? sections.find((s) => s.key === customStatus)
-                      : null;
+                      : sections.find((s) => s.key === status);
                     return (
                       <div className="flex items-center gap-2.5">
                         <StatusIcon
-                          status={currentCustomSection ? currentCustomSection.name : status}
-                          color={currentCustomSection?.color}
+                          status={currentSection ? currentSection.key : status}
+                          color={currentSection?.color}
+                          progress={currentSection?.progress}
                         />
                         <span className="text-zinc-200 font-medium group-hover:text-white truncate">
-                          {currentCustomSection
-                            ? currentCustomSection.name
+                          {currentSection
+                            ? currentSection.name
                             : STATUS_CONFIG[status]?.label || status}
                         </span>
                       </div>
@@ -3153,53 +3154,74 @@ function IssueDetailContent() {
                       { s: 'IN_PROGRESS' as TaskStatus, label: 'In Progress', shortcut: '3' },
                       { s: 'DONE' as TaskStatus, label: 'Done', shortcut: '4' },
                       { s: 'CANCELED' as TaskStatus, label: 'Canceled', shortcut: '5' },
-                    ].map((item) => (
-                      <button
-                        key={item.s}
-                        onClick={() => handleStatusChange(item.s, null)}
-                        className={cn(
-                          'w-full flex items-center justify-between px-2.5 py-1.5 text-xs rounded-lg transition-colors',
-                          item.s === status && !customStatus
-                            ? 'bg-[#282a38] text-white font-medium'
-                            : 'text-zinc-300 hover:bg-[#232432] hover:text-white',
-                        )}
-                      >
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          <StatusIcon status={item.s} />
-                          <span className="truncate">{item.label}</span>
-                        </div>
-                        <div className="flex items-center gap-2 shrink-0">
-                          {item.s === status && !customStatus && <Check className="w-3.5 h-3.5 text-white stroke-[2.5]" />}
-                          <span className="text-[11px] font-mono text-zinc-500">{item.shortcut}</span>
-                        </div>
-                      </button>
-                    ))}
+                    ].map((item) => {
+                      const override = sections.find((sec) => sec.key === item.s);
+                      return (
+                        <button
+                          key={item.s}
+                          onClick={() => handleStatusChange(item.s, null)}
+                          className={cn(
+                            'w-full flex items-center justify-between px-2.5 py-1.5 text-xs rounded-lg transition-colors',
+                            item.s === status && !customStatus
+                              ? 'bg-[#282a38] text-white font-medium'
+                              : 'text-zinc-300 hover:bg-[#232432] hover:text-white',
+                          )}
+                        >
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <StatusIcon
+                              status={item.s}
+                              color={override?.color}
+                              progress={override?.progress}
+                            />
+                            <span className="truncate">{override?.name || item.label}</span>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            {item.s === status && !customStatus && <Check className="w-3.5 h-3.5 text-white stroke-[2.5]" />}
+                            <span className="text-[11px] font-mono text-zinc-500">{item.shortcut}</span>
+                          </div>
+                        </button>
+                      );
+                    })}
 
-                    {sections.length > 0 && (
+                    {sections.filter(
+                      (sec) =>
+                        !['BACKLOG', 'TODO', 'IN_PROGRESS', 'DONE', 'CANCELED'].includes(sec.key),
+                    ).length > 0 && (
                       <>
                         <div className="px-2.5 py-1 text-[10px] font-semibold tracking-wider uppercase text-zinc-500 border-t border-[#2b2c3a]/70 mt-1 pt-1.5">
                           Custom Sections
                         </div>
-                        {sections.map((sec) => (
-                          <button
-                            key={sec.id}
-                            onClick={() => handleStatusChange(sec.category || 'IN_PROGRESS', sec.key)}
-                            className={cn(
-                              'w-full flex items-center justify-between px-2.5 py-1.5 text-xs rounded-lg transition-colors',
-                              customStatus === sec.key
-                                ? 'bg-[#282a38] text-white font-medium'
-                                : 'text-zinc-300 hover:bg-[#232432] hover:text-white',
-                            )}
-                          >
-                            <div className="flex items-center gap-2.5 min-w-0">
-                              <StatusIcon status={sec.name} color={sec.color} />
-                              <span className="truncate">{sec.name}</span>
-                            </div>
-                            {customStatus === sec.key && (
-                              <Check className="w-3.5 h-3.5 text-white stroke-[2.5]" />
-                            )}
-                          </button>
-                        ))}
+                        {sections
+                          .filter(
+                            (sec) =>
+                              !['BACKLOG', 'TODO', 'IN_PROGRESS', 'DONE', 'CANCELED'].includes(
+                                sec.key,
+                              ),
+                          )
+                          .map((sec) => (
+                            <button
+                              key={sec.id}
+                              onClick={() => handleStatusChange(sec.category || 'IN_PROGRESS', sec.key)}
+                              className={cn(
+                                'w-full flex items-center justify-between px-2.5 py-1.5 text-xs rounded-lg transition-colors',
+                                customStatus === sec.key
+                                  ? 'bg-[#282a38] text-white font-medium'
+                                  : 'text-zinc-300 hover:bg-[#232432] hover:text-white',
+                              )}
+                            >
+                              <div className="flex items-center gap-2.5 min-w-0">
+                                <StatusIcon
+                                  status={sec.name}
+                                  color={sec.color}
+                                  progress={sec.progress}
+                                />
+                                <span className="truncate">{sec.name}</span>
+                              </div>
+                              {customStatus === sec.key && (
+                                <Check className="w-3.5 h-3.5 text-white stroke-[2.5]" />
+                              )}
+                            </button>
+                          ))}
                       </>
                     )}
                   </div>

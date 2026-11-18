@@ -200,15 +200,39 @@ export class WorkspacesController {
         name: { type: 'string', example: 'In Review' },
         key: { type: 'string', example: 'in_review' },
         color: { type: 'string', example: '#8b5cf6' },
+        progress: { type: 'string', example: '3/4' },
         category: { type: 'string', enum: ['BACKLOG', 'TODO', 'IN_PROGRESS', 'DONE', 'CANCELED'], example: 'IN_PROGRESS' },
       },
     },
   })
   async createWorkspaceSection(
     @Param('id') id: string,
-    @Body() body: { name: string; key?: string; color?: string; category?: TaskStatus },
+    @Body() body: { name: string; key?: string; color?: string; progress?: string; category?: TaskStatus },
   ) {
     return this.workspacesService.createWorkspaceSection(id, body);
+  }
+
+  @Patch(':id/sections/:sectionId')
+  @ApiOperation({ summary: 'Update a workflow section name, color, or progress style' })
+  @ApiParam({ name: 'id', description: 'Workspace ID' })
+  @ApiParam({ name: 'sectionId', description: 'Section ID or built-in status key' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        name: { type: 'string', example: 'Ready for Dev.' },
+        color: { type: 'string', example: '#10b981' },
+        progress: { type: 'string', example: '1/4' },
+        category: { type: 'string', enum: ['BACKLOG', 'TODO', 'IN_PROGRESS', 'DONE', 'CANCELED'] },
+      },
+    },
+  })
+  async updateWorkspaceSection(
+    @Param('id') id: string,
+    @Param('sectionId') sectionId: string,
+    @Body() body: { name?: string; color?: string; progress?: string; category?: TaskStatus },
+  ) {
+    return this.workspacesService.updateWorkspaceSection(id, sectionId, body);
   }
 
   @Delete(':id/sections/:sectionId')

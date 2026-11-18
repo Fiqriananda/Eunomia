@@ -47,7 +47,7 @@ export function resolveMediaUrl(url: string): string {
 /**
  * Syntax colorizer helper for code blocks
  */
-function highlightCode(code: string, lang: string): React.ReactNode[] {
+function highlightCode(code: string): React.ReactNode[] {
   const lines = code.split('\n');
 
   return lines.map((line, lineIdx) => {
@@ -165,7 +165,7 @@ function CodeBlockComponent({ code, lang }: { code: string; lang: string }) {
 
       {/* Code Content with Line Numbers */}
       <div className="p-3.5 overflow-x-auto text-xs leading-relaxed font-mono">
-        <div className="table w-full">{highlightCode(code, lang)}</div>
+        <div className="table w-full">{highlightCode(code)}</div>
       </div>
     </div>
   );
@@ -185,8 +185,6 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
       '',
     );
   }, [content]);
-
-  if (!sanitizedContent) return null;
 
   const { workspace } = useAuth();
 
@@ -221,6 +219,8 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
       'gi',
     );
   }, [memberNames]);
+
+  if (!sanitizedContent) return null;
 
   // Helper to toggle checkbox on a specific line
   const handleToggleCheckbox = (lineIndex: number, currentChecked: boolean) => {
@@ -484,6 +484,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
 
   const lines = sanitizedContent.split('\n');
   const elements: React.ReactNode[] = [];
+  const lastOlNumByDepth: Record<number, number> = {};
 
   let i = 0;
   while (i < lines.length) {
@@ -791,6 +792,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
     }
     // 8. Bullet list: - or * or + or • (with nested indentation support)
     else if (/^(\s*)([-*+•])\s+(.*)/.test(line)) {
+      Object.keys(lastOlNumByDepth).forEach((k) => delete lastOlNumByDepth[+k]);
       const match = line.match(/^(\s*)([-*+•])\s+(.*)/)!;
       const indent = match[1].replace(/\t/g, '  ').length;
       const itemText = match[3];
@@ -811,18 +813,31 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
     else if (/^(\s*)(\d+)\.\s+(.*)/.test(line)) {
       const match = line.match(/^(\s*)(\d+)\.\s+(.*)/)!;
       const indent = match[1].replace(/\t/g, '  ').length;
+      const depthKey = Math.floor(indent / 2) * 2;
+      const explicitNum = parseInt(match[2], 10);
+      let itemNum = explicitNum;
+      if (explicitNum === 1 && (lastOlNumByDepth[depthKey] || 0) > 0) {
+        itemNum = (lastOlNumByDepth[depthKey] || 0) + 1;
+      }
+      lastOlNumByDepth[depthKey] = itemNum;
       const itemText = match[3];
       const isNested = indent >= 2;
       elements.push(
-        <li
-          key={`oli-${i}`}
+        <ol
+          key={`oli-wrap-${i}`}
+          start={itemNum}
           className={cn(
-            'text-zinc-300 my-0.5 text-xs leading-relaxed',
+            'my-0.5',
             isNested ? 'ml-10 list-[lower-alpha]' : 'ml-5 list-decimal',
           )}
         >
-          {renderInline(itemText, `oli-${i}`)}
-        </li>,
+          <li
+            value={itemNum}
+            className="text-zinc-300 text-xs leading-relaxed"
+          >
+            {renderInline(itemText, `oli-${i}`)}
+          </li>
+        </ol>,
       );
     }
     // 10. Empty line / Paragraph
@@ -830,6 +845,9 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
       if (line.trim() === '') {
         elements.push(<div key={`empty-${i}`} className="h-2" />);
       } else {
+        if (!line.trim().startsWith('![')) {
+          Object.keys(lastOlNumByDepth).forEach((k) => delete lastOlNumByDepth[+k]);
+        }
         elements.push(
           <p
             key={`p-${i}`}

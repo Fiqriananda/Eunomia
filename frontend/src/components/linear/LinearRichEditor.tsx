@@ -43,7 +43,7 @@ function markdownToHtml(md: string, membersList: WorkspaceMember[] = []): string
   );
 
   // 1. Normalize multi-line image tags where ] and ( are separated by newlines
-  let normalized = cleanInput.replace(
+  const normalized = cleanInput.replace(
     /!\[([\s\S]*?)\]\s*\(([\s\S]*?)\)/g,
     (_, alt, url) => {
       const cleanAlt = alt.trim().replace(/\n+/g, ' ');
@@ -63,6 +63,7 @@ function markdownToHtml(md: string, membersList: WorkspaceMember[] = []): string
     depth: number;
   }
   const listStack: ListLevel[] = [];
+  const lastOlNumByDepth: Record<number, number> = {};
 
   const closeAllLists = () => {
     while (listStack.length > 0) {
@@ -71,14 +72,22 @@ function markdownToHtml(md: string, membersList: WorkspaceMember[] = []): string
     }
   };
 
-  const adjustListLevel = (targetType: 'ul' | 'ol', indentSpaces: number) => {
+  const adjustListLevel = (
+    targetType: 'ul' | 'ol',
+    indentSpaces: number,
+    startNum?: number,
+  ) => {
     const normalizedDepth = Math.floor(indentSpaces / 2) * 2;
     if (listStack.length === 0) {
       listStack.push({ type: targetType, depth: normalizedDepth });
+      const startAttr =
+        targetType === 'ol' && startNum && startNum > 1
+          ? ` start="${startNum}"`
+          : '';
       htmlLines.push(
         targetType === 'ul'
           ? '<ul class="list-disc list-inside space-y-1 my-1.5">'
-          : '<ol class="list-decimal list-inside space-y-1 my-1.5">',
+          : `<ol${startAttr} class="list-decimal list-inside space-y-1 my-1.5">`,
       );
       return;
     }
@@ -92,27 +101,41 @@ function markdownToHtml(md: string, membersList: WorkspaceMember[] = []): string
       listStack.push({ type: targetType, depth: normalizedDepth });
       const level = listStack.length;
       const bulletClass = level === 2 ? 'list-[circle]' : 'list-[square]';
+      const startAttr =
+        targetType === 'ol' && startNum && startNum > 1
+          ? ` start="${startNum}"`
+          : '';
       htmlLines.push(
         targetType === 'ul'
           ? `<ul class="${bulletClass} list-inside ml-5 space-y-1 my-0.5">`
-          : `<ol class="list-decimal list-inside ml-5 space-y-1 my-0.5">`,
+          : `<ol${startAttr} class="list-decimal list-inside ml-5 space-y-1 my-0.5">`,
       );
       return;
     }
 
-    while (listStack.length > 0 && listStack[listStack.length - 1].depth > normalizedDepth) {
+    while (
+      listStack.length > 0 &&
+      listStack[listStack.length - 1].depth > normalizedDepth
+    ) {
       const item = listStack.pop()!;
       htmlLines.push(item.type === 'ul' ? '</ul>' : '</ol>');
     }
 
-    if (listStack.length > 0 && listStack[listStack.length - 1].type !== targetType) {
+    if (
+      listStack.length > 0 &&
+      listStack[listStack.length - 1].type !== targetType
+    ) {
       const item = listStack.pop()!;
       htmlLines.push(item.type === 'ul' ? '</ul>' : '</ol>');
       listStack.push({ type: targetType, depth: normalizedDepth });
+      const startAttr =
+        targetType === 'ol' && startNum && startNum > 1
+          ? ` start="${startNum}"`
+          : '';
       htmlLines.push(
         targetType === 'ul'
           ? '<ul class="list-disc list-inside space-y-1 my-1.5">'
-          : '<ol class="list-decimal list-inside space-y-1 my-1.5">',
+          : `<ol${startAttr} class="list-decimal list-inside space-y-1 my-1.5">`,
       );
     }
   };
@@ -255,6 +278,7 @@ function markdownToHtml(md: string, membersList: WorkspaceMember[] = []): string
     // Bullet lists: - or * or + or •
     const ulMatch = rawLine.match(/^(\s*)([-*+•])\s+(.*)$/);
     if (ulMatch) {
+      Object.keys(lastOlNumByDepth).forEach((k) => delete lastOlNumByDepth[+k]);
       const indent = ulMatch[1].replace(/\t/g, '  ').length;
       adjustListLevel('ul', indent);
       htmlLines.push(`<li>${formatInline(ulMatch[3], membersList)}</li>`);
@@ -265,8 +289,15 @@ function markdownToHtml(md: string, membersList: WorkspaceMember[] = []): string
     const olMatch = rawLine.match(/^(\s*)(\d+)\.\s+(.*)$/);
     if (olMatch) {
       const indent = olMatch[1].replace(/\t/g, '  ').length;
-      adjustListLevel('ol', indent);
-      htmlLines.push(`<li>${formatInline(olMatch[3], membersList)}</li>`);
+      const normalizedDepth = Math.floor(indent / 2) * 2;
+      const explicitNum = parseInt(olMatch[2], 10);
+      let itemNum = explicitNum;
+      if (explicitNum === 1 && (lastOlNumByDepth[normalizedDepth] || 0) > 0) {
+        itemNum = (lastOlNumByDepth[normalizedDepth] || 0) + 1;
+      }
+      lastOlNumByDepth[normalizedDepth] = itemNum;
+      adjustListLevel('ol', indent, itemNum);
+      htmlLines.push(`<li value="${itemNum}">${formatInline(olMatch[3], membersList)}</li>`);
       continue;
     }
 
@@ -310,6 +341,9 @@ function markdownToHtml(md: string, membersList: WorkspaceMember[] = []): string
       htmlLines.push('<p><br></p>');
     } else {
       closeAllLists();
+      if (!trimmed.startsWith('![')) {
+        Object.keys(lastOlNumByDepth).forEach((k) => delete lastOlNumByDepth[+k]);
+      }
       htmlLines.push(
         `<p class="my-1 text-sm leading-relaxed text-zinc-200">${formatInline(
           trimmed,
@@ -511,6 +545,35 @@ function htmlToMarkdown(node: Node, listDepth = 0): string {
   if (tag === 'ul' || tag === 'ol') {
     const isOrdered = tag === 'ol';
     let childIndex = 1;
+    if (isOrdered) {
+      if (el.hasAttribute('start')) {
+        childIndex = parseInt(el.getAttribute('start') || '1', 10);
+      } else {
+        // Look backward for a preceding <ol> across image cards or empty paragraphs
+        let prev = el.previousElementSibling;
+        while (
+          prev &&
+          (prev.tagName.toLowerCase() === 'p' ||
+            prev.classList.contains('editor-image-card'))
+        ) {
+          if (prev.previousElementSibling?.tagName.toLowerCase() === 'ol') {
+            prev = prev.previousElementSibling;
+            break;
+          }
+          prev = prev.previousElementSibling;
+        }
+        if (prev && prev.tagName.toLowerCase() === 'ol') {
+          const prevLis = prev.querySelectorAll('li');
+          if (prevLis.length > 0) {
+            const lastLi = prevLis[prevLis.length - 1];
+            const lastVal = lastLi.hasAttribute('value')
+              ? parseInt(lastLi.getAttribute('value') || '1', 10)
+              : prevLis.length;
+            childIndex = lastVal + 1;
+          }
+        }
+      }
+    }
     const listItems: string[] = [];
 
     for (const child of Array.from(el.childNodes)) {
@@ -545,7 +608,11 @@ function htmlToMarkdown(node: Node, listDepth = 0): string {
             .replace(/^[-*+•]\s+/, '')
             .replace(/^\d+\.\s+/, '');
 
-          const bullet = isOrdered ? `${childIndex++}. ` : '- ';
+          const liVal = childEl.hasAttribute('value')
+            ? parseInt(childEl.getAttribute('value') || '1', 10)
+            : childIndex;
+          const bullet = isOrdered ? `${liVal}. ` : '- ';
+          childIndex = liVal + 1;
           let itemText = `${indentSpaces}${bullet}${cleanInline}\n`;
 
           for (const nestedList of nestedListNodes) {
@@ -555,6 +622,8 @@ function htmlToMarkdown(node: Node, listDepth = 0): string {
           listItems.push(itemText);
         } else if (childTag === 'ul' || childTag === 'ol') {
           listItems.push(htmlToMarkdown(childEl, listDepth + 1));
+        } else if (childEl.classList.contains('editor-image-card')) {
+          listItems.push(`\n${htmlToMarkdown(childEl, listDepth).trim()}\n\n`);
         } else {
           const text = htmlToMarkdown(child, listDepth).trim();
           if (text) {
@@ -575,7 +644,13 @@ function htmlToMarkdown(node: Node, listDepth = 0): string {
     const childrenMd = Array.from(el.childNodes).map((n) => htmlToMarkdown(n, listDepth)).join('');
     const cleanContent = childrenMd.trim().replace(/^[-*+•]\s+/, '');
     if (parentTag === 'ol') {
-      const index = Array.from(el.parentElement?.children || []).indexOf(el) + 1;
+      let index = Array.from(el.parentElement?.children || []).indexOf(el) + 1;
+      if (el.hasAttribute('value')) {
+        index = parseInt(el.getAttribute('value') || '1', 10);
+      } else if (el.parentElement?.hasAttribute('start')) {
+        const start = parseInt(el.parentElement.getAttribute('start') || '1', 10);
+        index = start + Array.from(el.parentElement.children).indexOf(el);
+      }
       const textWithoutNum = cleanContent.replace(/^\d+\.\s+/, '');
       return `${prefix}${index}. ${textWithoutNum}\n`;
     }
@@ -935,11 +1010,22 @@ export function LinearRichEditor({
             document.execCommand('insertUnorderedList', false);
             syncMarkdown();
             return;
-          } else if (textBefore === '1.' && offset === 2) {
+          } else if (/^\d+\.$/.test(textBefore)) {
             e.preventDefault();
+            const startNum = parseInt(textBefore, 10);
             const remainingText = text.slice(offset);
             node.textContent = remainingText;
             document.execCommand('insertOrderedList', false);
+            const selAfter = window.getSelection();
+            const anchor = selAfter?.anchorNode;
+            const li = anchor instanceof HTMLElement ? anchor.closest('li') : anchor?.parentElement?.closest('li');
+            if (li) {
+              li.setAttribute('value', String(startNum));
+              const ol = li.closest('ol');
+              if (ol && startNum > 1) {
+                ol.setAttribute('start', String(startNum));
+              }
+            }
             syncMarkdown();
             return;
           }

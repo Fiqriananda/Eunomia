@@ -361,6 +361,7 @@ model WorkflowSection {
   name        String
   key         String
   color       String     @default("#8b5cf6")
+  progress    String?
   order       Float      @default(1000)
   category    TaskStatus @default(IN_PROGRESS)
   workspaceId String

@@ -22,7 +22,7 @@ import { StakeholderRequestsView } from '../components/linear/StakeholderRequest
 import { CreateIntakeModal } from '../components/linear/CreateIntakeModal';
 import { ProjectsView } from '../components/linear/ProjectsView';
 import { CreateProjectModal } from '../components/linear/CreateProjectModal';
-import { Task, TaskPriority, TaskStatus, WorkflowSection, Cycle, Division, Project } from '../types';
+import { Task, TaskPriority, TaskStatus, WorkflowSection, SectionProgress, Cycle, Division, Project } from '../types';
 import { api } from '../lib/api';
 import { Loader2, Plus, SlidersHorizontal, Filter, X, Sparkles, UserPlus, RotateCw, Trash2, Layers, Inbox, Users, Menu, GitPullRequest } from 'lucide-react';
 import { Button } from '../components/ui/button';
@@ -350,15 +350,21 @@ function Dashboard() {
     }
   };
 
-  // Section Creation & Deletion Handlers
+  // Section Creation, Update & Deletion Handlers
   const handleCreateSection = async (
     name: string,
     color?: string,
     category?: TaskStatus,
     positionPlacement?: string,
+    progress?: SectionProgress,
   ) => {
     if (!workspace) return;
-    const newSec = await api.workspaces.createSection(workspace.id, { name, color, category });
+    const newSec = await api.workspaces.createSection(workspace.id, {
+      name,
+      color,
+      category,
+      progress,
+    });
     setSections((prev) => [...prev, newSec]);
 
     // Calculate updated column order
@@ -395,6 +401,32 @@ function Dashboard() {
     }
 
     handleUpdateColumnOrder(updatedCols);
+  };
+
+  const handleUpdateSection = async (
+    sectionIdOrKey: string,
+    updates: {
+      name?: string;
+      color?: string;
+      progress?: SectionProgress;
+      category?: TaskStatus;
+    },
+  ) => {
+    if (!workspace) return;
+    const updated = await api.workspaces.updateSection(
+      workspace.id,
+      sectionIdOrKey,
+      updates,
+    );
+    setSections((prev) => {
+      const exists = prev.some((s) => s.id === updated.id || s.key === updated.key);
+      if (exists) {
+        return prev.map((s) =>
+          s.id === updated.id || s.key === updated.key ? updated : s,
+        );
+      }
+      return [...prev, updated];
+    });
   };
 
   const handleDeleteSection = async (sectionId: string) => {
@@ -906,6 +938,7 @@ function Dashboard() {
                   columnOrder={columnOrder}
                   onUpdateColumnOrder={handleUpdateColumnOrder}
                   onCreateSection={handleCreateSection}
+                  onUpdateSection={handleUpdateSection}
                   onDeleteSection={handleDeleteSection}
                   isDragDisabled={workspace?.role === 'STAKEHOLDER'}
                 />

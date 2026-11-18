@@ -220,19 +220,24 @@ export function CreateTaskModal({
                   className="w-full bg-[#1b1d2c] border border-border text-foreground rounded px-2 py-1.5 text-xs focus:ring-1 focus:ring-primary focus:outline-none cursor-pointer"
                 >
                   <optgroup label="Standard Statuses">
-                    {STATUSES.map((s) => (
-                      <option key={s} value={s}>
-                        {STATUS_CONFIG[s].label}
-                      </option>
-                    ))}
-                  </optgroup>
-                  {sections.length > 0 && (
-                    <optgroup label="Custom Sections">
-                      {sections.map((sec) => (
-                        <option key={sec.id} value={`custom:${sec.key}`}>
-                          {sec.name}
+                    {STATUSES.map((s) => {
+                      const override = sections.find((sec) => sec.key === s);
+                      return (
+                        <option key={s} value={s}>
+                          {override?.name || STATUS_CONFIG[s].label}
                         </option>
-                      ))}
+                      );
+                    })}
+                  </optgroup>
+                  {sections.filter((sec) => !STATUSES.includes(sec.key as TaskStatus)).length > 0 && (
+                    <optgroup label="Custom Sections">
+                      {sections
+                        .filter((sec) => !STATUSES.includes(sec.key as TaskStatus))
+                        .map((sec) => (
+                          <option key={sec.id} value={`custom:${sec.key}`}>
+                            {sec.name}
+                          </option>
+                        ))}
                     </optgroup>
                   )}
                 </select>

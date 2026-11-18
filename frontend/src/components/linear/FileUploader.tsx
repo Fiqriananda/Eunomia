@@ -1,11 +1,12 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
-import { Upload, X, FileText, Image as ImageIcon, Check, Loader2, Download, Paperclip } from 'lucide-react';
+import { Upload, X, FileText, Loader2, Download, Paperclip } from 'lucide-react';
 import { Attachment } from '../../types';
 import { api } from '../../lib/api';
 import { Button } from '../ui/button';
 import { cn } from '../../lib/utils';
+import { resolveMediaUrl } from '../ui/MarkdownRenderer';
 
 interface FileUploaderProps {
   taskId?: string;
@@ -33,9 +34,10 @@ export function FileUploader({
     try {
       const res = await api.uploads.upload(file, taskId);
       if (onUploadSuccess) onUploadSuccess(res);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      setUploadError(err.message || 'Failed to upload file');
+      const msg = err instanceof Error ? err.message : 'Failed to upload file';
+      setUploadError(msg);
     } finally {
       setIsUploading(false);
     }
@@ -77,7 +79,7 @@ export function FileUploader({
     try {
       await api.uploads.delete(id);
       if (onDeleteSuccess) onDeleteSuccess(id);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
     }
   };
@@ -143,7 +145,9 @@ export function FileUploader({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {attachments.map((att) => {
-              const isImg = att.mimeType.startsWith('image/');
+              const isImg =
+                att.mimeType?.startsWith('image/') ||
+                att.url?.match(/\.(png|jpg|jpeg|gif|webp|svg)$/i);
 
               return (
                 <div
@@ -153,9 +157,13 @@ export function FileUploader({
                   {isImg ? (
                     <div className="w-9 h-9 rounded bg-black/40 overflow-hidden shrink-0 border border-border/50">
                       <img
-                        src={att.url}
-                        alt={att.originalName}
-                        className="w-full h-full object-cover"
+                        src={resolveMediaUrl(att.url)}
+                        alt={att.originalName || 'Attachment'}
+                        className="w-full h-full object-cover cursor-pointer hover:opacity-80 transition-opacity"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          window.open(resolveMediaUrl(att.url), '_blank');
+                        }}
                         onError={(e) => {
                           (e.target as HTMLElement).style.display = 'none';
                         }}
@@ -178,7 +186,7 @@ export function FileUploader({
 
                   <div className="absolute right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     <a
-                      href={att.url}
+                      href={resolveMediaUrl(att.url)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="p-1 rounded hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors"

@@ -69,6 +69,9 @@ let WorkspacesController = class WorkspacesController {
     async createWorkspaceSection(id, body) {
         return this.workspacesService.createWorkspaceSection(id, body);
     }
+    async updateWorkspaceSection(id, sectionId, body) {
+        return this.workspacesService.updateWorkspaceSection(id, sectionId, body);
+    }
     async deleteWorkspaceSection(id, sectionId) {
         return this.workspacesService.deleteWorkspaceSection(id, sectionId);
     }
@@ -286,6 +289,7 @@ __decorate([
                 name: { type: 'string', example: 'In Review' },
                 key: { type: 'string', example: 'in_review' },
                 color: { type: 'string', example: '#8b5cf6' },
+                progress: { type: 'string', example: '3/4' },
                 category: { type: 'string', enum: ['BACKLOG', 'TODO', 'IN_PROGRESS', 'DONE', 'CANCELED'], example: 'IN_PROGRESS' },
             },
         },
@@ -296,6 +300,29 @@ __decorate([
     __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", Promise)
 ], WorkspacesController.prototype, "createWorkspaceSection", null);
+__decorate([
+    Patch(':id/sections/:sectionId'),
+    ApiOperation({ summary: 'Update a workflow section name, color, or progress style' }),
+    ApiParam({ name: 'id', description: 'Workspace ID' }),
+    ApiParam({ name: 'sectionId', description: 'Section ID or built-in status key' }),
+    ApiBody({
+        schema: {
+            type: 'object',
+            properties: {
+                name: { type: 'string', example: 'Ready for Dev.' },
+                color: { type: 'string', example: '#10b981' },
+                progress: { type: 'string', example: '1/4' },
+                category: { type: 'string', enum: ['BACKLOG', 'TODO', 'IN_PROGRESS', 'DONE', 'CANCELED'] },
+            },
+        },
+    }),
+    __param(0, Param('id')),
+    __param(1, Param('sectionId')),
+    __param(2, Body()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, Object]),
+    __metadata("design:returntype", Promise)
+], WorkspacesController.prototype, "updateWorkspaceSection", null);
 __decorate([
     Delete(':id/sections/:sectionId'),
     ApiOperation({ summary: 'Delete a custom workflow section' }),

@@ -365,6 +365,7 @@ export declare class WorkspacesController {
         key: string;
         color: string;
         workspaceId: string;
+        progress: string | null;
         order: number;
         category: import("@prisma/client").$Enums.TaskStatus;
     }[]>;
@@ -372,6 +373,7 @@ export declare class WorkspacesController {
         name: string;
         key?: string;
         color?: string;
+        progress?: string;
         category?: TaskStatus;
     }): Promise<{
         id: string;
@@ -381,6 +383,24 @@ export declare class WorkspacesController {
         key: string;
         color: string;
         workspaceId: string;
+        progress: string | null;
+        order: number;
+        category: import("@prisma/client").$Enums.TaskStatus;
+    }>;
+    updateWorkspaceSection(id: string, sectionId: string, body: {
+        name?: string;
+        color?: string;
+        progress?: string;
+        category?: TaskStatus;
+    }): Promise<{
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        name: string;
+        key: string;
+        color: string;
+        workspaceId: string;
+        progress: string | null;
         order: number;
         category: import("@prisma/client").$Enums.TaskStatus;
     }>;
@@ -392,6 +412,7 @@ export declare class WorkspacesController {
         key: string;
         color: string;
         workspaceId: string;
+        progress: string | null;
         order: number;
         category: import("@prisma/client").$Enums.TaskStatus;
     }>;
