@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Cycle, Task, Workspace } from '../../types';
+import { Cycle, Task, WorkflowSection, Workspace } from '../../types';
 import { api } from '../../lib/api';
 import { PriorityIcon } from './PriorityIcon';
 import { StatusIcon } from './StatusIcon';
@@ -24,11 +24,51 @@ import { Button } from '../ui/button';
 
 interface CyclesViewProps {
   workspace: Workspace;
+  sections?: WorkflowSection[];
   onTaskClick: (task: Task) => void;
   onOpenCreateTask?: (cycleId?: string) => void;
 }
 
-export function CyclesView({ workspace, onTaskClick, onOpenCreateTask }: CyclesViewProps) {
+function resolveCycleMetrics(
+  cycle: Cycle | null | undefined,
+  tasks: Task[],
+  useTasksFallback: boolean,
+) {
+  if (useTasksFallback) {
+    const totalTasks = tasks.length;
+    const completedTasks = tasks.filter((t) => t.status === 'DONE').length;
+    const totalPoints = tasks.reduce((sum, t) => sum + (t.estimate ?? 1), 0);
+    const completedPoints = tasks
+      .filter((t) => t.status === 'DONE')
+      .reduce((sum, t) => sum + (t.estimate ?? 1), 0);
+    return {
+      totalTasks,
+      completedTasks,
+      remainingTasks: totalTasks - completedTasks,
+      totalPoints,
+      completedPoints,
+      remainingPoints: totalPoints - completedPoints,
+      velocityPercentage: totalPoints > 0 ? Math.round((completedPoints / totalPoints) * 100) : 0,
+    };
+  }
+  if (cycle?.metrics) return cycle.metrics;
+  if (cycle?.stats) {
+    const totalTasks = cycle.stats.totalTasks ?? 0;
+    const completedTasks = cycle.stats.completedTasks ?? 0;
+    return {
+      totalTasks,
+      completedTasks,
+      remainingTasks: cycle.stats.remainingTasks ?? Math.max(0, totalTasks - completedTasks),
+      totalPoints: cycle.stats.totalPoints ?? 0,
+      completedPoints: cycle.stats.completedPoints ?? 0,
+      remainingPoints: cycle.stats.remainingPoints ?? 0,
+      velocityPercentage: cycle.stats.velocityPercentage ?? cycle.stats.completionPercentage ?? 0,
+    };
+  }
+  return null;
+}
+
+export function CyclesView({ workspace, sections = [], onTaskClick, onOpenCreateTask }: CyclesViewProps) {
   const [cycles, setCycles] = useState<Cycle[]>([]);
   const [activeCycle, setActiveCycle] = useState<Cycle | null>(null);
   const [selectedCycleId, setSelectedCycleId] = useState<string | null>(null);
@@ -144,7 +184,11 @@ export function CyclesView({ workspace, onTaskClick, onOpenCreateTask }: CyclesV
   };
 
   const displayedCycle = cycles.find((c) => c.id === selectedCycleId) || activeCycle;
-  const metrics = displayedCycle?.metrics;
+  const metrics = resolveCycleMetrics(
+    displayedCycle,
+    cycleTasks,
+    !tasksLoading && Boolean(displayedCycle?.id && displayedCycle.id === selectedCycleId),
+  );
 
   const totalPoints = metrics?.totalPoints || 0;
   const completedPoints = metrics?.completedPoints || 0;
@@ -242,7 +286,11 @@ export function CyclesView({ workspace, onTaskClick, onOpenCreateTask }: CyclesV
               />
               <span className="font-semibold">{c.name}</span>
               <span className="text-[10px] text-zinc-500">
-                ({c._count?.tasks ?? c.metrics?.totalTasks ?? 0})
+                (
+                {c.id === selectedCycleId && !tasksLoading
+                  ? cycleTasks.length
+                  : c.metrics?.totalTasks ?? c.stats?.totalTasks ?? c._count?.tasks ?? 0}
+                )
               </span>
             </button>
           );
@@ -429,7 +477,11 @@ export function CyclesView({ workspace, onTaskClick, onOpenCreateTask }: CyclesV
                   >
                     <div className="flex items-center gap-3 min-w-0">
                       <PriorityIcon priority={t.priority} />
-                      <StatusIcon status={t.status} />
+                      <StatusIcon
+                        status={t.status}
+                        customStatus={t.customStatus}
+                        sections={sections}
+                      />
                       <span className="text-xs font-mono text-zinc-500 shrink-0">
                         {t.identifier}
                       </span>

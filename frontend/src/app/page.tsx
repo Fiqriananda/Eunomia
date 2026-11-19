@@ -83,6 +83,7 @@ function Dashboard() {
   // Group default for new task modal
   const [createDefaultPriority, setCreateDefaultPriority] = useState<TaskPriority>('NO_PRIORITY');
   const [createDefaultStatus, setCreateDefaultStatus] = useState<TaskStatus>('TODO');
+  const [createDefaultCycleId, setCreateDefaultCycleId] = useState<string | null>(null);
 
   const fetchTasks = useCallback(async () => {
     if (!workspace) return;
@@ -653,6 +654,7 @@ function Dashboard() {
               } else {
                 setCreateDefaultPriority('NO_PRIORITY');
                 setCreateDefaultStatus('TODO');
+                setCreateDefaultCycleId(activeCycle?.id || null);
                 setIsCreateOpen(true);
               }
             }}
@@ -667,22 +669,26 @@ function Dashboard() {
 
         {sidebarTab === 'inbox' ? (
           <InboxView
+            sections={sections}
             onUnreadCountChange={setUnreadInboxCount}
             onOpenMobileNav={() => setIsMobileNavOpen(true)}
           />
         ) : sidebarTab === 'cycles' && workspace && workspace.cyclesEnabled !== false ? (
           <CyclesView
             workspace={workspace}
+            sections={sections}
             onTaskClick={handleTaskClick}
             onOpenCreateTask={(cycleId) => {
               setCreateDefaultPriority('NO_PRIORITY');
               setCreateDefaultStatus('TODO');
+              setCreateDefaultCycleId(cycleId || activeCycle?.id || null);
               setIsCreateOpen(true);
             }}
           />
         ) : sidebarTab === 'trash' && workspace ? (
           <TrashView
             workspace={workspace}
+            sections={sections}
             onTaskClick={handleTaskClick}
             onTaskRestored={(task) => {
               setTasks((prev) => {
@@ -725,6 +731,7 @@ function Dashboard() {
             projects={projects}
             tasks={tasks}
             workspace={workspace}
+            sections={sections}
             selectedProject={project}
             onSelectProject={(p) => setProject(p)}
             onOpenCreateProject={() => {
@@ -946,8 +953,9 @@ function Dashboard() {
                 <ListView
                   tasks={filteredTasks}
                   groupBy="priority"
+                  sections={sections}
                   onTaskClick={handleTaskClick}
-                  onStatusChange={(id, status) => handleTaskUpdate(id, { status })}
+                  onStatusChange={(id, status) => handleTaskUpdate(id, { status, customStatus: null })}
                   onPriorityChange={(id, priority) => handleTaskUpdate(id, { priority })}
                 />
               )}
@@ -968,7 +976,7 @@ function Dashboard() {
         members={workspace?.members}
         sections={sections}
         cycles={cycles}
-        defaultCycleId={activeCycle?.id || null}
+        defaultCycleId={createDefaultCycleId ?? activeCycle?.id ?? null}
       />
 
       {/* Quick Command Menu */}
@@ -976,6 +984,7 @@ function Dashboard() {
         isOpen={isCommandOpen}
         onClose={() => setIsCommandOpen(false)}
         tasks={tasks}
+        sections={sections}
         onSelectTask={handleTaskClick}
         onOpenCreateTask={() => setIsCreateOpen(true)}
         onOpenCreateProject={() => {

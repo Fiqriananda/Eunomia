@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Task, TaskRelationType, WorkspaceMember } from '../../types';
+import { Task, TaskRelationType, WorkflowSection, WorkspaceMember } from '../../types';
 import { StatusIcon } from './StatusIcon';
 import {
   ChevronDown,
@@ -56,6 +56,7 @@ const RELATION_TYPE_CONFIG: Record<
 interface RelatedIssuesSectionProps {
   task: Task;
   allTasks?: Task[];
+  sections?: WorkflowSection[];
   onTaskChange: (updatedTask: Task) => void;
   onNavigate?: (task: Task) => void;
 }
@@ -63,6 +64,7 @@ interface RelatedIssuesSectionProps {
 export function RelatedIssuesSection({
   task,
   allTasks = [],
+  sections = [],
   onTaskChange,
   onNavigate,
 }: RelatedIssuesSectionProps) {
@@ -216,7 +218,11 @@ export function RelatedIssuesSection({
                     {displayLabel}
                   </span>
 
-                  <StatusIcon status={relatedTask.status} />
+                  <StatusIcon
+                    status={relatedTask.status}
+                    customStatus={relatedTask.customStatus}
+                    sections={sections}
+                  />
 
                   <span className="text-xs font-mono text-zinc-400 shrink-0">
                     {relatedTask.identifier}
@@ -333,7 +339,11 @@ export function RelatedIssuesSection({
                       className="w-full flex items-center justify-between px-2.5 py-1.5 rounded hover:bg-[#1f202d] text-left transition-colors text-xs group"
                     >
                       <div className="flex items-center gap-2 min-w-0 flex-1 pr-2">
-                        <StatusIcon status={t.status} />
+                        <StatusIcon
+                          status={t.status}
+                          customStatus={t.customStatus}
+                          sections={sections}
+                        />
                         <span className="font-mono text-[11px] text-zinc-400">{t.identifier}</span>
                         <span className="text-zinc-200 group-hover:text-white truncate">
                           {t.title}

@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Task, TaskPriority, TaskStatus, WorkspaceMember } from '../../types';
+import { Task, TaskPriority, TaskStatus, WorkflowSection, WorkspaceMember } from '../../types';
 import { StatusIcon } from './StatusIcon';
 import { PriorityIcon } from './PriorityIcon';
 import {
@@ -52,6 +52,7 @@ interface SubIssuesSectionProps {
   subTasks: Task[];
   members: WorkspaceMember[];
   allTasks?: Task[];
+  sections?: WorkflowSection[];
   onSubTasksChange: (updatedSubTasks: Task[]) => void;
   onNavigate?: (task: Task) => void;
 }
@@ -61,6 +62,7 @@ export function SubIssuesSection({
   subTasks,
   members,
   allTasks = [],
+  sections = [],
   onSubTasksChange,
   onNavigate,
 }: SubIssuesSectionProps) {
@@ -152,7 +154,10 @@ export function SubIssuesSection({
   ) => {
     e.stopPropagation();
     try {
-      const updated = await api.tasks.update(subTask.id, { status: nextStatus });
+      const updated = await api.tasks.update(subTask.id, {
+        status: nextStatus,
+        customStatus: null,
+      });
       onSubTasksChange(subTasks.map((s) => (s.id === subTask.id ? { ...s, ...updated } : s)));
     } catch (err) {
       console.error('Failed to update sub-issue status:', err);
@@ -323,7 +328,11 @@ export function SubIssuesSection({
                     className="shrink-0 hover:scale-110 transition-transform cursor-pointer"
                     title={`Status: ${subTask.status}. Click to change`}
                   >
-                    <StatusIcon status={subTask.status} color={subTask.project?.color || undefined} />
+                    <StatusIcon
+                      status={subTask.status}
+                      customStatus={subTask.customStatus}
+                      sections={sections}
+                    />
                   </div>
 
                   <span className="text-xs font-mono text-zinc-500 shrink-0">
@@ -539,7 +548,11 @@ export function SubIssuesSection({
                       className="w-full flex items-center justify-between px-2.5 py-1.5 rounded hover:bg-[#1f202d] text-left transition-colors text-xs group"
                     >
                       <div className="flex items-center gap-2 min-w-0 flex-1 pr-2">
-                        <StatusIcon status={t.status} />
+                        <StatusIcon
+                          status={t.status}
+                          customStatus={t.customStatus}
+                          sections={sections}
+                        />
                         <span className="font-mono text-[11px] text-zinc-400">{t.identifier}</span>
                         <span className="text-zinc-200 group-hover:text-white truncate">
                           {t.title}

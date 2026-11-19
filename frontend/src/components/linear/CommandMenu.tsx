@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Command } from 'cmdk';
-import { Task } from '../../types';
+import { Task, WorkflowSection } from '../../types';
 import { Search, Plus, LayoutGrid, List, SlidersHorizontal, LogOut, CheckCircle2, FolderKanban } from 'lucide-react';
 import { PriorityIcon } from './PriorityIcon';
 import { StatusIcon } from './StatusIcon';
@@ -12,6 +12,7 @@ interface CommandMenuProps {
   isOpen: boolean;
   onClose: () => void;
   tasks: Task[];
+  sections?: WorkflowSection[];
   onSelectTask: (task: Task) => void;
   onOpenCreateTask: () => void;
   onOpenCreateProject?: () => void;
@@ -23,6 +24,7 @@ export function CommandMenu({
   isOpen,
   onClose,
   tasks,
+  sections = [],
   onSelectTask,
   onOpenCreateTask,
   onOpenCreateProject,
@@ -152,7 +154,11 @@ export function CommandMenu({
                       className="flex items-center justify-between px-2.5 py-2 rounded-md hover:bg-secondary cursor-pointer text-foreground aria-selected:bg-secondary"
                     >
                       <div className="flex items-center gap-2 min-w-0">
-                        <StatusIcon status={t.status} />
+                        <StatusIcon
+                          status={t.status}
+                          customStatus={t.customStatus}
+                          sections={sections}
+                        />
                         <span className="font-mono text-muted-foreground text-[11px] shrink-0">
                           {t.identifier}
                         </span>

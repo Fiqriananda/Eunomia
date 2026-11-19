@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Task, Workspace } from '../../types';
+import { Task, WorkflowSection, Workspace } from '../../types';
 import { api } from '../../lib/api';
 import { PriorityIcon } from './PriorityIcon';
 import { StatusIcon } from './StatusIcon';
@@ -19,11 +19,12 @@ import { Button } from '../ui/button';
 
 interface TrashViewProps {
   workspace: Workspace;
+  sections?: WorkflowSection[];
   onTaskClick?: (task: Task) => void;
   onTaskRestored?: (task: Task) => void;
 }
 
-export function TrashView({ workspace, onTaskClick, onTaskRestored }: TrashViewProps) {
+export function TrashView({ workspace, sections = [], onTaskClick, onTaskRestored }: TrashViewProps) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -184,7 +185,11 @@ export function TrashView({ workspace, onTaskClick, onTaskRestored }: TrashViewP
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <PriorityIcon priority={t.priority} />
-                  <StatusIcon status={t.status} />
+                  <StatusIcon
+                    status={t.status}
+                    customStatus={t.customStatus}
+                    sections={sections}
+                  />
 
                   <span className="text-xs font-mono text-zinc-500 shrink-0">
                     {t.identifier}

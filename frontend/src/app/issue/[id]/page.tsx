@@ -423,6 +423,30 @@ function IssueDetailContent() {
       }, 1500);
     };
 
+    const syncRelatedOrSubTask = (targetId: string, patch: Partial<Task>) => {
+      setTask((prev) => {
+        if (!prev) return prev;
+        let changed = false;
+        const subTasks = prev.subTasks?.map((st) => {
+          if (st.id !== targetId) return st;
+          changed = true;
+          return { ...st, ...patch };
+        });
+        const sourceRelations = prev.sourceRelations?.map((rel) => {
+          if (rel.targetTask?.id !== targetId) return rel;
+          changed = true;
+          return { ...rel, targetTask: { ...rel.targetTask, ...patch } };
+        });
+        const targetRelations = prev.targetRelations?.map((rel) => {
+          if (rel.sourceTask?.id !== targetId) return rel;
+          changed = true;
+          return { ...rel, sourceTask: { ...rel.sourceTask, ...patch } };
+        });
+        return changed ? { ...prev, subTasks, sourceRelations, targetRelations } : prev;
+      });
+      setAllTasks((prev) => prev.map((t) => (t.id === targetId ? { ...t, ...patch } : t)));
+    };
+
     const handleTaskUpdated = (updatedTask: Task) => {
       if (updatedTask.id === taskId) {
         setTask((prev) => (prev ? { ...prev, ...updatedTask } : updatedTask));
@@ -456,6 +480,14 @@ function IssueDetailContent() {
         if (updatedTask.subscribers) {
           setSubscribers(updatedTask.subscribers);
         }
+      } else {
+        syncRelatedOrSubTask(updatedTask.id, {
+          status: updatedTask.status,
+          customStatus: updatedTask.customStatus,
+          priority: updatedTask.priority,
+          title: updatedTask.title,
+          assignee: updatedTask.assignee,
+        });
       }
     };
 
@@ -473,6 +505,21 @@ function IssueDetailContent() {
         if (data.status) setStatus(data.status);
         if (data.customStatus !== undefined) setCustomStatus(data.customStatus);
         if (data.priority) setPriority(data.priority);
+      } else {
+        const patch: Partial<Task> = data.task
+          ? {
+              status: data.task.status,
+              customStatus: data.task.customStatus,
+              priority: data.task.priority,
+              title: data.task.title,
+              assignee: data.task.assignee,
+            }
+          : {
+              ...(data.status !== undefined ? { status: data.status } : {}),
+              ...(data.customStatus !== undefined ? { customStatus: data.customStatus } : {}),
+              ...(data.priority !== undefined ? { priority: data.priority } : {}),
+            };
+        syncRelatedOrSubTask(data.taskId, patch);
       }
     };
 
@@ -2161,6 +2208,7 @@ function IssueDetailContent() {
               subTasks={task.subTasks || []}
               members={members}
               allTasks={allTasks}
+              sections={sections}
               onSubTasksChange={(updatedSubTasks) => {
                 setTask((prev) => (prev ? { ...prev, subTasks: updatedSubTasks } : null));
               }}
@@ -2172,6 +2220,7 @@ function IssueDetailContent() {
             <RelatedIssuesSection
               task={task}
               allTasks={allTasks}
+              sections={sections}
               onTaskChange={(updatedTask) => {
                 setTask(updatedTask);
               }}

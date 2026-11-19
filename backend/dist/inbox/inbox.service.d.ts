@@ -23,6 +23,7 @@ export declare class InboxService {
                 priority: import("@prisma/client").$Enums.TaskPriority;
                 identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
+                customStatus: string | null;
             } | null;
             actor: {
                 id: string;
