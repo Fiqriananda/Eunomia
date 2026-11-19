@@ -1,5 +1,5 @@
 import React from 'react';
-import { SectionProgress, TaskStatus } from '../../types';
+import { SectionProgress, TaskStatus, WorkflowSection } from '../../types';
 import { cn } from '../../lib/utils';
 
 export const SECTION_PROGRESS_OPTIONS: Array<{
@@ -29,10 +29,28 @@ export const DEFAULT_STATUS_META: Record<
 
 interface StatusIconProps {
   status: TaskStatus | string;
+  customStatus?: string | null;
+  sections?: WorkflowSection[];
   color?: string;
   progress?: SectionProgress | string | null;
   className?: string;
   showLabel?: boolean;
+}
+
+export function resolveStatusVisual(
+  status: TaskStatus | string,
+  customStatus?: string | null,
+  sections?: WorkflowSection[],
+) {
+  const sectionKey = customStatus || status;
+  const matchedSection = sections?.find((s) => s.key === sectionKey);
+  const builtIn = DEFAULT_STATUS_META[status as TaskStatus];
+  return {
+    section: matchedSection,
+    progress: (matchedSection?.progress || builtIn?.progress || '1/2') as SectionProgress | string,
+    color: matchedSection?.color || builtIn?.color || '#8b5cf6',
+    label: matchedSection?.name || builtIn?.label || status,
+  };
 }
 
 export function renderProgressSvg(
@@ -129,16 +147,17 @@ export function renderProgressSvg(
 
 export function StatusIcon({
   status,
+  customStatus,
+  sections,
   color,
   progress,
   className,
   showLabel = false,
 }: StatusIconProps) {
-  const builtIn = DEFAULT_STATUS_META[status as TaskStatus];
-  const resolvedProgress: SectionProgress | string =
-    progress || builtIn?.progress || '1/2';
-  const resolvedColor = color || builtIn?.color || '#8b5cf6';
-  const label = builtIn?.label || status;
+  const resolved = resolveStatusVisual(status, customStatus, sections);
+  const resolvedProgress: SectionProgress | string = progress || resolved.progress;
+  const resolvedColor = color || resolved.color;
+  const label = resolved.label;
 
   return (
     <div className={cn('inline-flex items-center gap-1.5', className)}>

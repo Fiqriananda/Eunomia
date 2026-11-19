@@ -185,6 +185,18 @@ export interface Cycle {
     remainingPoints: number;
     velocityPercentage: number;
   };
+  stats?: {
+    totalTasks: number;
+    completedTasks: number;
+    remainingTasks?: number;
+    inProgressTasks?: number;
+    todoTasks?: number;
+    totalPoints: number;
+    completedPoints: number;
+    remainingPoints: number;
+    completionPercentage?: number;
+    velocityPercentage?: number;
+  };
 }
 
 export interface Task {
@@ -308,6 +320,7 @@ export interface InboxNotification {
     identifier: string;
     title: string;
     status: TaskStatus;
+    customStatus?: string | null;
     priority?: TaskPriority;
     project?: {
       id: string;

@@ -72,7 +72,8 @@ export function CreateTaskModal({
     if (defaultProjectId) setProjectId(defaultProjectId);
     if (defaultStatus) setStatusValue(defaultStatus);
     if (defaultPriority) setPriority(defaultPriority);
-  }, [defaultProjectId, defaultStatus, defaultPriority]);
+    if (defaultCycleId !== undefined) setCycleId(defaultCycleId || '');
+  }, [defaultProjectId, defaultStatus, defaultPriority, defaultCycleId]);
 
   if (!isOpen) return null;
 

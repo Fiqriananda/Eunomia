@@ -8,6 +8,7 @@ import {
   TaskComment,
   TaskStatus,
   TaskPriority,
+  WorkflowSection,
   WorkspaceMember,
 } from '../../types';
 import { api } from '../../lib/api';
@@ -66,11 +67,12 @@ function formatTimeAgo(dateStr: string): string {
 }
 
 interface InboxViewProps {
+  sections?: WorkflowSection[];
   onUnreadCountChange?: (count: number) => void;
   onOpenMobileNav?: () => void;
 }
 
-export function InboxView({ onUnreadCountChange, onOpenMobileNav }: InboxViewProps) {
+export function InboxView({ sections = [], onUnreadCountChange, onOpenMobileNav }: InboxViewProps) {
   const router = useRouter();
   const { user, workspace, workspaces, refreshWorkspacesAndProjects, setWorkspace } = useAuth();
 
@@ -958,7 +960,12 @@ export function InboxView({ onUnreadCountChange, onOpenMobileNav }: InboxViewPro
                   {/* Right: Status Icon + Timestamp */}
                   <div className="flex items-center gap-1.5 shrink-0 mt-0.5">
                     {notif.task?.status && (
-                      <StatusIcon status={notif.task.status} className="w-3.5 h-3.5" />
+                      <StatusIcon
+                        status={notif.task.status}
+                        customStatus={notif.task.customStatus}
+                        sections={notif.workspaceId === workspace?.id ? sections : undefined}
+                        className="w-3.5 h-3.5"
+                      />
                     )}
                     <span className="text-[10px] text-zinc-500 font-mono">
                       {formatTimeAgo(notif.createdAt)}
@@ -1312,7 +1319,12 @@ export function InboxView({ onUnreadCountChange, onOpenMobileNav }: InboxViewPro
                           className="flex items-center justify-between p-2 rounded-lg bg-[#11121d] border border-[#1e202f] hover:border-zinc-700 transition-colors text-xs cursor-pointer group"
                         >
                           <div className="flex items-center gap-2 min-w-0">
-                            <StatusIcon status={st.status} className="w-3.5 h-3.5" />
+                            <StatusIcon
+                              status={st.status}
+                              customStatus={st.customStatus}
+                              sections={selectedTask.workspaceId === workspace?.id ? sections : undefined}
+                              className="w-3.5 h-3.5"
+                            />
                             <span className="font-mono text-zinc-500 text-[11px]">
                               {st.identifier}
                             </span>
@@ -1864,9 +1876,17 @@ export function InboxView({ onUnreadCountChange, onOpenMobileNav }: InboxViewPro
                     >
                       <span className="text-zinc-400 text-xs">Status</span>
                       <div className="flex items-center gap-1.5">
-                        <StatusIcon status={selectedTask.status} />
+                        <StatusIcon
+                          status={selectedTask.status}
+                          customStatus={selectedTask.customStatus}
+                          sections={selectedTask.workspaceId === workspace?.id ? sections : undefined}
+                        />
                         <span className="font-medium text-white text-xs">
-                          {selectedTask.status.replace('_', ' ')}
+                          {(selectedTask.workspaceId === workspace?.id &&
+                            sections.find(
+                              (s) => s.key === (selectedTask.customStatus || selectedTask.status),
+                            )?.name) ||
+                            selectedTask.status.replace('_', ' ')}
                         </span>
                       </div>
                     </button>

@@ -20,7 +20,17 @@ let CyclesService = class CyclesService {
             where: { workspaceId },
             include: {
                 _count: {
-                    select: { tasks: true },
+                    select: {
+                        tasks: {
+                            where: {
+                                isArchived: false,
+                                OR: [
+                                    { triageStatus: { not: 'INBOX_PENDING' } },
+                                    { triageStatus: null },
+                                ],
+                            },
+                        },
+                    },
                 },
             },
             orderBy: { number: 'desc' },
@@ -30,6 +40,7 @@ let CyclesService = class CyclesService {
             return {
                 ...cycle,
                 stats,
+                metrics: stats,
             };
         }));
     }
@@ -49,10 +60,10 @@ let CyclesService = class CyclesService {
             if (!latest)
                 return null;
             const stats = await this.getCycleStats(latest.id);
-            return { ...latest, stats };
+            return { ...latest, stats, metrics: stats };
         }
         const stats = await this.getCycleStats(cycle.id);
-        return { ...cycle, stats };
+        return { ...cycle, stats, metrics: stats };
     }
     async getCycleById(id) {
         const cycle = await this.prisma.cycle.findUnique({
@@ -75,32 +86,43 @@ let CyclesService = class CyclesService {
         return {
             ...cycle,
             stats,
+            metrics: stats,
         };
     }
     async getCycleStats(cycleId) {
         const tasks = await this.prisma.task.findMany({
-            where: { cycleId, isArchived: false },
+            where: {
+                cycleId,
+                isArchived: false,
+                OR: [
+                    { triageStatus: { not: 'INBOX_PENDING' } },
+                    { triageStatus: null },
+                ],
+            },
             select: { status: true, estimate: true },
         });
         const totalTasks = tasks.length;
         const completedTasks = tasks.filter((t) => t.status === TaskStatus.DONE).length;
+        const remainingTasks = totalTasks - completedTasks;
         const inProgressTasks = tasks.filter((t) => t.status === TaskStatus.IN_PROGRESS).length;
         const todoTasks = tasks.filter((t) => t.status === TaskStatus.TODO || t.status === TaskStatus.BACKLOG).length;
-        const totalPoints = tasks.reduce((sum, t) => sum + (t.estimate || 1), 0);
+        const totalPoints = tasks.reduce((sum, t) => sum + (t.estimate ?? 1), 0);
         const completedPoints = tasks
             .filter((t) => t.status === TaskStatus.DONE)
-            .reduce((sum, t) => sum + (t.estimate || 1), 0);
+            .reduce((sum, t) => sum + (t.estimate ?? 1), 0);
         const remainingPoints = totalPoints - completedPoints;
         const completionPercentage = totalPoints > 0 ? Math.round((completedPoints / totalPoints) * 100) : 0;
         return {
             totalTasks,
             completedTasks,
+            remainingTasks,
             inProgressTasks,
             todoTasks,
             totalPoints,
             completedPoints,
             remainingPoints,
             completionPercentage,
+            velocityPercentage: completionPercentage,
         };
     }
     async createCycle(data) {
@@ -144,18 +166,20 @@ let CyclesService = class CyclesService {
         const incompleteTasks = await this.prisma.task.findMany({
             where: {
                 cycleId,
-                status: { not: TaskStatus.DONE },
+                status: { notIn: [TaskStatus.DONE, TaskStatus.CANCELED] },
                 isArchived: false,
             },
             select: { id: true },
         });
         const taskIds = incompleteTasks.map((t) => t.id);
-        await this.prisma.task.updateMany({
-            where: { id: { in: taskIds } },
-            data: {
-                cycleId: dto.targetCycleId || null,
-            },
-        });
+        if (taskIds.length > 0) {
+            await this.prisma.task.updateMany({
+                where: { id: { in: taskIds } },
+                data: {
+                    cycleId: dto.targetCycleId || null,
+                },
+            });
+        }
         await this.prisma.cycle.update({
             where: { id: cycleId },
             data: { status: 'COMPLETED' },

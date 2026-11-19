@@ -7,12 +7,26 @@ export declare class CyclesService {
         stats: {
             totalTasks: number;
             completedTasks: number;
+            remainingTasks: number;
             inProgressTasks: number;
             todoTasks: number;
             totalPoints: number;
             completedPoints: number;
             remainingPoints: number;
             completionPercentage: number;
+            velocityPercentage: number;
+        };
+        metrics: {
+            totalTasks: number;
+            completedTasks: number;
+            remainingTasks: number;
+            inProgressTasks: number;
+            todoTasks: number;
+            totalPoints: number;
+            completedPoints: number;
+            remainingPoints: number;
+            completionPercentage: number;
+            velocityPercentage: number;
         };
         _count: {
             tasks: number;
@@ -32,12 +46,26 @@ export declare class CyclesService {
         stats: {
             totalTasks: number;
             completedTasks: number;
+            remainingTasks: number;
             inProgressTasks: number;
             todoTasks: number;
             totalPoints: number;
             completedPoints: number;
             remainingPoints: number;
             completionPercentage: number;
+            velocityPercentage: number;
+        };
+        metrics: {
+            totalTasks: number;
+            completedTasks: number;
+            remainingTasks: number;
+            inProgressTasks: number;
+            todoTasks: number;
+            totalPoints: number;
+            completedPoints: number;
+            remainingPoints: number;
+            completionPercentage: number;
+            velocityPercentage: number;
         };
         number: number;
         description: string | null;
@@ -54,12 +82,26 @@ export declare class CyclesService {
         stats: {
             totalTasks: number;
             completedTasks: number;
+            remainingTasks: number;
             inProgressTasks: number;
             todoTasks: number;
             totalPoints: number;
             completedPoints: number;
             remainingPoints: number;
             completionPercentage: number;
+            velocityPercentage: number;
+        };
+        metrics: {
+            totalTasks: number;
+            completedTasks: number;
+            remainingTasks: number;
+            inProgressTasks: number;
+            todoTasks: number;
+            totalPoints: number;
+            completedPoints: number;
+            remainingPoints: number;
+            completionPercentage: number;
+            velocityPercentage: number;
         };
         tasks: ({
             project: {

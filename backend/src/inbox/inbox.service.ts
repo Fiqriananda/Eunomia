@@ -27,6 +27,7 @@ export class InboxService {
               identifier: true,
               title: true,
               status: true,
+              customStatus: true,
               priority: true,
               project: {
                 select: {

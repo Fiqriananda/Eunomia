@@ -22,7 +22,7 @@ import {
   AlertCircle,
   Tag,
 } from 'lucide-react';
-import { Project, Task, Workspace } from '../../types';
+import { Project, Task, WorkflowSection, Workspace } from '../../types';
 import { StatusIcon } from './StatusIcon';
 import { PriorityIcon } from './PriorityIcon';
 import { api } from '../../lib/api';
@@ -31,6 +31,7 @@ interface ProjectsViewProps {
   projects: Project[];
   tasks: Task[];
   workspace: Workspace;
+  sections?: WorkflowSection[];
   selectedProject: Project | null;
   onSelectProject: (p: Project | null) => void;
   onOpenCreateProject: () => void;
@@ -44,6 +45,7 @@ export function ProjectsView({
   projects,
   tasks,
   workspace,
+  sections = [],
   selectedProject,
   onSelectProject,
   onOpenCreateProject,
@@ -344,7 +346,11 @@ export function ProjectsView({
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <PriorityIcon priority={t.priority} />
-                    <StatusIcon status={t.status} />
+                    <StatusIcon
+                      status={t.status}
+                      customStatus={t.customStatus}
+                      sections={sections}
+                    />
                     <span className="text-xs font-mono text-zinc-400 font-medium shrink-0">
                       {t.identifier}
                     </span>

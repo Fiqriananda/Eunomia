@@ -27,6 +27,7 @@ import {
   DEFAULT_STATUS_META,
   SECTION_PROGRESS_OPTIONS,
   renderProgressSvg,
+  resolveStatusVisual,
 } from './StatusIcon';
 import { TaskCard } from './TaskCard';
 import { Plus, X, Loader2 } from 'lucide-react';
@@ -327,16 +328,8 @@ export function BoardView({
   }, [tasks]);
 
   const getTaskSectionVisual = (task: Task) => {
-    const key = task.customStatus || task.status;
-    const sec = sectionByKey.get(key);
-    if (sec) {
-      return {
-        color: sec.color || DEFAULT_STATUS_META[task.status].color,
-        progress: sec.progress || DEFAULT_STATUS_META[task.status].progress,
-      };
-    }
-    const def = DEFAULT_STATUS_META[task.status];
-    return { color: def.color, progress: def.progress };
+    const resolved = resolveStatusVisual(task.status, task.customStatus, customSections);
+    return { color: resolved.color, progress: resolved.progress };
   };
 
   return (

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Task, TaskPriority, TaskStatus } from '../../types';
+import { Task, TaskPriority, TaskStatus, WorkflowSection } from '../../types';
 import { PriorityIcon, PRIORITY_CONFIG } from './PriorityIcon';
 import { StatusIcon, STATUS_CONFIG } from './StatusIcon';
 import { Paperclip, Calendar, User as UserIcon, GitFork } from 'lucide-react';
@@ -11,6 +11,7 @@ import { cn } from '../../lib/utils';
 interface ListViewProps {
   tasks: Task[];
   groupBy: 'priority' | 'status';
+  sections?: WorkflowSection[];
   onTaskClick: (task: Task) => void;
   onStatusChange?: (taskId: string, status: TaskStatus) => void;
   onPriorityChange?: (taskId: string, priority: TaskPriority) => void;
@@ -22,6 +23,7 @@ const STATUS_GROUPS: TaskStatus[] = ['BACKLOG', 'TODO', 'IN_PROGRESS', 'DONE', '
 export function ListView({
   tasks,
   groupBy,
+  sections = [],
   onTaskClick,
   onStatusChange,
   onPriorityChange,
@@ -55,7 +57,7 @@ export function ListView({
           groupBy === 'priority' ? (
             <PriorityIcon priority={groupKey as TaskPriority} />
           ) : (
-            <StatusIcon status={groupKey as TaskStatus} />
+            <StatusIcon status={groupKey as TaskStatus} sections={sections} />
           );
 
         return (
@@ -99,7 +101,11 @@ export function ListView({
                         }}
                         className="cursor-pointer hover:scale-110 transition-transform"
                       >
-                        <StatusIcon status={task.status} />
+                        <StatusIcon
+                          status={task.status}
+                          customStatus={task.customStatus}
+                          sections={sections}
+                        />
                       </div>
 
                       <span className="text-xs font-mono font-medium text-muted-foreground shrink-0">
