@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { api } from '../../lib/api';
-import { resolveMediaUrl } from '../ui/MarkdownRenderer';
+import { resolveMediaUrl, parseMarkdownTable } from '../ui/MarkdownRenderer';
 import {
   Code,
   List,
@@ -171,6 +171,50 @@ function markdownToHtml(md: string, membersList: WorkspaceMember[] = []): string
 
     if (inCodeBlock) {
       codeBuffer.push(rawLine);
+      continue;
+    }
+
+    // Markdown Table: | col | col | + | :--- | :--- |
+    const parsedTable = parseMarkdownTable(lines, i);
+    if (parsedTable) {
+      closeAllLists();
+      const headerHtml = parsedTable.headers
+        .map((h, idx) => {
+          const align = parsedTable.alignments[idx] || 'left';
+          return `<th style="text-align: ${align}" data-align="${align}" class="px-3.5 py-2.5 font-semibold text-zinc-100 uppercase tracking-wider text-[11px] border-b border-border/70">${formatInline(
+            h,
+            membersList,
+          )}</th>`;
+        })
+        .join('');
+
+      const bodyHtml = parsedTable.rows
+        .map(
+          (row) =>
+            `<tr class="hover:bg-indigo-500/5 transition-colors even:bg-[#0f101b] border-b border-border/40 last:border-b-0">${row
+              .map((cell, idx) => {
+                const align = parsedTable.alignments[idx] || 'left';
+                return `<td style="text-align: ${align}" data-align="${align}" class="px-3.5 py-2 text-zinc-300 align-top">${formatInline(
+                  cell,
+                  membersList,
+                )}</td>`;
+              })
+              .join('')}</tr>`,
+        )
+        .join('');
+
+      htmlLines.push(
+        `<div class="editor-table-wrapper my-3 overflow-x-auto rounded-xl border border-border/70 bg-[#0c0d16] shadow-md">` +
+          `<table class="w-full text-xs text-left border-collapse">` +
+            `<thead><tr class="bg-[#121422]">${headerHtml}</tr></thead>` +
+            `<tbody>${bodyHtml}</tbody>` +
+          `</table>` +
+        `</div>`,
+      );
+      if (parsedTable.nextIndex >= lines.length) {
+        htmlLines.push('<p><br></p>');
+      }
+      i = parsedTable.nextIndex - 1;
       continue;
     }
 
@@ -514,6 +558,77 @@ function htmlToMarkdown(node: Node, listDepth = 0): string {
     const lang = el.getAttribute('data-lang') || '';
     const codeText = el.querySelector('code')?.textContent || el.textContent || '';
     return `\n\`\`\`${lang}\n${codeText.trim()}\n\`\`\`\n\n`;
+  }
+
+  if (el.classList.contains('editor-table-wrapper')) {
+    const tableEl = el.querySelector('table');
+    if (tableEl) return htmlToMarkdown(tableEl, listDepth);
+    return '';
+  }
+
+  if (tag === 'table') {
+    const formatCell = (cellEl: Element) =>
+      Array.from(cellEl.childNodes)
+        .map((n) => htmlToMarkdown(n, listDepth))
+        .join('')
+        .replace(/\r?\n+/g, ' ')
+        .replace(/\s{2,}/g, ' ')
+        .trim();
+
+    const escapeCellPipes = (cell: string) => {
+      let out = '';
+      let inCode = false;
+      for (let k = 0; k < cell.length; k++) {
+        const ch = cell[k];
+        if (ch === '`') inCode = !inCode;
+        if (ch === '|' && !inCode && cell[k - 1] !== '\\') {
+          out += '\\|';
+        } else {
+          out += ch;
+        }
+      }
+      return out;
+    };
+
+    const headerRow = el.querySelector('thead tr') || el.querySelector('tr');
+    if (!headerRow) return '';
+
+    const headerCells = Array.from(headerRow.children).filter(
+      (c) => c.tagName.toLowerCase() === 'th' || c.tagName.toLowerCase() === 'td',
+    );
+    if (headerCells.length === 0) return '';
+
+    const headers = headerCells.map(formatCell);
+    const alignments = headerCells.map((cell) => {
+      const align =
+        cell.getAttribute('data-align') ||
+        (cell as HTMLElement).style?.textAlign ||
+        'left';
+      if (align === 'center') return ':---:';
+      if (align === 'right') return '---:';
+      return ':---';
+    });
+
+    const bodyRowEls = Array.from(el.querySelectorAll('tbody tr'));
+    const rows = (
+      bodyRowEls.length > 0
+        ? bodyRowEls
+        : Array.from(el.querySelectorAll('tr')).slice(1)
+    ).map((tr) => {
+      const cells = Array.from(tr.children).filter(
+        (c) => c.tagName.toLowerCase() === 'td' || c.tagName.toLowerCase() === 'th',
+      );
+      return Array.from({ length: headers.length }, (_, idx) =>
+        cells[idx] ? formatCell(cells[idx]) : '',
+      );
+    });
+
+    const mdLines = [
+      `| ${headers.map(escapeCellPipes).join(' | ')} |`,
+      `| ${alignments.join(' | ')} |`,
+      ...rows.map((r) => `| ${r.map(escapeCellPipes).join(' | ')} |`),
+    ];
+    return `\n${mdLines.join('\n')}\n\n`;
   }
 
   if (el.classList.contains('editor-image-card')) {
@@ -1244,6 +1359,7 @@ export function LinearRichEditor({
       /(?:^|\n)(?:#{1,6}\s|[-*+•]\s*\[[ xX]\]|[-*+•]\s+|\d+\.\s+|>{1,2}\s+|```|---|___|\*\*\*)/m.test(
         normalizedText,
       ) ||
+      /(?:^|\n)\s*\|?.+\|.+\n\s*\|?\s*:?-{1,}:?\s*\|/m.test(normalizedText) ||
       /\*\*[^*]+\*\*/.test(normalizedText) ||
       /\+\+[^+]+\+\+/.test(normalizedText) ||
       /`[^`]+`/.test(normalizedText) ||
