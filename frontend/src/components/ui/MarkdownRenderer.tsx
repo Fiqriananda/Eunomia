@@ -28,6 +28,95 @@ interface MarkdownRendererProps {
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
+export interface ParsedMarkdownTable {
+  headers: string[];
+  alignments: Array<'left' | 'center' | 'right'>;
+  rows: string[][];
+  nextIndex: number;
+}
+
+export function splitTableRow(line: string): string[] {
+  let trimmed = line.trim();
+  if (trimmed.startsWith('|')) trimmed = trimmed.slice(1);
+  if (trimmed.endsWith('|') && !trimmed.endsWith('\\|')) {
+    trimmed = trimmed.slice(0, -1);
+  }
+
+  const cells: string[] = [];
+  let current = '';
+  let inCode = false;
+  for (let idx = 0; idx < trimmed.length; idx++) {
+    const ch = trimmed[idx];
+    if (ch === '\\' && idx + 1 < trimmed.length && trimmed[idx + 1] === '|') {
+      current += '|';
+      idx++;
+      continue;
+    }
+    if (ch === '`') {
+      inCode = !inCode;
+      current += ch;
+      continue;
+    }
+    if (ch === '|' && !inCode) {
+      cells.push(current.trim());
+      current = '';
+      continue;
+    }
+    current += ch;
+  }
+  cells.push(current.trim());
+  return cells;
+}
+
+export function parseMarkdownTable(
+  lines: string[],
+  startIndex: number,
+): ParsedMarkdownTable | null {
+  const headerLine = lines[startIndex];
+  const sepLine = lines[startIndex + 1];
+  if (!headerLine || !sepLine) return null;
+  if (!headerLine.includes('|') || !sepLine.includes('|')) return null;
+
+  const sepCells = splitTableRow(sepLine);
+  if (sepCells.length === 0 || !sepCells.every((c) => /^:?-{1,}:?$/.test(c))) {
+    return null;
+  }
+
+  const headers = splitTableRow(headerLine);
+  if (headers.length === 0 || headers.length !== sepCells.length) {
+    return null;
+  }
+
+  const alignments = sepCells.map((c) => {
+    if (c.startsWith(':') && c.endsWith(':')) return 'center';
+    if (c.endsWith(':')) return 'right';
+    return 'left';
+  });
+
+  const rows: string[][] = [];
+  let idx = startIndex + 2;
+  while (idx < lines.length) {
+    const raw = lines[idx];
+    const trim = raw.trim();
+    if (
+      !trim ||
+      !trim.includes('|') ||
+      /^`{3,4}/.test(trim) ||
+      /^#{1,6}\s/.test(trim) ||
+      trim.startsWith('>')
+    ) {
+      break;
+    }
+    const rowCells = splitTableRow(raw);
+    rows.push(
+      Array.from({ length: headers.length }, (_, cIdx) => rowCells[cIdx] ?? ''),
+    );
+    idx++;
+  }
+
+  return { headers, alignments, rows, nextIndex: idx };
+}
+
 export function resolveMediaUrl(url: string): string {
   if (!url) return '';
   if (
@@ -517,82 +606,53 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
       continue;
     }
 
-    // 2. Table Block: lines with |
-    if (line.trim().startsWith('|') && line.trim().endsWith('|')) {
-      const tableLines: string[] = [];
-      while (
-        i < lines.length &&
-        lines[i].trim().startsWith('|') &&
-        lines[i].trim().endsWith('|')
-      ) {
-        tableLines.push(lines[i]);
-        i++;
-      }
+    // 2. Table Block: GFM piped table with separator row
+    const parsedTable = parseMarkdownTable(lines, i);
+    if (parsedTable) {
+      const { headers: headerCells, alignments: alignCells, rows: bodyRows, nextIndex } = parsedTable;
+      i = nextIndex;
 
-      if (tableLines.length >= 2) {
-        const headerCells = tableLines[0]
-          .split('|')
-          .slice(1, -1)
-          .map((c) => c.trim());
-        const alignCells = tableLines[1]
-          .split('|')
-          .slice(1, -1)
-          .map((c) => {
-            const trim = c.trim();
-            if (trim.startsWith(':') && trim.endsWith(':')) return 'center';
-            if (trim.endsWith(':')) return 'right';
-            return 'left';
-          });
-
-        const bodyRows = tableLines.slice(2).map((row) =>
-          row
-            .split('|')
-            .slice(1, -1)
-            .map((c) => c.trim()),
-        );
-
-        elements.push(
-          <div
-            key={`table-${i}`}
-            className="my-3 overflow-x-auto rounded-xl border border-border/70 bg-[#0c0d16] shadow-md"
-          >
-            <table className="w-full text-xs text-left border-collapse">
-              <thead>
-                <tr className="bg-[#121422] border-b border-border/70">
-                  {headerCells.map((header, hIdx) => (
-                    <th
-                      key={`th-${hIdx}`}
-                      style={{ textAlign: alignCells[hIdx] || 'left' }}
-                      className="px-3.5 py-2.5 font-semibold text-zinc-100 uppercase tracking-wider text-[11px]"
+      elements.push(
+        <div
+          key={`table-${i}`}
+          className="my-3 overflow-x-auto rounded-xl border border-border/70 bg-[#0c0d16] shadow-md"
+        >
+          <table className="w-full text-xs text-left border-collapse">
+            <thead>
+              <tr className="bg-[#121422] border-b border-border/70">
+                {headerCells.map((header, hIdx) => (
+                  <th
+                    key={`th-${hIdx}`}
+                    style={{ textAlign: alignCells[hIdx] || 'left' }}
+                    className="px-3.5 py-2.5 font-semibold text-zinc-100 uppercase tracking-wider text-[11px]"
+                  >
+                    {renderInline(header, `th-${hIdx}`)}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border/40">
+              {bodyRows.map((row, rIdx) => (
+                <tr
+                  key={`tr-${rIdx}`}
+                  className="hover:bg-indigo-500/5 transition-colors even:bg-[#0f101b]"
+                >
+                  {row.map((cell, cIdx) => (
+                    <td
+                      key={`td-${rIdx}-${cIdx}`}
+                      style={{ textAlign: alignCells[cIdx] || 'left' }}
+                      className="px-3.5 py-2 text-zinc-300"
                     >
-                      {renderInline(header, `th-${hIdx}`)}
-                    </th>
+                      {renderInline(cell, `td-${rIdx}-${cIdx}`)}
+                    </td>
                   ))}
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-border/40">
-                {bodyRows.map((row, rIdx) => (
-                  <tr
-                    key={`tr-${rIdx}`}
-                    className="hover:bg-indigo-500/5 transition-colors even:bg-[#0f101b]"
-                  >
-                    {row.map((cell, cIdx) => (
-                      <td
-                        key={`td-${rIdx}-${cIdx}`}
-                        style={{ textAlign: alignCells[cIdx] || 'left' }}
-                        className="px-3.5 py-2 text-zinc-300"
-                      >
-                        {renderInline(cell, `td-${rIdx}-${cIdx}`)}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>,
-        );
-        continue;
-      }
+              ))}
+            </tbody>
+          </table>
+        </div>,
+      );
+      continue;
     }
 
     // 3. GitHub Callout Alert: > [!NOTE], > [!TIP], > [!IMPORTANT], > [!WARNING], > [!CAUTION]
