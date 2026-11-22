@@ -8,7 +8,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEmail, IsNotEmpty, IsOptional, IsString, MinLength } from 'class-validator';
+import { IsBoolean, IsEmail, IsNotEmpty, IsOptional, IsString, MinLength } from 'class-validator';
 export class RegisterDto {
     email;
     password;
@@ -108,6 +108,8 @@ export class UpdateProfileDto {
     email;
     currentPassword;
     newPassword;
+    whatsappNumber;
+    whatsappNotifications;
 }
 __decorate([
     ApiPropertyOptional({ example: 'Alex Vance' }),
@@ -140,4 +142,16 @@ __decorate([
     MinLength(6),
     __metadata("design:type", String)
 ], UpdateProfileDto.prototype, "newPassword", void 0);
+__decorate([
+    ApiPropertyOptional({ example: '6281234567890', description: 'WhatsApp number for task reminders' }),
+    IsOptional(),
+    IsString(),
+    __metadata("design:type", Object)
+], UpdateProfileDto.prototype, "whatsappNumber", void 0);
+__decorate([
+    ApiPropertyOptional({ example: true, description: 'Enable WhatsApp task reminders' }),
+    IsOptional(),
+    IsBoolean(),
+    __metadata("design:type", Boolean)
+], UpdateProfileDto.prototype, "whatsappNotifications", void 0);
 //# sourceMappingURL=auth.dto.js.map

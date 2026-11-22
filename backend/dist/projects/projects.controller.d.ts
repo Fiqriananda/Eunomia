@@ -9,24 +9,24 @@ export declare class ProjectsController {
             priority: import("@prisma/client").$Enums.TaskPriority;
             identifier: string;
             status: import("@prisma/client").$Enums.TaskStatus;
-            dueDate: Date | null;
-            estimate: number | null;
-            isArchived: boolean;
             assignee: {
                 id: string;
                 name: string;
                 avatarUrl: string | null;
             } | null;
+            dueDate: Date | null;
+            estimate: number | null;
+            isArchived: boolean;
         }[];
+        _count: {
+            tasks: number;
+        };
         lead: {
             id: string;
             name: string;
             email: string;
             avatarUrl: string | null;
         } | null;
-        _count: {
-            tasks: number;
-        };
     } & {
         description: string | null;
         id: string;
@@ -34,11 +34,11 @@ export declare class ProjectsController {
         updatedAt: Date;
         name: string;
         key: string;
-        color: string | null;
+        workspaceId: string;
         status: string;
+        color: string | null;
         targetDate: Date | null;
         leadId: string | null;
-        workspaceId: string;
     })[]>;
     getProject(id: string): Promise<{
         tasks: ({
@@ -63,8 +63,8 @@ export declare class ProjectsController {
             priority: import("@prisma/client").$Enums.TaskPriority;
             identifier: string;
             assigneeId: string | null;
-            status: import("@prisma/client").$Enums.TaskStatus;
             workspaceId: string;
+            status: import("@prisma/client").$Enums.TaskStatus;
             order: number;
             customStatus: string | null;
             dueDate: Date | null;
@@ -81,15 +81,15 @@ export declare class ProjectsController {
             assignedDivisionId: string | null;
             parentId: string | null;
         })[];
+        _count: {
+            tasks: number;
+        };
         lead: {
             id: string;
             name: string;
             email: string;
             avatarUrl: string | null;
         } | null;
-        _count: {
-            tasks: number;
-        };
     } & {
         description: string | null;
         id: string;
@@ -97,11 +97,11 @@ export declare class ProjectsController {
         updatedAt: Date;
         name: string;
         key: string;
-        color: string | null;
+        workspaceId: string;
         status: string;
+        color: string | null;
         targetDate: Date | null;
         leadId: string | null;
-        workspaceId: string;
     }>;
     createProject(body: {
         workspaceId: string;
@@ -122,8 +122,8 @@ export declare class ProjectsController {
             priority: import("@prisma/client").$Enums.TaskPriority;
             identifier: string;
             assigneeId: string | null;
-            status: import("@prisma/client").$Enums.TaskStatus;
             workspaceId: string;
+            status: import("@prisma/client").$Enums.TaskStatus;
             order: number;
             customStatus: string | null;
             dueDate: Date | null;
@@ -140,15 +140,15 @@ export declare class ProjectsController {
             assignedDivisionId: string | null;
             parentId: string | null;
         }[];
+        _count: {
+            tasks: number;
+        };
         lead: {
             id: string;
             name: string;
             email: string;
             avatarUrl: string | null;
         } | null;
-        _count: {
-            tasks: number;
-        };
     } & {
         description: string | null;
         id: string;
@@ -156,11 +156,11 @@ export declare class ProjectsController {
         updatedAt: Date;
         name: string;
         key: string;
-        color: string | null;
+        workspaceId: string;
         status: string;
+        color: string | null;
         targetDate: Date | null;
         leadId: string | null;
-        workspaceId: string;
     }>;
     updateProject(id: string, body: {
         name?: string;
@@ -180,8 +180,8 @@ export declare class ProjectsController {
             priority: import("@prisma/client").$Enums.TaskPriority;
             identifier: string;
             assigneeId: string | null;
-            status: import("@prisma/client").$Enums.TaskStatus;
             workspaceId: string;
+            status: import("@prisma/client").$Enums.TaskStatus;
             order: number;
             customStatus: string | null;
             dueDate: Date | null;
@@ -198,15 +198,15 @@ export declare class ProjectsController {
             assignedDivisionId: string | null;
             parentId: string | null;
         }[];
+        _count: {
+            tasks: number;
+        };
         lead: {
             id: string;
             name: string;
             email: string;
             avatarUrl: string | null;
         } | null;
-        _count: {
-            tasks: number;
-        };
     } & {
         description: string | null;
         id: string;
@@ -214,11 +214,11 @@ export declare class ProjectsController {
         updatedAt: Date;
         name: string;
         key: string;
-        color: string | null;
+        workspaceId: string;
         status: string;
+        color: string | null;
         targetDate: Date | null;
         leadId: string | null;
-        workspaceId: string;
     }>;
     deleteProject(id: string): Promise<{
         description: string | null;
@@ -227,10 +227,10 @@ export declare class ProjectsController {
         updatedAt: Date;
         name: string;
         key: string;
-        color: string | null;
+        workspaceId: string;
         status: string;
+        color: string | null;
         targetDate: Date | null;
         leadId: string | null;
-        workspaceId: string;
     }>;
 }

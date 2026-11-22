@@ -26,11 +26,11 @@ export declare class WorkspacesController {
             updatedAt: Date;
             name: string;
             key: string;
-            color: string | null;
+            workspaceId: string;
             status: string;
+            color: string | null;
             targetDate: Date | null;
             leadId: string | null;
-            workspaceId: string;
         }[];
         id: string;
         createdAt: Date;
@@ -41,6 +41,8 @@ export declare class WorkspacesController {
         ticketPrefix: string;
         columnOrder: string[];
         cyclesEnabled: boolean;
+        whatsappEnabled: boolean;
+        whatsappSessionName: string | null;
     }[]>;
     getInvitationByToken(token: string): Promise<{
         workspace: {
@@ -59,10 +61,10 @@ export declare class WorkspacesController {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        email: string;
         role: import("@prisma/client").$Enums.WorkspaceRole;
-        status: import("@prisma/client").$Enums.InvitationStatus;
         workspaceId: string;
+        status: import("@prisma/client").$Enums.InvitationStatus;
+        email: string;
         invitedById: string;
     }>;
     acceptInvitation(token: string, userId: string): Promise<{
@@ -78,6 +80,8 @@ export declare class WorkspacesController {
             ticketPrefix: string;
             columnOrder: string[];
             cyclesEnabled: boolean;
+            whatsappEnabled: boolean;
+            whatsappSessionName: string | null;
         };
         membership: {
             user: {
@@ -121,6 +125,8 @@ export declare class WorkspacesController {
             ticketPrefix: string;
             columnOrder: string[];
             cyclesEnabled: boolean;
+            whatsappEnabled: boolean;
+            whatsappSessionName: string | null;
         };
         membership: {
             user: {
@@ -160,11 +166,11 @@ export declare class WorkspacesController {
             updatedAt: Date;
             name: string;
             key: string;
-            color: string | null;
+            workspaceId: string;
             status: string;
+            color: string | null;
             targetDate: Date | null;
             leadId: string | null;
-            workspaceId: string;
         }[];
         divisions: ({
             members: ({
@@ -187,8 +193,8 @@ export declare class WorkspacesController {
             createdAt: Date;
             updatedAt: Date;
             name: string;
-            slug: string;
             workspaceId: string;
+            slug: string;
             isTechnical: boolean;
         })[];
         id: string;
@@ -200,6 +206,8 @@ export declare class WorkspacesController {
         ticketPrefix: string;
         columnOrder: string[];
         cyclesEnabled: boolean;
+        whatsappEnabled: boolean;
+        whatsappSessionName: string | null;
     }>;
     updateWorkspace(id: string, userId: string, body: {
         name?: string;
@@ -230,11 +238,11 @@ export declare class WorkspacesController {
             updatedAt: Date;
             name: string;
             key: string;
-            color: string | null;
+            workspaceId: string;
             status: string;
+            color: string | null;
             targetDate: Date | null;
             leadId: string | null;
-            workspaceId: string;
         }[];
         id: string;
         createdAt: Date;
@@ -245,6 +253,8 @@ export declare class WorkspacesController {
         ticketPrefix: string;
         columnOrder: string[];
         cyclesEnabled: boolean;
+        whatsappEnabled: boolean;
+        whatsappSessionName: string | null;
     }>;
     createWorkspace(userId: string, body: {
         name: string;
@@ -256,11 +266,11 @@ export declare class WorkspacesController {
             updatedAt: Date;
             name: string;
             key: string;
-            color: string | null;
+            workspaceId: string;
             status: string;
+            color: string | null;
             targetDate: Date | null;
             leadId: string | null;
-            workspaceId: string;
         }[];
     } & {
         id: string;
@@ -272,6 +282,8 @@ export declare class WorkspacesController {
         ticketPrefix: string;
         columnOrder: string[];
         cyclesEnabled: boolean;
+        whatsappEnabled: boolean;
+        whatsappSessionName: string | null;
     }>;
     getWorkspaceMembers(id: string): Promise<({
         user: {
@@ -310,10 +322,10 @@ export declare class WorkspacesController {
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            email: string;
             role: import("@prisma/client").$Enums.WorkspaceRole;
-            status: import("@prisma/client").$Enums.InvitationStatus;
             workspaceId: string;
+            status: import("@prisma/client").$Enums.InvitationStatus;
+            email: string;
             invitedById: string;
         };
     }>;
@@ -329,10 +341,10 @@ export declare class WorkspacesController {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        email: string;
         role: import("@prisma/client").$Enums.WorkspaceRole;
-        status: import("@prisma/client").$Enums.InvitationStatus;
         workspaceId: string;
+        status: import("@prisma/client").$Enums.InvitationStatus;
+        email: string;
         invitedById: string;
     })[]>;
     cancelInvitation(workspaceId: string, invitationId: string, userId: string): Promise<{
@@ -363,8 +375,8 @@ export declare class WorkspacesController {
         updatedAt: Date;
         name: string;
         key: string;
-        color: string;
         workspaceId: string;
+        color: string;
         progress: string | null;
         order: number;
         category: import("@prisma/client").$Enums.TaskStatus;
@@ -381,8 +393,8 @@ export declare class WorkspacesController {
         updatedAt: Date;
         name: string;
         key: string;
-        color: string;
         workspaceId: string;
+        color: string;
         progress: string | null;
         order: number;
         category: import("@prisma/client").$Enums.TaskStatus;
@@ -398,8 +410,8 @@ export declare class WorkspacesController {
         updatedAt: Date;
         name: string;
         key: string;
-        color: string;
         workspaceId: string;
+        color: string;
         progress: string | null;
         order: number;
         category: import("@prisma/client").$Enums.TaskStatus;
@@ -410,8 +422,8 @@ export declare class WorkspacesController {
         updatedAt: Date;
         name: string;
         key: string;
-        color: string;
         workspaceId: string;
+        color: string;
         progress: string | null;
         order: number;
         category: import("@prisma/client").$Enums.TaskStatus;
@@ -428,6 +440,8 @@ export declare class WorkspacesController {
         ticketPrefix: string;
         columnOrder: string[];
         cyclesEnabled: boolean;
+        whatsappEnabled: boolean;
+        whatsappSessionName: string | null;
     }>;
     getDivisions(workspaceId: string): Promise<({
         members: ({
@@ -454,8 +468,8 @@ export declare class WorkspacesController {
         createdAt: Date;
         updatedAt: Date;
         name: string;
-        slug: string;
         workspaceId: string;
+        slug: string;
         isTechnical: boolean;
     })[]>;
     createDivision(workspaceId: string, userId: string, body: {
@@ -484,8 +498,8 @@ export declare class WorkspacesController {
         createdAt: Date;
         updatedAt: Date;
         name: string;
-        slug: string;
         workspaceId: string;
+        slug: string;
         isTechnical: boolean;
     }>;
     updateDivision(divisionId: string, userId: string, body: {
@@ -514,8 +528,8 @@ export declare class WorkspacesController {
         createdAt: Date;
         updatedAt: Date;
         name: string;
-        slug: string;
         workspaceId: string;
+        slug: string;
         isTechnical: boolean;
     }>;
     deleteDivision(divisionId: string, userId: string): Promise<{
@@ -524,8 +538,8 @@ export declare class WorkspacesController {
         createdAt: Date;
         updatedAt: Date;
         name: string;
-        slug: string;
         workspaceId: string;
+        slug: string;
         isTechnical: boolean;
     }>;
     addDivisionMember(divisionId: string, userId: string, body: {
@@ -544,8 +558,8 @@ export declare class WorkspacesController {
             createdAt: Date;
             updatedAt: Date;
             name: string;
-            slug: string;
             workspaceId: string;
+            slug: string;
             isTechnical: boolean;
         };
     } & {

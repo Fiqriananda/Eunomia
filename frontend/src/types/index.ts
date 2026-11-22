@@ -11,6 +11,8 @@ export interface User {
   email: string;
   name: string;
   avatarUrl?: string | null;
+  whatsappNumber?: string | null;
+  whatsappNotifications?: boolean;
 }
 
 export interface WorkspaceMember {
@@ -66,6 +68,8 @@ export interface Workspace {
   ticketPrefix?: string;
   columnOrder?: string[];
   cyclesEnabled?: boolean;
+  whatsappEnabled?: boolean;
+  whatsappSessionName?: string | null;
   createdAt: string;
   updatedAt: string;
   projects?: Project[];
@@ -346,6 +350,15 @@ export interface InboxNotification {
     role: WorkspaceRole;
     status: 'PENDING' | 'ACCEPTED' | 'DECLINED';
   };
+}
+
+export interface WhatsappStatusResponse {
+  enabled: boolean;
+  sessionName: string;
+  status: 'STOPPED' | 'STARTING' | 'SCAN_QR_CODE' | 'WORKING' | 'FAILED' | 'UNREACHABLE';
+  me: { id?: string; phone?: string; pushName?: string } | null;
+  qrDataUrl: string | null;
+  error?: string;
 }
 
 export interface ExternalMetadata {

@@ -14,6 +14,7 @@ import { MobileModule } from './mobile/mobile.module.js';
 import { EventsModule } from './events/events.module.js';
 import { CyclesModule } from './cycles/cycles.module.js';
 import { NotificationsModule } from './notifications/notifications.module.js';
+import { WhatsappModule } from './whatsapp/whatsapp.module.js';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { NotificationsModule } from './notifications/notifications.module.js';
     MobileModule,
     EventsModule,
     CyclesModule,
+    WhatsappModule,
   ],
 })
 export class AppModule {}

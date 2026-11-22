@@ -26,11 +26,11 @@ export declare class MobileController {
             updatedAt: Date;
             name: string;
             key: string;
-            color: string | null;
+            workspaceId: string;
             status: string;
+            color: string | null;
             targetDate: Date | null;
             leadId: string | null;
-            workspaceId: string;
         }[];
     } & {
         id: string;
@@ -42,6 +42,8 @@ export declare class MobileController {
         ticketPrefix: string;
         columnOrder: string[];
         cyclesEnabled: boolean;
+        whatsappEnabled: boolean;
+        whatsappSessionName: string | null;
     }>;
     getWorkspaceMembers(workspaceId: string, userId: string): Promise<MobileWorkspaceMemberDto[]>;
     inviteWorkspaceMember(workspaceId: string, userId: string, dto: MobileInviteMemberDto): Promise<{
@@ -63,10 +65,10 @@ export declare class MobileController {
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            email: string;
             role: import("@prisma/client").$Enums.WorkspaceRole;
-            status: import("@prisma/client").$Enums.InvitationStatus;
             workspaceId: string;
+            status: import("@prisma/client").$Enums.InvitationStatus;
+            email: string;
             invitedById: string;
         };
     }>;
@@ -81,8 +83,8 @@ export declare class MobileController {
             priority: import("@prisma/client").$Enums.TaskPriority;
             identifier: string;
             assigneeId: string | null;
-            status: import("@prisma/client").$Enums.TaskStatus;
             workspaceId: string;
+            status: import("@prisma/client").$Enums.TaskStatus;
             order: number;
             customStatus: string | null;
             dueDate: Date | null;
@@ -99,15 +101,15 @@ export declare class MobileController {
             assignedDivisionId: string | null;
             parentId: string | null;
         }[];
+        _count: {
+            tasks: number;
+        };
         lead: {
             id: string;
             name: string;
             email: string;
             avatarUrl: string | null;
         } | null;
-        _count: {
-            tasks: number;
-        };
     } & {
         description: string | null;
         id: string;
@@ -115,11 +117,11 @@ export declare class MobileController {
         updatedAt: Date;
         name: string;
         key: string;
-        color: string | null;
+        workspaceId: string;
         status: string;
+        color: string | null;
         targetDate: Date | null;
         leadId: string | null;
-        workspaceId: string;
     }>;
     getProjectDetail(userId: string, projectId: string): Promise<MobileProjectDetailDto>;
     updateProject(projectId: string, dto: MobileUpdateProjectDto): Promise<{
@@ -132,8 +134,8 @@ export declare class MobileController {
             priority: import("@prisma/client").$Enums.TaskPriority;
             identifier: string;
             assigneeId: string | null;
-            status: import("@prisma/client").$Enums.TaskStatus;
             workspaceId: string;
+            status: import("@prisma/client").$Enums.TaskStatus;
             order: number;
             customStatus: string | null;
             dueDate: Date | null;
@@ -150,15 +152,15 @@ export declare class MobileController {
             assignedDivisionId: string | null;
             parentId: string | null;
         }[];
+        _count: {
+            tasks: number;
+        };
         lead: {
             id: string;
             name: string;
             email: string;
             avatarUrl: string | null;
         } | null;
-        _count: {
-            tasks: number;
-        };
     } & {
         description: string | null;
         id: string;
@@ -166,11 +168,11 @@ export declare class MobileController {
         updatedAt: Date;
         name: string;
         key: string;
-        color: string | null;
+        workspaceId: string;
         status: string;
+        color: string | null;
         targetDate: Date | null;
         leadId: string | null;
-        workspaceId: string;
     }>;
     deleteProject(projectId: string): Promise<{
         description: string | null;
@@ -179,11 +181,11 @@ export declare class MobileController {
         updatedAt: Date;
         name: string;
         key: string;
-        color: string | null;
+        workspaceId: string;
         status: string;
+        color: string | null;
         targetDate: Date | null;
         leadId: string | null;
-        workspaceId: string;
     }>;
     getCycles(userId: string, workspaceId?: string): Promise<MobileCycleDto[]>;
     getCurrentCycle(userId: string, workspaceId?: string): Promise<MobileCycleDetailDto | null>;
@@ -194,8 +196,8 @@ export declare class MobileController {
         createdAt: Date;
         updatedAt: Date;
         name: string | null;
-        status: string;
         workspaceId: string;
+        status: string;
         startDate: Date;
         endDate: Date;
     }>;
@@ -206,8 +208,8 @@ export declare class MobileController {
         createdAt: Date;
         updatedAt: Date;
         name: string | null;
-        status: string;
         workspaceId: string;
+        status: string;
         startDate: Date;
         endDate: Date;
     }>;
@@ -313,18 +315,18 @@ export declare class MobileController {
             toValue: string | null;
             details: string | null;
         })[];
-        creator: {
-            id: string;
-            name: string;
-            email: string;
-            avatarUrl: string | null;
-        };
         assignee: {
             id: string;
             name: string;
             email: string;
             avatarUrl: string | null;
         } | null;
+        creator: {
+            id: string;
+            name: string;
+            email: string;
+            avatarUrl: string | null;
+        };
         assignees: ({
             user: {
                 id: string;
@@ -393,8 +395,8 @@ export declare class MobileController {
             priority: import("@prisma/client").$Enums.TaskPriority;
             identifier: string;
             assigneeId: string | null;
-            status: import("@prisma/client").$Enums.TaskStatus;
             workspaceId: string;
+            status: import("@prisma/client").$Enums.TaskStatus;
             order: number;
             customStatus: string | null;
             dueDate: Date | null;
@@ -418,14 +420,14 @@ export declare class MobileController {
                 priority: import("@prisma/client").$Enums.TaskPriority;
                 identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
-                customStatus: string | null;
-                labels: string[];
                 assignee: {
                     id: string;
                     name: string;
                     email: string;
                     avatarUrl: string | null;
                 } | null;
+                customStatus: string | null;
+                labels: string[];
             };
         } & {
             type: string;
@@ -441,14 +443,14 @@ export declare class MobileController {
                 priority: import("@prisma/client").$Enums.TaskPriority;
                 identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
-                customStatus: string | null;
-                labels: string[];
                 assignee: {
                     id: string;
                     name: string;
                     email: string;
                     avatarUrl: string | null;
                 } | null;
+                customStatus: string | null;
+                labels: string[];
             };
         } & {
             type: string;
@@ -504,8 +506,8 @@ export declare class MobileController {
         priority: import("@prisma/client").$Enums.TaskPriority;
         identifier: string;
         assigneeId: string | null;
-        status: import("@prisma/client").$Enums.TaskStatus;
         workspaceId: string;
+        status: import("@prisma/client").$Enums.TaskStatus;
         order: number;
         customStatus: string | null;
         dueDate: Date | null;
@@ -622,18 +624,18 @@ export declare class MobileController {
             toValue: string | null;
             details: string | null;
         })[];
-        creator: {
-            id: string;
-            name: string;
-            email: string;
-            avatarUrl: string | null;
-        };
         assignee: {
             id: string;
             name: string;
             email: string;
             avatarUrl: string | null;
         } | null;
+        creator: {
+            id: string;
+            name: string;
+            email: string;
+            avatarUrl: string | null;
+        };
         assignees: ({
             user: {
                 id: string;
@@ -702,8 +704,8 @@ export declare class MobileController {
             priority: import("@prisma/client").$Enums.TaskPriority;
             identifier: string;
             assigneeId: string | null;
-            status: import("@prisma/client").$Enums.TaskStatus;
             workspaceId: string;
+            status: import("@prisma/client").$Enums.TaskStatus;
             order: number;
             customStatus: string | null;
             dueDate: Date | null;
@@ -727,14 +729,14 @@ export declare class MobileController {
                 priority: import("@prisma/client").$Enums.TaskPriority;
                 identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
-                customStatus: string | null;
-                labels: string[];
                 assignee: {
                     id: string;
                     name: string;
                     email: string;
                     avatarUrl: string | null;
                 } | null;
+                customStatus: string | null;
+                labels: string[];
             };
         } & {
             type: string;
@@ -750,14 +752,14 @@ export declare class MobileController {
                 priority: import("@prisma/client").$Enums.TaskPriority;
                 identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
-                customStatus: string | null;
-                labels: string[];
                 assignee: {
                     id: string;
                     name: string;
                     email: string;
                     avatarUrl: string | null;
                 } | null;
+                customStatus: string | null;
+                labels: string[];
             };
         } & {
             type: string;
@@ -813,8 +815,8 @@ export declare class MobileController {
         priority: import("@prisma/client").$Enums.TaskPriority;
         identifier: string;
         assigneeId: string | null;
-        status: import("@prisma/client").$Enums.TaskStatus;
         workspaceId: string;
+        status: import("@prisma/client").$Enums.TaskStatus;
         order: number;
         customStatus: string | null;
         dueDate: Date | null;
@@ -931,18 +933,18 @@ export declare class MobileController {
             toValue: string | null;
             details: string | null;
         })[];
-        creator: {
-            id: string;
-            name: string;
-            email: string;
-            avatarUrl: string | null;
-        };
         assignee: {
             id: string;
             name: string;
             email: string;
             avatarUrl: string | null;
         } | null;
+        creator: {
+            id: string;
+            name: string;
+            email: string;
+            avatarUrl: string | null;
+        };
         assignees: ({
             user: {
                 id: string;
@@ -1011,8 +1013,8 @@ export declare class MobileController {
             priority: import("@prisma/client").$Enums.TaskPriority;
             identifier: string;
             assigneeId: string | null;
-            status: import("@prisma/client").$Enums.TaskStatus;
             workspaceId: string;
+            status: import("@prisma/client").$Enums.TaskStatus;
             order: number;
             customStatus: string | null;
             dueDate: Date | null;
@@ -1036,14 +1038,14 @@ export declare class MobileController {
                 priority: import("@prisma/client").$Enums.TaskPriority;
                 identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
-                customStatus: string | null;
-                labels: string[];
                 assignee: {
                     id: string;
                     name: string;
                     email: string;
                     avatarUrl: string | null;
                 } | null;
+                customStatus: string | null;
+                labels: string[];
             };
         } & {
             type: string;
@@ -1059,14 +1061,14 @@ export declare class MobileController {
                 priority: import("@prisma/client").$Enums.TaskPriority;
                 identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
-                customStatus: string | null;
-                labels: string[];
                 assignee: {
                     id: string;
                     name: string;
                     email: string;
                     avatarUrl: string | null;
                 } | null;
+                customStatus: string | null;
+                labels: string[];
             };
         } & {
             type: string;
@@ -1122,8 +1124,8 @@ export declare class MobileController {
         priority: import("@prisma/client").$Enums.TaskPriority;
         identifier: string;
         assigneeId: string | null;
-        status: import("@prisma/client").$Enums.TaskStatus;
         workspaceId: string;
+        status: import("@prisma/client").$Enums.TaskStatus;
         order: number;
         customStatus: string | null;
         dueDate: Date | null;
@@ -1240,18 +1242,18 @@ export declare class MobileController {
             toValue: string | null;
             details: string | null;
         })[];
-        creator: {
-            id: string;
-            name: string;
-            email: string;
-            avatarUrl: string | null;
-        };
         assignee: {
             id: string;
             name: string;
             email: string;
             avatarUrl: string | null;
         } | null;
+        creator: {
+            id: string;
+            name: string;
+            email: string;
+            avatarUrl: string | null;
+        };
         assignees: ({
             user: {
                 id: string;
@@ -1320,8 +1322,8 @@ export declare class MobileController {
             priority: import("@prisma/client").$Enums.TaskPriority;
             identifier: string;
             assigneeId: string | null;
-            status: import("@prisma/client").$Enums.TaskStatus;
             workspaceId: string;
+            status: import("@prisma/client").$Enums.TaskStatus;
             order: number;
             customStatus: string | null;
             dueDate: Date | null;
@@ -1345,14 +1347,14 @@ export declare class MobileController {
                 priority: import("@prisma/client").$Enums.TaskPriority;
                 identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
-                customStatus: string | null;
-                labels: string[];
                 assignee: {
                     id: string;
                     name: string;
                     email: string;
                     avatarUrl: string | null;
                 } | null;
+                customStatus: string | null;
+                labels: string[];
             };
         } & {
             type: string;
@@ -1368,14 +1370,14 @@ export declare class MobileController {
                 priority: import("@prisma/client").$Enums.TaskPriority;
                 identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
-                customStatus: string | null;
-                labels: string[];
                 assignee: {
                     id: string;
                     name: string;
                     email: string;
                     avatarUrl: string | null;
                 } | null;
+                customStatus: string | null;
+                labels: string[];
             };
         } & {
             type: string;
@@ -1431,8 +1433,8 @@ export declare class MobileController {
         priority: import("@prisma/client").$Enums.TaskPriority;
         identifier: string;
         assigneeId: string | null;
-        status: import("@prisma/client").$Enums.TaskStatus;
         workspaceId: string;
+        status: import("@prisma/client").$Enums.TaskStatus;
         order: number;
         customStatus: string | null;
         dueDate: Date | null;
@@ -1549,18 +1551,18 @@ export declare class MobileController {
             toValue: string | null;
             details: string | null;
         })[];
-        creator: {
-            id: string;
-            name: string;
-            email: string;
-            avatarUrl: string | null;
-        };
         assignee: {
             id: string;
             name: string;
             email: string;
             avatarUrl: string | null;
         } | null;
+        creator: {
+            id: string;
+            name: string;
+            email: string;
+            avatarUrl: string | null;
+        };
         assignees: ({
             user: {
                 id: string;
@@ -1629,8 +1631,8 @@ export declare class MobileController {
             priority: import("@prisma/client").$Enums.TaskPriority;
             identifier: string;
             assigneeId: string | null;
-            status: import("@prisma/client").$Enums.TaskStatus;
             workspaceId: string;
+            status: import("@prisma/client").$Enums.TaskStatus;
             order: number;
             customStatus: string | null;
             dueDate: Date | null;
@@ -1654,14 +1656,14 @@ export declare class MobileController {
                 priority: import("@prisma/client").$Enums.TaskPriority;
                 identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
-                customStatus: string | null;
-                labels: string[];
                 assignee: {
                     id: string;
                     name: string;
                     email: string;
                     avatarUrl: string | null;
                 } | null;
+                customStatus: string | null;
+                labels: string[];
             };
         } & {
             type: string;
@@ -1677,14 +1679,14 @@ export declare class MobileController {
                 priority: import("@prisma/client").$Enums.TaskPriority;
                 identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
-                customStatus: string | null;
-                labels: string[];
                 assignee: {
                     id: string;
                     name: string;
                     email: string;
                     avatarUrl: string | null;
                 } | null;
+                customStatus: string | null;
+                labels: string[];
             };
         } & {
             type: string;
@@ -1740,8 +1742,8 @@ export declare class MobileController {
         priority: import("@prisma/client").$Enums.TaskPriority;
         identifier: string;
         assigneeId: string | null;
-        status: import("@prisma/client").$Enums.TaskStatus;
         workspaceId: string;
+        status: import("@prisma/client").$Enums.TaskStatus;
         order: number;
         customStatus: string | null;
         dueDate: Date | null;
@@ -1858,18 +1860,18 @@ export declare class MobileController {
             toValue: string | null;
             details: string | null;
         })[];
-        creator: {
-            id: string;
-            name: string;
-            email: string;
-            avatarUrl: string | null;
-        };
         assignee: {
             id: string;
             name: string;
             email: string;
             avatarUrl: string | null;
         } | null;
+        creator: {
+            id: string;
+            name: string;
+            email: string;
+            avatarUrl: string | null;
+        };
         assignees: ({
             user: {
                 id: string;
@@ -1938,8 +1940,8 @@ export declare class MobileController {
             priority: import("@prisma/client").$Enums.TaskPriority;
             identifier: string;
             assigneeId: string | null;
-            status: import("@prisma/client").$Enums.TaskStatus;
             workspaceId: string;
+            status: import("@prisma/client").$Enums.TaskStatus;
             order: number;
             customStatus: string | null;
             dueDate: Date | null;
@@ -1963,14 +1965,14 @@ export declare class MobileController {
                 priority: import("@prisma/client").$Enums.TaskPriority;
                 identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
-                customStatus: string | null;
-                labels: string[];
                 assignee: {
                     id: string;
                     name: string;
                     email: string;
                     avatarUrl: string | null;
                 } | null;
+                customStatus: string | null;
+                labels: string[];
             };
         } & {
             type: string;
@@ -1986,14 +1988,14 @@ export declare class MobileController {
                 priority: import("@prisma/client").$Enums.TaskPriority;
                 identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
-                customStatus: string | null;
-                labels: string[];
                 assignee: {
                     id: string;
                     name: string;
                     email: string;
                     avatarUrl: string | null;
                 } | null;
+                customStatus: string | null;
+                labels: string[];
             };
         } & {
             type: string;
@@ -2049,8 +2051,8 @@ export declare class MobileController {
         priority: import("@prisma/client").$Enums.TaskPriority;
         identifier: string;
         assigneeId: string | null;
-        status: import("@prisma/client").$Enums.TaskStatus;
         workspaceId: string;
+        status: import("@prisma/client").$Enums.TaskStatus;
         order: number;
         customStatus: string | null;
         dueDate: Date | null;
@@ -2167,18 +2169,18 @@ export declare class MobileController {
             toValue: string | null;
             details: string | null;
         })[];
-        creator: {
-            id: string;
-            name: string;
-            email: string;
-            avatarUrl: string | null;
-        };
         assignee: {
             id: string;
             name: string;
             email: string;
             avatarUrl: string | null;
         } | null;
+        creator: {
+            id: string;
+            name: string;
+            email: string;
+            avatarUrl: string | null;
+        };
         assignees: ({
             user: {
                 id: string;
@@ -2247,8 +2249,8 @@ export declare class MobileController {
             priority: import("@prisma/client").$Enums.TaskPriority;
             identifier: string;
             assigneeId: string | null;
-            status: import("@prisma/client").$Enums.TaskStatus;
             workspaceId: string;
+            status: import("@prisma/client").$Enums.TaskStatus;
             order: number;
             customStatus: string | null;
             dueDate: Date | null;
@@ -2272,14 +2274,14 @@ export declare class MobileController {
                 priority: import("@prisma/client").$Enums.TaskPriority;
                 identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
-                customStatus: string | null;
-                labels: string[];
                 assignee: {
                     id: string;
                     name: string;
                     email: string;
                     avatarUrl: string | null;
                 } | null;
+                customStatus: string | null;
+                labels: string[];
             };
         } & {
             type: string;
@@ -2295,14 +2297,14 @@ export declare class MobileController {
                 priority: import("@prisma/client").$Enums.TaskPriority;
                 identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
-                customStatus: string | null;
-                labels: string[];
                 assignee: {
                     id: string;
                     name: string;
                     email: string;
                     avatarUrl: string | null;
                 } | null;
+                customStatus: string | null;
+                labels: string[];
             };
         } & {
             type: string;
@@ -2358,8 +2360,8 @@ export declare class MobileController {
         priority: import("@prisma/client").$Enums.TaskPriority;
         identifier: string;
         assigneeId: string | null;
-        status: import("@prisma/client").$Enums.TaskStatus;
         workspaceId: string;
+        status: import("@prisma/client").$Enums.TaskStatus;
         order: number;
         customStatus: string | null;
         dueDate: Date | null;
@@ -2391,8 +2393,8 @@ export declare class MobileController {
         priority: import("@prisma/client").$Enums.TaskPriority;
         identifier: string;
         assigneeId: string | null;
-        status: import("@prisma/client").$Enums.TaskStatus;
         workspaceId: string;
+        status: import("@prisma/client").$Enums.TaskStatus;
         order: number;
         customStatus: string | null;
         dueDate: Date | null;
@@ -2509,18 +2511,18 @@ export declare class MobileController {
             toValue: string | null;
             details: string | null;
         })[];
-        creator: {
-            id: string;
-            name: string;
-            email: string;
-            avatarUrl: string | null;
-        };
         assignee: {
             id: string;
             name: string;
             email: string;
             avatarUrl: string | null;
         } | null;
+        creator: {
+            id: string;
+            name: string;
+            email: string;
+            avatarUrl: string | null;
+        };
         assignees: ({
             user: {
                 id: string;
@@ -2589,8 +2591,8 @@ export declare class MobileController {
             priority: import("@prisma/client").$Enums.TaskPriority;
             identifier: string;
             assigneeId: string | null;
-            status: import("@prisma/client").$Enums.TaskStatus;
             workspaceId: string;
+            status: import("@prisma/client").$Enums.TaskStatus;
             order: number;
             customStatus: string | null;
             dueDate: Date | null;
@@ -2614,14 +2616,14 @@ export declare class MobileController {
                 priority: import("@prisma/client").$Enums.TaskPriority;
                 identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
-                customStatus: string | null;
-                labels: string[];
                 assignee: {
                     id: string;
                     name: string;
                     email: string;
                     avatarUrl: string | null;
                 } | null;
+                customStatus: string | null;
+                labels: string[];
             };
         } & {
             type: string;
@@ -2637,14 +2639,14 @@ export declare class MobileController {
                 priority: import("@prisma/client").$Enums.TaskPriority;
                 identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
-                customStatus: string | null;
-                labels: string[];
                 assignee: {
                     id: string;
                     name: string;
                     email: string;
                     avatarUrl: string | null;
                 } | null;
+                customStatus: string | null;
+                labels: string[];
             };
         } & {
             type: string;
@@ -2700,8 +2702,8 @@ export declare class MobileController {
         priority: import("@prisma/client").$Enums.TaskPriority;
         identifier: string;
         assigneeId: string | null;
-        status: import("@prisma/client").$Enums.TaskStatus;
         workspaceId: string;
+        status: import("@prisma/client").$Enums.TaskStatus;
         order: number;
         customStatus: string | null;
         dueDate: Date | null;
@@ -2819,18 +2821,18 @@ export declare class MobileController {
             toValue: string | null;
             details: string | null;
         })[];
-        creator: {
-            id: string;
-            name: string;
-            email: string;
-            avatarUrl: string | null;
-        };
         assignee: {
             id: string;
             name: string;
             email: string;
             avatarUrl: string | null;
         } | null;
+        creator: {
+            id: string;
+            name: string;
+            email: string;
+            avatarUrl: string | null;
+        };
         assignees: ({
             user: {
                 id: string;
@@ -2899,8 +2901,8 @@ export declare class MobileController {
             priority: import("@prisma/client").$Enums.TaskPriority;
             identifier: string;
             assigneeId: string | null;
-            status: import("@prisma/client").$Enums.TaskStatus;
             workspaceId: string;
+            status: import("@prisma/client").$Enums.TaskStatus;
             order: number;
             customStatus: string | null;
             dueDate: Date | null;
@@ -2924,14 +2926,14 @@ export declare class MobileController {
                 priority: import("@prisma/client").$Enums.TaskPriority;
                 identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
-                customStatus: string | null;
-                labels: string[];
                 assignee: {
                     id: string;
                     name: string;
                     email: string;
                     avatarUrl: string | null;
                 } | null;
+                customStatus: string | null;
+                labels: string[];
             };
         } & {
             type: string;
@@ -2947,14 +2949,14 @@ export declare class MobileController {
                 priority: import("@prisma/client").$Enums.TaskPriority;
                 identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
-                customStatus: string | null;
-                labels: string[];
                 assignee: {
                     id: string;
                     name: string;
                     email: string;
                     avatarUrl: string | null;
                 } | null;
+                customStatus: string | null;
+                labels: string[];
             };
         } & {
             type: string;
@@ -3010,8 +3012,8 @@ export declare class MobileController {
         priority: import("@prisma/client").$Enums.TaskPriority;
         identifier: string;
         assigneeId: string | null;
-        status: import("@prisma/client").$Enums.TaskStatus;
         workspaceId: string;
+        status: import("@prisma/client").$Enums.TaskStatus;
         order: number;
         customStatus: string | null;
         dueDate: Date | null;
@@ -3128,18 +3130,18 @@ export declare class MobileController {
             toValue: string | null;
             details: string | null;
         })[];
-        creator: {
-            id: string;
-            name: string;
-            email: string;
-            avatarUrl: string | null;
-        };
         assignee: {
             id: string;
             name: string;
             email: string;
             avatarUrl: string | null;
         } | null;
+        creator: {
+            id: string;
+            name: string;
+            email: string;
+            avatarUrl: string | null;
+        };
         assignees: ({
             user: {
                 id: string;
@@ -3208,8 +3210,8 @@ export declare class MobileController {
             priority: import("@prisma/client").$Enums.TaskPriority;
             identifier: string;
             assigneeId: string | null;
-            status: import("@prisma/client").$Enums.TaskStatus;
             workspaceId: string;
+            status: import("@prisma/client").$Enums.TaskStatus;
             order: number;
             customStatus: string | null;
             dueDate: Date | null;
@@ -3233,14 +3235,14 @@ export declare class MobileController {
                 priority: import("@prisma/client").$Enums.TaskPriority;
                 identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
-                customStatus: string | null;
-                labels: string[];
                 assignee: {
                     id: string;
                     name: string;
                     email: string;
                     avatarUrl: string | null;
                 } | null;
+                customStatus: string | null;
+                labels: string[];
             };
         } & {
             type: string;
@@ -3256,14 +3258,14 @@ export declare class MobileController {
                 priority: import("@prisma/client").$Enums.TaskPriority;
                 identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
-                customStatus: string | null;
-                labels: string[];
                 assignee: {
                     id: string;
                     name: string;
                     email: string;
                     avatarUrl: string | null;
                 } | null;
+                customStatus: string | null;
+                labels: string[];
             };
         } & {
             type: string;
@@ -3319,8 +3321,8 @@ export declare class MobileController {
         priority: import("@prisma/client").$Enums.TaskPriority;
         identifier: string;
         assigneeId: string | null;
-        status: import("@prisma/client").$Enums.TaskStatus;
         workspaceId: string;
+        status: import("@prisma/client").$Enums.TaskStatus;
         order: number;
         customStatus: string | null;
         dueDate: Date | null;
@@ -3609,18 +3611,18 @@ export declare class MobileController {
             toValue: string | null;
             details: string | null;
         })[];
-        creator: {
-            id: string;
-            name: string;
-            email: string;
-            avatarUrl: string | null;
-        };
         assignee: {
             id: string;
             name: string;
             email: string;
             avatarUrl: string | null;
         } | null;
+        creator: {
+            id: string;
+            name: string;
+            email: string;
+            avatarUrl: string | null;
+        };
         assignees: ({
             user: {
                 id: string;
@@ -3689,8 +3691,8 @@ export declare class MobileController {
             priority: import("@prisma/client").$Enums.TaskPriority;
             identifier: string;
             assigneeId: string | null;
-            status: import("@prisma/client").$Enums.TaskStatus;
             workspaceId: string;
+            status: import("@prisma/client").$Enums.TaskStatus;
             order: number;
             customStatus: string | null;
             dueDate: Date | null;
@@ -3714,14 +3716,14 @@ export declare class MobileController {
                 priority: import("@prisma/client").$Enums.TaskPriority;
                 identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
-                customStatus: string | null;
-                labels: string[];
                 assignee: {
                     id: string;
                     name: string;
                     email: string;
                     avatarUrl: string | null;
                 } | null;
+                customStatus: string | null;
+                labels: string[];
             };
         } & {
             type: string;
@@ -3737,14 +3739,14 @@ export declare class MobileController {
                 priority: import("@prisma/client").$Enums.TaskPriority;
                 identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
-                customStatus: string | null;
-                labels: string[];
                 assignee: {
                     id: string;
                     name: string;
                     email: string;
                     avatarUrl: string | null;
                 } | null;
+                customStatus: string | null;
+                labels: string[];
             };
         } & {
             type: string;
@@ -3800,8 +3802,8 @@ export declare class MobileController {
         priority: import("@prisma/client").$Enums.TaskPriority;
         identifier: string;
         assigneeId: string | null;
-        status: import("@prisma/client").$Enums.TaskStatus;
         workspaceId: string;
+        status: import("@prisma/client").$Enums.TaskStatus;
         order: number;
         customStatus: string | null;
         dueDate: Date | null;
@@ -3827,8 +3829,8 @@ export declare class MobileController {
         priority: import("@prisma/client").$Enums.TaskPriority;
         identifier: string;
         assigneeId: string | null;
-        status: import("@prisma/client").$Enums.TaskStatus;
         workspaceId: string;
+        status: import("@prisma/client").$Enums.TaskStatus;
         order: number;
         customStatus: string | null;
         dueDate: Date | null;
@@ -3852,12 +3854,16 @@ export declare class MobileController {
         name: string;
         email: string;
         avatarUrl: string | null;
+        whatsappNumber: string | null;
+        whatsappNotifications: boolean;
     }>;
     changePassword(userId: string, dto: MobileChangePasswordDto): Promise<{
         id: string;
         name: string;
         email: string;
         avatarUrl: string | null;
+        whatsappNumber: string | null;
+        whatsappNotifications: boolean;
     }>;
     getUserHoverCard(currentUserId: string, targetUserId: string, workspaceId?: string): Promise<MobileUserHoverCardDto>;
     getAdminPerformance(userId: string, workspaceId?: string, period?: string): Promise<MobileAdminPerformanceResponseDto>;

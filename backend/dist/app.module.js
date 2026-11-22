@@ -20,6 +20,7 @@ import { MobileModule } from './mobile/mobile.module.js';
 import { EventsModule } from './events/events.module.js';
 import { CyclesModule } from './cycles/cycles.module.js';
 import { NotificationsModule } from './notifications/notifications.module.js';
+import { WhatsappModule } from './whatsapp/whatsapp.module.js';
 let AppModule = class AppModule {
 };
 AppModule = __decorate([
@@ -45,6 +46,7 @@ AppModule = __decorate([
             MobileModule,
             EventsModule,
             CyclesModule,
+            WhatsappModule,
         ],
     })
 ], AppModule);

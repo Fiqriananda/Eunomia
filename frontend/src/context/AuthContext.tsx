@@ -25,6 +25,8 @@ interface AuthContextType {
     email?: string;
     currentPassword?: string;
     newPassword?: string;
+    whatsappNumber?: string | null;
+    whatsappNotifications?: boolean;
   }) => Promise<User>;
 }
 
@@ -52,6 +54,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         email: me.email,
         name: me.name,
         avatarUrl: me.avatarUrl,
+        whatsappNumber: me.whatsappNumber,
+        whatsappNotifications: me.whatsappNotifications,
       });
 
       const wsList = await api.workspaces.getAll();
@@ -194,6 +198,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     email?: string;
     currentPassword?: string;
     newPassword?: string;
+    whatsappNumber?: string | null;
+    whatsappNotifications?: boolean;
   }) => {
     const updated = await api.auth.updateProfile(data);
     setUser((prev) => (prev ? { ...prev, ...updated } : updated));

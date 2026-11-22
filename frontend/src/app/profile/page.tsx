@@ -30,6 +30,8 @@ import {
   X,
   Repeat,
   Building2,
+  Phone,
+  MessageCircle,
 } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 
@@ -44,6 +46,8 @@ function ProfileContent() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
+  const [whatsappNumber, setWhatsappNumber] = useState('');
+  const [whatsappNotifications, setWhatsappNotifications] = useState(true);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -103,6 +107,8 @@ function ProfileContent() {
       setName(user.name || '');
       setEmail(user.email || '');
       setAvatarUrl(user.avatarUrl || '');
+      setWhatsappNumber(user.whatsappNumber || '');
+      setWhatsappNotifications(user.whatsappNotifications !== false);
     }
   }, [user]);
 
@@ -184,6 +190,8 @@ function ProfileContent() {
         name: name.trim(),
         avatarUrl: avatarUrl || undefined,
         email: email.trim().toLowerCase() !== user?.email ? email.trim().toLowerCase() : undefined,
+        whatsappNumber: whatsappNumber.trim(),
+        whatsappNotifications,
         currentPassword: currentPassword || undefined,
         newPassword: newPassword || undefined,
       });
@@ -220,6 +228,8 @@ function ProfileContent() {
     name !== (user.name || '') ||
     email !== (user.email || '') ||
     avatarUrl !== (user.avatarUrl || '') ||
+    whatsappNumber !== (user.whatsappNumber || '') ||
+    whatsappNotifications !== (user.whatsappNotifications !== false) ||
     newPassword.length > 0;
 
   return (
@@ -479,6 +489,41 @@ function ProfileContent() {
                     className="w-full bg-[#151622] border border-border/80 rounded-lg px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/40 transition-colors font-mono"
                   />
                   <Mail className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-600" />
+                </div>
+              </div>
+
+              {/* WhatsApp Number */}
+              <div className="space-y-1.5 sm:col-span-2 pt-2 border-t border-border/40">
+                <label className="text-xs font-semibold text-zinc-300 flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <MessageCircle className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>WhatsApp Number</span>
+                  </span>
+                  <span className="text-[10px] text-zinc-500 font-normal">
+                    Receive task assignment reminders (e.g. 081234567890 or 6281234567890)
+                  </span>
+                </label>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                  <div className="relative flex-1">
+                    <input
+                      type="tel"
+                      value={whatsappNumber}
+                      onChange={(e) => setWhatsappNumber(e.target.value)}
+                      placeholder="081234567890"
+                      className="w-full bg-[#151622] border border-border/80 rounded-lg px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/40 transition-colors font-mono pr-10"
+                    />
+                    <Phone className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-600" />
+                  </div>
+
+                  <label className="inline-flex items-center gap-2 text-xs text-zinc-300 cursor-pointer select-none px-3 py-2 rounded-lg bg-[#151622] border border-border/70">
+                    <input
+                      type="checkbox"
+                      checked={whatsappNotifications}
+                      onChange={(e) => setWhatsappNotifications(e.target.checked)}
+                      className="rounded border-border bg-[#0f101a] text-emerald-500 focus:ring-0"
+                    />
+                    <span>Enable WA reminders</span>
+                  </label>
                 </div>
               </div>
             </div>
