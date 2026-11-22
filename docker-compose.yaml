@@ -60,7 +60,7 @@ services:
       - eunomia-network
 
   waha:
-    image: ${WAHA_IMAGE:-devlikeapro/waha:arm}
+    image: ${WAHA_IMAGE:-devlikeapro/waha:latest}
     container_name: eunomia-waha
     restart: unless-stopped
     ports:
