@@ -21,6 +21,8 @@ export declare class AuthService {
             email: string;
             name: string;
             avatarUrl: string | null;
+            whatsappNumber: string | null;
+            whatsappNotifications: boolean;
         };
         workspace: {
             projects: {
@@ -30,11 +32,11 @@ export declare class AuthService {
                 updatedAt: Date;
                 name: string;
                 key: string;
-                color: string | null;
+                workspaceId: string;
                 status: string;
+                color: string | null;
                 targetDate: Date | null;
                 leadId: string | null;
-                workspaceId: string;
             }[];
         } & {
             id: string;
@@ -46,6 +48,8 @@ export declare class AuthService {
             ticketPrefix: string;
             columnOrder: string[];
             cyclesEnabled: boolean;
+            whatsappEnabled: boolean;
+            whatsappSessionName: string | null;
         };
         defaultProject: {
             description: string | null;
@@ -54,11 +58,11 @@ export declare class AuthService {
             updatedAt: Date;
             name: string;
             key: string;
-            color: string | null;
+            workspaceId: string;
             status: string;
+            color: string | null;
             targetDate: Date | null;
             leadId: string | null;
-            workspaceId: string;
         };
     }>;
     login(data: {
@@ -75,6 +79,8 @@ export declare class AuthService {
             email: string;
             name: string;
             avatarUrl: string | null;
+            whatsappNumber: string | null;
+            whatsappNotifications: boolean;
         };
         workspace: {
             projects: {
@@ -84,11 +90,11 @@ export declare class AuthService {
                 updatedAt: Date;
                 name: string;
                 key: string;
-                color: string | null;
+                workspaceId: string;
                 status: string;
+                color: string | null;
                 targetDate: Date | null;
                 leadId: string | null;
-                workspaceId: string;
             }[];
         } & {
             id: string;
@@ -100,6 +106,8 @@ export declare class AuthService {
             ticketPrefix: string;
             columnOrder: string[];
             cyclesEnabled: boolean;
+            whatsappEnabled: boolean;
+            whatsappSessionName: string | null;
         };
         defaultProject: {
             description: string | null;
@@ -108,11 +116,11 @@ export declare class AuthService {
             updatedAt: Date;
             name: string;
             key: string;
-            color: string | null;
+            workspaceId: string;
             status: string;
+            color: string | null;
             targetDate: Date | null;
             leadId: string | null;
-            workspaceId: string;
         };
     }>;
     getMe(userId: string): Promise<{
@@ -120,6 +128,8 @@ export declare class AuthService {
         name: string;
         email: string;
         avatarUrl: string | null;
+        whatsappNumber: string | null;
+        whatsappNotifications: boolean;
         workspaces: ({
             workspace: {
                 members: ({
@@ -143,11 +153,11 @@ export declare class AuthService {
                     updatedAt: Date;
                     name: string;
                     key: string;
-                    color: string | null;
+                    workspaceId: string;
                     status: string;
+                    color: string | null;
                     targetDate: Date | null;
                     leadId: string | null;
-                    workspaceId: string;
                 }[];
             } & {
                 id: string;
@@ -159,6 +169,8 @@ export declare class AuthService {
                 ticketPrefix: string;
                 columnOrder: string[];
                 cyclesEnabled: boolean;
+                whatsappEnabled: boolean;
+                whatsappSessionName: string | null;
             };
         } & {
             id: string;
@@ -174,10 +186,14 @@ export declare class AuthService {
         email?: string;
         currentPassword?: string;
         newPassword?: string;
+        whatsappNumber?: string | null;
+        whatsappNotifications?: boolean;
     }): Promise<{
         id: string;
         name: string;
         email: string;
         avatarUrl: string | null;
+        whatsappNumber: string | null;
+        whatsappNotifications: boolean;
     }>;
 }

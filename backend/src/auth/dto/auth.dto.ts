@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEmail, IsNotEmpty, IsOptional, IsString, MinLength } from 'class-validator';
+import { IsBoolean, IsEmail, IsNotEmpty, IsOptional, IsString, MinLength } from 'class-validator';
 
 export class RegisterDto {
   @ApiProperty({ example: 'alex@company.com', description: 'User email address' })
@@ -94,4 +94,14 @@ export class UpdateProfileDto {
   @IsString()
   @MinLength(6)
   newPassword?: string;
+
+  @ApiPropertyOptional({ example: '6281234567890', description: 'WhatsApp number for task reminders' })
+  @IsOptional()
+  @IsString()
+  whatsappNumber?: string | null;
+
+  @ApiPropertyOptional({ example: true, description: 'Enable WhatsApp task reminders' })
+  @IsOptional()
+  @IsBoolean()
+  whatsappNotifications?: boolean;
 }

@@ -32,11 +32,11 @@ export declare class WorkspacesService {
             updatedAt: Date;
             name: string;
             key: string;
-            color: string | null;
+            workspaceId: string;
             status: string;
+            color: string | null;
             targetDate: Date | null;
             leadId: string | null;
-            workspaceId: string;
         }[];
         id: string;
         createdAt: Date;
@@ -47,6 +47,8 @@ export declare class WorkspacesService {
         ticketPrefix: string;
         columnOrder: string[];
         cyclesEnabled: boolean;
+        whatsappEnabled: boolean;
+        whatsappSessionName: string | null;
     }[]>;
     getWorkspaceById(workspaceId: string, userId: string): Promise<{
         role: import("@prisma/client").$Enums.WorkspaceRole;
@@ -71,11 +73,11 @@ export declare class WorkspacesService {
             updatedAt: Date;
             name: string;
             key: string;
-            color: string | null;
+            workspaceId: string;
             status: string;
+            color: string | null;
             targetDate: Date | null;
             leadId: string | null;
-            workspaceId: string;
         }[];
         divisions: ({
             members: ({
@@ -98,8 +100,8 @@ export declare class WorkspacesService {
             createdAt: Date;
             updatedAt: Date;
             name: string;
-            slug: string;
             workspaceId: string;
+            slug: string;
             isTechnical: boolean;
         })[];
         id: string;
@@ -111,6 +113,8 @@ export declare class WorkspacesService {
         ticketPrefix: string;
         columnOrder: string[];
         cyclesEnabled: boolean;
+        whatsappEnabled: boolean;
+        whatsappSessionName: string | null;
     }>;
     createWorkspace(userId: string, data: {
         name: string;
@@ -123,11 +127,11 @@ export declare class WorkspacesService {
             updatedAt: Date;
             name: string;
             key: string;
-            color: string | null;
+            workspaceId: string;
             status: string;
+            color: string | null;
             targetDate: Date | null;
             leadId: string | null;
-            workspaceId: string;
         }[];
     } & {
         id: string;
@@ -139,6 +143,8 @@ export declare class WorkspacesService {
         ticketPrefix: string;
         columnOrder: string[];
         cyclesEnabled: boolean;
+        whatsappEnabled: boolean;
+        whatsappSessionName: string | null;
     }>;
     inviteMember(workspaceId: string, currentUserId: string, data: {
         email: string;
@@ -163,10 +169,10 @@ export declare class WorkspacesService {
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            email: string;
             role: import("@prisma/client").$Enums.WorkspaceRole;
-            status: import("@prisma/client").$Enums.InvitationStatus;
             workspaceId: string;
+            status: import("@prisma/client").$Enums.InvitationStatus;
+            email: string;
             invitedById: string;
         };
     }>;
@@ -190,8 +196,8 @@ export declare class WorkspacesService {
         updatedAt: Date;
         name: string;
         key: string;
-        color: string;
         workspaceId: string;
+        color: string;
         progress: string | null;
         order: number;
         category: import("@prisma/client").$Enums.TaskStatus;
@@ -208,8 +214,8 @@ export declare class WorkspacesService {
         updatedAt: Date;
         name: string;
         key: string;
-        color: string;
         workspaceId: string;
+        color: string;
         progress: string | null;
         order: number;
         category: import("@prisma/client").$Enums.TaskStatus;
@@ -225,8 +231,8 @@ export declare class WorkspacesService {
         updatedAt: Date;
         name: string;
         key: string;
-        color: string;
         workspaceId: string;
+        color: string;
         progress: string | null;
         order: number;
         category: import("@prisma/client").$Enums.TaskStatus;
@@ -237,8 +243,8 @@ export declare class WorkspacesService {
         updatedAt: Date;
         name: string;
         key: string;
-        color: string;
         workspaceId: string;
+        color: string;
         progress: string | null;
         order: number;
         category: import("@prisma/client").$Enums.TaskStatus;
@@ -253,6 +259,8 @@ export declare class WorkspacesService {
         ticketPrefix: string;
         columnOrder: string[];
         cyclesEnabled: boolean;
+        whatsappEnabled: boolean;
+        whatsappSessionName: string | null;
     }>;
     updateWorkspace(workspaceId: string, userId: string, data: {
         name?: string;
@@ -283,11 +291,11 @@ export declare class WorkspacesService {
             updatedAt: Date;
             name: string;
             key: string;
-            color: string | null;
+            workspaceId: string;
             status: string;
+            color: string | null;
             targetDate: Date | null;
             leadId: string | null;
-            workspaceId: string;
         }[];
         id: string;
         createdAt: Date;
@@ -298,6 +306,8 @@ export declare class WorkspacesService {
         ticketPrefix: string;
         columnOrder: string[];
         cyclesEnabled: boolean;
+        whatsappEnabled: boolean;
+        whatsappSessionName: string | null;
     }>;
     updateMemberRole(workspaceId: string, memberId: string, role: WorkspaceRole): Promise<{
         user: {
@@ -329,10 +339,10 @@ export declare class WorkspacesService {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        email: string;
         role: import("@prisma/client").$Enums.WorkspaceRole;
-        status: import("@prisma/client").$Enums.InvitationStatus;
         workspaceId: string;
+        status: import("@prisma/client").$Enums.InvitationStatus;
+        email: string;
         invitedById: string;
     })[]>;
     cancelInvitation(workspaceId: string, invitationId: string, currentUserId: string): Promise<{
@@ -356,10 +366,10 @@ export declare class WorkspacesService {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        email: string;
         role: import("@prisma/client").$Enums.WorkspaceRole;
-        status: import("@prisma/client").$Enums.InvitationStatus;
         workspaceId: string;
+        status: import("@prisma/client").$Enums.InvitationStatus;
+        email: string;
         invitedById: string;
     }>;
     acceptInvitation(tokenOrId: string, currentUserId: string): Promise<{
@@ -375,6 +385,8 @@ export declare class WorkspacesService {
             ticketPrefix: string;
             columnOrder: string[];
             cyclesEnabled: boolean;
+            whatsappEnabled: boolean;
+            whatsappSessionName: string | null;
         };
         membership: {
             user: {
@@ -418,6 +430,8 @@ export declare class WorkspacesService {
             ticketPrefix: string;
             columnOrder: string[];
             cyclesEnabled: boolean;
+            whatsappEnabled: boolean;
+            whatsappSessionName: string | null;
         };
         membership: {
             user: {
@@ -460,8 +474,8 @@ export declare class WorkspacesService {
         createdAt: Date;
         updatedAt: Date;
         name: string;
-        slug: string;
         workspaceId: string;
+        slug: string;
         isTechnical: boolean;
     })[]>;
     createDivision(workspaceId: string, userId: string, data: {
@@ -490,8 +504,8 @@ export declare class WorkspacesService {
         createdAt: Date;
         updatedAt: Date;
         name: string;
-        slug: string;
         workspaceId: string;
+        slug: string;
         isTechnical: boolean;
     }>;
     updateDivision(divisionId: string, userId: string, data: {
@@ -520,8 +534,8 @@ export declare class WorkspacesService {
         createdAt: Date;
         updatedAt: Date;
         name: string;
-        slug: string;
         workspaceId: string;
+        slug: string;
         isTechnical: boolean;
     }>;
     deleteDivision(divisionId: string, userId: string): Promise<{
@@ -530,8 +544,8 @@ export declare class WorkspacesService {
         createdAt: Date;
         updatedAt: Date;
         name: string;
-        slug: string;
         workspaceId: string;
+        slug: string;
         isTechnical: boolean;
     }>;
     addDivisionMember(divisionId: string, userId: string, targetUserId: string, role?: string): Promise<{
@@ -547,8 +561,8 @@ export declare class WorkspacesService {
             createdAt: Date;
             updatedAt: Date;
             name: string;
-            slug: string;
             workspaceId: string;
+            slug: string;
             isTechnical: boolean;
         };
     } & {

@@ -37,8 +37,8 @@ export declare class CyclesController {
         createdAt: Date;
         updatedAt: Date;
         name: string | null;
-        status: string;
         workspaceId: string;
+        status: string;
         startDate: Date;
         endDate: Date;
     }[]>;
@@ -73,8 +73,8 @@ export declare class CyclesController {
         createdAt: Date;
         updatedAt: Date;
         name: string | null;
-        status: string;
         workspaceId: string;
+        status: string;
         startDate: Date;
         endDate: Date;
     } | null>;
@@ -124,8 +124,8 @@ export declare class CyclesController {
             priority: import("@prisma/client").$Enums.TaskPriority;
             identifier: string;
             assigneeId: string | null;
-            status: import("@prisma/client").$Enums.TaskStatus;
             workspaceId: string;
+            status: import("@prisma/client").$Enums.TaskStatus;
             order: number;
             customStatus: string | null;
             dueDate: Date | null;
@@ -148,8 +148,8 @@ export declare class CyclesController {
         createdAt: Date;
         updatedAt: Date;
         name: string | null;
-        status: string;
         workspaceId: string;
+        status: string;
         startDate: Date;
         endDate: Date;
     }>;
@@ -160,8 +160,8 @@ export declare class CyclesController {
         createdAt: Date;
         updatedAt: Date;
         name: string | null;
-        status: string;
         workspaceId: string;
+        status: string;
         startDate: Date;
         endDate: Date;
     }>;
@@ -172,8 +172,8 @@ export declare class CyclesController {
         createdAt: Date;
         updatedAt: Date;
         name: string | null;
-        status: string;
         workspaceId: string;
+        status: string;
         startDate: Date;
         endDate: Date;
     }>;

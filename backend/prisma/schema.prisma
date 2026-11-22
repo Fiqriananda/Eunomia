@@ -46,9 +46,11 @@ model User {
   id               String            @id @default(uuid())
   email            String            @unique
   password         String
-  name             String
-  avatarUrl        String?
-  createdAt        DateTime          @default(now())
+  name                  String
+  avatarUrl             String?
+  whatsappNumber        String?
+  whatsappNotifications Boolean           @default(true)
+  createdAt             DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
   workspaces       WorkspaceMember[]
   createdTasks     Task[]            @relation("CreatedTasks")
@@ -74,9 +76,11 @@ model Workspace {
   slug        String            @unique
   logoUrl     String?
   ticketPrefix String           @default("LAB")
-  columnOrder   String[]          @default([])
-  cyclesEnabled Boolean           @default(true)
-  createdAt     DateTime          @default(now())
+  columnOrder         String[]          @default([])
+  cyclesEnabled       Boolean           @default(true)
+  whatsappEnabled     Boolean           @default(false)
+  whatsappSessionName String?
+  createdAt           DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
   members     WorkspaceMember[]
   invitations WorkspaceInvitation[]

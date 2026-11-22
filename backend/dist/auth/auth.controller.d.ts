@@ -10,6 +10,8 @@ export declare class AuthController {
             email: string;
             name: string;
             avatarUrl: string | null;
+            whatsappNumber: string | null;
+            whatsappNotifications: boolean;
         };
         workspace: {
             projects: {
@@ -19,11 +21,11 @@ export declare class AuthController {
                 updatedAt: Date;
                 name: string;
                 key: string;
-                color: string | null;
+                workspaceId: string;
                 status: string;
+                color: string | null;
                 targetDate: Date | null;
                 leadId: string | null;
-                workspaceId: string;
             }[];
         } & {
             id: string;
@@ -35,6 +37,8 @@ export declare class AuthController {
             ticketPrefix: string;
             columnOrder: string[];
             cyclesEnabled: boolean;
+            whatsappEnabled: boolean;
+            whatsappSessionName: string | null;
         };
         defaultProject: {
             description: string | null;
@@ -43,11 +47,11 @@ export declare class AuthController {
             updatedAt: Date;
             name: string;
             key: string;
-            color: string | null;
+            workspaceId: string;
             status: string;
+            color: string | null;
             targetDate: Date | null;
             leadId: string | null;
-            workspaceId: string;
         };
     }>;
     login(body: LoginDto): Promise<{
@@ -57,6 +61,8 @@ export declare class AuthController {
             email: string;
             name: string;
             avatarUrl: string | null;
+            whatsappNumber: string | null;
+            whatsappNotifications: boolean;
         };
         workspace: {
             projects: {
@@ -66,11 +72,11 @@ export declare class AuthController {
                 updatedAt: Date;
                 name: string;
                 key: string;
-                color: string | null;
+                workspaceId: string;
                 status: string;
+                color: string | null;
                 targetDate: Date | null;
                 leadId: string | null;
-                workspaceId: string;
             }[];
         } & {
             id: string;
@@ -82,6 +88,8 @@ export declare class AuthController {
             ticketPrefix: string;
             columnOrder: string[];
             cyclesEnabled: boolean;
+            whatsappEnabled: boolean;
+            whatsappSessionName: string | null;
         };
         defaultProject: {
             description: string | null;
@@ -90,11 +98,11 @@ export declare class AuthController {
             updatedAt: Date;
             name: string;
             key: string;
-            color: string | null;
+            workspaceId: string;
             status: string;
+            color: string | null;
             targetDate: Date | null;
             leadId: string | null;
-            workspaceId: string;
         };
     }>;
     getMe(userId: string): Promise<{
@@ -102,6 +110,8 @@ export declare class AuthController {
         name: string;
         email: string;
         avatarUrl: string | null;
+        whatsappNumber: string | null;
+        whatsappNotifications: boolean;
         workspaces: ({
             workspace: {
                 members: ({
@@ -125,11 +135,11 @@ export declare class AuthController {
                     updatedAt: Date;
                     name: string;
                     key: string;
-                    color: string | null;
+                    workspaceId: string;
                     status: string;
+                    color: string | null;
                     targetDate: Date | null;
                     leadId: string | null;
-                    workspaceId: string;
                 }[];
             } & {
                 id: string;
@@ -141,6 +151,8 @@ export declare class AuthController {
                 ticketPrefix: string;
                 columnOrder: string[];
                 cyclesEnabled: boolean;
+                whatsappEnabled: boolean;
+                whatsappSessionName: string | null;
             };
         } & {
             id: string;
@@ -155,5 +167,7 @@ export declare class AuthController {
         name: string;
         email: string;
         avatarUrl: string | null;
+        whatsappNumber: string | null;
+        whatsappNotifications: boolean;
     }>;
 }

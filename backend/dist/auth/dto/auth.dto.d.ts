@@ -21,4 +21,6 @@ export declare class UpdateProfileDto {
     email?: string;
     currentPassword?: string;
     newPassword?: string;
+    whatsappNumber?: string | null;
+    whatsappNotifications?: boolean;
 }

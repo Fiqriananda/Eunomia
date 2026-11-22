@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { AuthProvider, useAuth } from '../../../context/AuthContext';
 import { AuthScreen } from '../../../components/auth/AuthScreen';
 import { api } from '../../../lib/api';
-import { Division } from '../../../types';
+import { Division, WhatsappStatusResponse } from '../../../types';
 import { resolveMediaUrl } from '../../../components/ui/MarkdownRenderer';
 import {
   ArrowLeft,
@@ -27,6 +27,11 @@ import {
   Users,
   Image as ImageIcon,
   Tag,
+  MessageCircle,
+  QrCode,
+  RefreshCw,
+  Send,
+  Unplug,
 } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
 
@@ -54,6 +59,13 @@ function WorkspaceSettingsContent() {
   const [isSubmittingDivision, setIsSubmittingDivision] = useState(false);
   const [deletingDivisionId, setDeletingDivisionId] = useState<string | null>(null);
 
+  // WhatsApp Bot (WAHA) State
+  const [waStatus, setWaStatus] = useState<WhatsappStatusResponse | null>(null);
+  const [waLoading, setWaLoading] = useState(false);
+  const [waActionLoading, setWaActionLoading] = useState(false);
+  const [waTestPhone, setWaTestPhone] = useState('');
+  const [waTesting, setWaTesting] = useState(false);
+
   // Sync state with current workspace
   useEffect(() => {
     if (workspace) {
@@ -63,7 +75,7 @@ function WorkspaceSettingsContent() {
     }
   }, [workspace]);
 
-  // Load divisions
+  // Load divisions & WhatsApp bot status
   useEffect(() => {
     if (workspace) {
       setIsLoadingDivisions(true);
@@ -72,8 +84,34 @@ function WorkspaceSettingsContent() {
         .then((data) => setDivisions(data))
         .catch((err) => console.error('Failed to load divisions:', err))
         .finally(() => setIsLoadingDivisions(false));
+
+      setWaLoading(true);
+      api.whatsapp
+        .getStatus(workspace.id)
+        .then((res) => setWaStatus(res))
+        .catch(() => setWaStatus(null))
+        .finally(() => setWaLoading(false));
     }
   }, [workspace]);
+
+  useEffect(() => {
+    if (user?.whatsappNumber && !waTestPhone) {
+      setWaTestPhone(user.whatsappNumber);
+    }
+  }, [user?.whatsappNumber, waTestPhone]);
+
+  // Poll WAHA status every 3s while waiting for QR scan or startup
+  useEffect(() => {
+    if (!workspace?.id) return;
+    if (waStatus?.status !== 'STARTING' && waStatus?.status !== 'SCAN_QR_CODE') return;
+    const timer = setInterval(() => {
+      api.whatsapp
+        .getStatus(workspace.id)
+        .then((res) => setWaStatus(res))
+        .catch(() => undefined);
+    }, 3000);
+    return () => clearInterval(timer);
+  }, [workspace?.id, waStatus?.status]);
 
   if (loading) {
     return (
@@ -107,6 +145,86 @@ function WorkspaceSettingsContent() {
   const userRole = currentMember?.role || workspace.role;
   const canManage = userRole === 'OWNER' || userRole === 'ADMIN';
   const cyclesEnabled = workspace.cyclesEnabled !== false;
+
+  const handleRefreshWaStatus = async () => {
+    if (!workspace) return;
+    setWaLoading(true);
+    try {
+      const res = await api.whatsapp.getStatus(workspace.id);
+      setWaStatus(res);
+    } catch (err: any) {
+      setFeedback({ type: 'error', message: err.message || 'Failed to check WhatsApp bot status.' });
+    } finally {
+      setWaLoading(false);
+    }
+  };
+
+  const handleConnectWhatsapp = async () => {
+    if (!workspace || !canManage) return;
+    setWaActionLoading(true);
+    setFeedback(null);
+    try {
+      const res = await api.whatsapp.connect(workspace.id);
+      setWaStatus(res);
+      updateActiveWorkspace({ ...workspace, whatsappEnabled: true, whatsappSessionName: res.sessionName });
+    } catch (err: any) {
+      setFeedback({ type: 'error', message: err.message || 'Failed to start WhatsApp session.' });
+    } finally {
+      setWaActionLoading(false);
+    }
+  };
+
+  const handleDisconnectWhatsapp = async () => {
+    if (!workspace || !canManage) return;
+    if (!window.confirm('Disconnect WhatsApp bot from this workspace?')) return;
+    setWaActionLoading(true);
+    setFeedback(null);
+    try {
+      const res = await api.whatsapp.disconnect(workspace.id);
+      setWaStatus(res);
+      updateActiveWorkspace({ ...workspace, whatsappEnabled: false });
+      setFeedback({ type: 'success', message: 'WhatsApp bot disconnected.' });
+    } catch (err: any) {
+      setFeedback({ type: 'error', message: err.message || 'Failed to disconnect WhatsApp bot.' });
+    } finally {
+      setWaActionLoading(false);
+    }
+  };
+
+  const handleToggleWhatsapp = async () => {
+    if (!workspace || !canManage || !waStatus) return;
+    const nextEnabled = !waStatus.enabled;
+    setWaActionLoading(true);
+    setFeedback(null);
+    try {
+      await api.whatsapp.toggle(workspace.id, nextEnabled);
+      setWaStatus((prev) => (prev ? { ...prev, enabled: nextEnabled } : prev));
+      updateActiveWorkspace({ ...workspace, whatsappEnabled: nextEnabled });
+      setFeedback({
+        type: 'success',
+        message: nextEnabled ? 'WhatsApp reminders enabled.' : 'WhatsApp reminders paused.',
+      });
+    } catch (err: any) {
+      setFeedback({ type: 'error', message: err.message || 'Failed to update WhatsApp toggle.' });
+    } finally {
+      setWaActionLoading(false);
+    }
+  };
+
+  const handleSendTestWhatsapp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!workspace || !canManage) return;
+    setWaTesting(true);
+    setFeedback(null);
+    try {
+      const res = await api.whatsapp.sendTest(workspace.id, waTestPhone.trim() || undefined);
+      setFeedback({ type: 'success', message: `Test WhatsApp message sent to ${res.to}.` });
+    } catch (err: any) {
+      setFeedback({ type: 'error', message: err.message || 'Failed to send test WhatsApp message.' });
+    } finally {
+      setWaTesting(false);
+    }
+  };
 
   // Handle Logo Upload
   const handleLogoFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -696,6 +814,211 @@ function WorkspaceSettingsContent() {
               </Button>
             )}
           </div>
+        </section>
+
+        {/* Section 2.5: WhatsApp Bot (WAHA) */}
+        <section className="rounded-2xl bg-[#11121d] border border-[#202234] p-6 space-y-5 shadow-xl">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#202234] pb-4">
+            <div>
+              <h2 className="text-base font-semibold text-white flex items-center gap-2">
+                <MessageCircle className="w-4 h-4 text-emerald-400" />
+                <span>WhatsApp Task Reminder Bot (WAHA)</span>
+                {waStatus?.status === 'WORKING' ? (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                    Connected
+                  </span>
+                ) : waStatus?.status === 'SCAN_QR_CODE' ? (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30">
+                    Scan QR
+                  </span>
+                ) : waStatus?.status === 'STARTING' ? (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/15 text-indigo-400 border border-indigo-500/30">
+                    Starting
+                  </span>
+                ) : waStatus?.status === 'UNREACHABLE' ? (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/15 text-rose-400 border border-rose-500/30">
+                    WAHA Offline
+                  </span>
+                ) : (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-zinc-800 text-zinc-400 border border-zinc-700">
+                    Disconnected
+                  </span>
+                )}
+              </h2>
+              <p className="text-xs text-zinc-400 mt-1">
+                Scan QR sekali untuk menghubungkan nomor WhatsApp bot workspace ini. Setiap task baru yang di-assign akan otomatis dikirim ke nomor WA di profil masing-masing member.
+              </p>
+            </div>
+
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={handleRefreshWaStatus}
+              disabled={waLoading}
+              className="text-xs h-8 px-3 border border-[#232538] text-zinc-300 hover:text-white self-start sm:self-auto cursor-pointer"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${waLoading ? 'animate-spin' : ''}`} />
+              <span>Refresh</span>
+            </Button>
+          </div>
+
+          {waLoading && !waStatus ? (
+            <div className="py-6 flex items-center justify-center text-zinc-500 gap-2 text-xs">
+              <Loader2 className="w-4 h-4 animate-spin text-emerald-400" />
+              <span>Checking WAHA bot status...</span>
+            </div>
+          ) : waStatus?.status === 'SCAN_QR_CODE' ? (
+            <div className="p-5 rounded-xl bg-[#151624] border border-amber-500/30 flex flex-col sm:flex-row items-center gap-6">
+              <div className="p-3 bg-white rounded-xl shrink-0">
+                {waStatus.qrDataUrl ? (
+                  <img
+                    src={waStatus.qrDataUrl}
+                    alt="WhatsApp QR Code"
+                    className="w-48 h-48 object-contain"
+                  />
+                ) : (
+                  <div className="w-48 h-48 flex items-center justify-center text-zinc-500 text-xs">
+                    <Loader2 className="w-5 h-5 animate-spin text-zinc-700" />
+                  </div>
+                )}
+              </div>
+              <div className="space-y-2 text-xs text-zinc-300">
+                <div className="font-semibold text-white flex items-center gap-1.5">
+                  <QrCode className="w-4 h-4 text-amber-400" />
+                  <span>Scan QR Code dengan WhatsApp</span>
+                </div>
+                <ol className="list-decimal list-inside space-y-1 text-zinc-400">
+                  <li>Buka WhatsApp di HP yang akan dijadikan nomor bot.</li>
+                  <li>Masuk ke menu Linked Devices (Perangkat Tertaut) &rarr; Link a Device.</li>
+                  <li>Arahkan kamera ke QR di samping. Status akan otomatis berubah setelah tersambung.</li>
+                </ol>
+                {canManage && (
+                  <div className="pt-2">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleDisconnectWhatsapp}
+                      disabled={waActionLoading}
+                      className="text-xs h-7 px-3 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10"
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : waStatus?.status === 'WORKING' ? (
+            <div className="space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl bg-[#151624] border border-emerald-500/25">
+                <div className="space-y-1">
+                  <div className="text-xs font-semibold text-white">
+                    Bot Number:{' '}
+                    <span className="font-mono text-emerald-400">
+                      +{waStatus.me?.phone || waStatus.sessionName}
+                    </span>
+                    {waStatus.me?.pushName ? (
+                      <span className="text-zinc-400 font-normal ml-2">({waStatus.me.pushName})</span>
+                    ) : null}
+                  </div>
+                  <p className="text-[11px] text-zinc-400">
+                    Session: <span className="font-mono text-zinc-300">{waStatus.sessionName}</span> &bull;{' '}
+                    {waStatus.enabled ? 'Auto-reminder aktif saat task di-assign' : 'Auto-reminder sedang dijeda'}
+                  </p>
+                </div>
+
+                {canManage && (
+                  <div className="flex items-center gap-2 self-start sm:self-auto">
+                    <Button
+                      type="button"
+                      variant={waStatus.enabled ? 'outline' : 'linear'}
+                      size="sm"
+                      onClick={handleToggleWhatsapp}
+                      disabled={waActionLoading}
+                      className="text-xs h-8 px-3 cursor-pointer"
+                    >
+                      <span>{waStatus.enabled ? 'Pause Reminders' : 'Enable Reminders'}</span>
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      onClick={handleDisconnectWhatsapp}
+                      disabled={waActionLoading}
+                      className="text-xs h-8 px-3 cursor-pointer"
+                    >
+                      <Unplug className="w-3.5 h-3.5 mr-1.5" />
+                      <span>Disconnect</span>
+                    </Button>
+                  </div>
+                )}
+              </div>
+
+              {canManage && (
+                <form
+                  onSubmit={handleSendTestWhatsapp}
+                  className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 p-3.5 rounded-xl bg-[#151624] border border-[#232538]"
+                >
+                  <input
+                    type="tel"
+                    value={waTestPhone}
+                    onChange={(e) => setWaTestPhone(e.target.value)}
+                    placeholder="Test recipient number (e.g. 081234567890)"
+                    className="flex-1 bg-[#10111d] border border-[#2b2d44] focus:border-emerald-500 rounded-lg px-3 py-1.5 text-xs text-white font-mono placeholder:text-zinc-500 focus:outline-none"
+                  />
+                  <Button
+                    type="submit"
+                    size="sm"
+                    disabled={waTesting}
+                    className="h-8 text-xs px-3.5 bg-emerald-600 hover:bg-emerald-500 text-white cursor-pointer"
+                  >
+                    {waTesting ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />
+                    ) : (
+                      <Send className="w-3.5 h-3.5 mr-1.5" />
+                    )}
+                    <span>Send Test</span>
+                  </Button>
+                </form>
+              )}
+            </div>
+          ) : (
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl bg-[#151624] border border-[#232538]">
+              <div className="space-y-1">
+                <div className="text-xs font-semibold text-white">
+                  {waStatus?.status === 'STARTING'
+                    ? 'Starting WAHA session...'
+                    : waStatus?.status === 'UNREACHABLE'
+                    ? 'WAHA server belum terhubung'
+                    : 'WhatsApp Bot belum terhubung'}
+                </div>
+                <p className="text-[11px] text-zinc-400 max-w-lg">
+                  {waStatus?.status === 'UNREACHABLE'
+                    ? waStatus.error || 'Pastikan container WAHA sudah berjalan (docker compose up -d waha) dan WAHA_URL sudah sesuai.'
+                    : 'Klik Connect untuk menampilkan QR code WhatsApp dan menghubungkan nomor bot workspace ini.'}
+                </p>
+              </div>
+
+              {canManage && (
+                <Button
+                  type="button"
+                  variant="linear"
+                  size="sm"
+                  onClick={handleConnectWhatsapp}
+                  disabled={waActionLoading || waStatus?.status === 'STARTING'}
+                  className="text-xs h-8 px-4 bg-emerald-600 hover:bg-emerald-500 text-white self-start sm:self-auto cursor-pointer"
+                >
+                  {waActionLoading || waStatus?.status === 'STARTING' ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />
+                  ) : (
+                    <QrCode className="w-3.5 h-3.5 mr-1.5" />
+                  )}
+                  <span>Connect WhatsApp Bot</span>
+                </Button>
+              )}
+            </div>
+          )}
         </section>
 
         {/* Section 3: Custom Requesting & Technical Divisions */}

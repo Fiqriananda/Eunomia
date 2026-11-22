@@ -12,6 +12,7 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { NotificationsService } from '../notifications/notifications.service.js';
+import { normalizeWhatsappNumber } from '../whatsapp/whatsapp.service.js';
 let AuthService = class AuthService {
     prisma;
     jwtService;
@@ -79,6 +80,8 @@ let AuthService = class AuthService {
                 email: user.email,
                 name: user.name,
                 avatarUrl: user.avatarUrl,
+                whatsappNumber: user.whatsappNumber,
+                whatsappNotifications: user.whatsappNotifications,
             },
             workspace,
             defaultProject: workspace.projects[0],
@@ -125,6 +128,8 @@ let AuthService = class AuthService {
                 email: user.email,
                 name: user.name,
                 avatarUrl: user.avatarUrl,
+                whatsappNumber: user.whatsappNumber,
+                whatsappNotifications: user.whatsappNotifications,
             },
             workspace: firstWorkspace,
             defaultProject: firstWorkspace?.projects[0] || null,
@@ -138,6 +143,8 @@ let AuthService = class AuthService {
                 email: true,
                 name: true,
                 avatarUrl: true,
+                whatsappNumber: true,
+                whatsappNotifications: true,
                 workspaces: {
                     include: {
                         workspace: {
@@ -202,6 +209,12 @@ let AuthService = class AuthService {
             }
             updateData.password = await bcrypt.hash(data.newPassword.trim(), 10);
         }
+        if (data.whatsappNumber !== undefined) {
+            updateData.whatsappNumber = normalizeWhatsappNumber(data.whatsappNumber);
+        }
+        if (data.whatsappNotifications !== undefined) {
+            updateData.whatsappNotifications = Boolean(data.whatsappNotifications);
+        }
         const updatedUser = await this.prisma.user.update({
             where: { id: userId },
             data: updateData,
@@ -210,6 +223,8 @@ let AuthService = class AuthService {
                 email: true,
                 name: true,
                 avatarUrl: true,
+                whatsappNumber: true,
+                whatsappNotifications: true,
             },
         });
         return updatedUser;

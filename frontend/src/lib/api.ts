@@ -17,6 +17,7 @@ import {
   WorkspaceInvitation,
   Division,
   DivisionMember,
+  WhatsappStatusResponse,
 } from '../types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
@@ -89,6 +90,8 @@ class ApiClient {
       email?: string;
       currentPassword?: string;
       newPassword?: string;
+      whatsappNumber?: string | null;
+      whatsappNotifications?: boolean;
     }) =>
       this.request<User>('/auth/profile', {
         method: 'PATCH',
@@ -682,6 +685,37 @@ class ApiClient {
         }>;
       }>(`/mobile/admin/performance?${q.toString()}`);
     },
+  };
+
+  // WhatsApp Bot (WAHA)
+  whatsapp = {
+    getStatus: (workspaceId: string) =>
+      this.request<WhatsappStatusResponse>(`/workspaces/${workspaceId}/whatsapp/status`),
+
+    connect: (workspaceId: string) =>
+      this.request<WhatsappStatusResponse>(`/workspaces/${workspaceId}/whatsapp/connect`, {
+        method: 'POST',
+      }),
+
+    disconnect: (workspaceId: string) =>
+      this.request<WhatsappStatusResponse>(`/workspaces/${workspaceId}/whatsapp/disconnect`, {
+        method: 'POST',
+      }),
+
+    toggle: (workspaceId: string, enabled: boolean) =>
+      this.request<{ id: string; whatsappEnabled: boolean; whatsappSessionName?: string | null }>(
+        `/workspaces/${workspaceId}/whatsapp/toggle`,
+        {
+          method: 'PATCH',
+          body: JSON.stringify({ enabled }),
+        },
+      ),
+
+    sendTest: (workspaceId: string, phone?: string) =>
+      this.request<{ success: boolean; to: string }>(`/workspaces/${workspaceId}/whatsapp/test`, {
+        method: 'POST',
+        body: JSON.stringify({ phone: phone || undefined }),
+      }),
   };
 }
 

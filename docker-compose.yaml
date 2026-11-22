@@ -49,11 +49,28 @@ services:
       SMTP_SECURE: ${SMTP_SECURE:-true}
       EMAIL_FROM: ${EMAIL_FROM:-"Eunomia" <fiqrianandahakin@gmail.com>}
       RESEND_API_KEY: ${RESEND_API_KEY:-}
+      WAHA_URL: ${WAHA_URL:-http://waha:3000}
+      WAHA_API_KEY: ${WAHA_API_KEY:-Akdasjdj21kndslan193912jdjsa}
     volumes:
       - backend_uploads:/app/uploads
     depends_on:
       postgres:
         condition: service_healthy
+    networks:
+      - eunomia-network
+
+  waha:
+    image: ${WAHA_IMAGE:-devlikeapro/waha:arm}
+    container_name: eunomia-waha
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${WAHA_PORT:-3005}:3000"
+    environment:
+      WHATSAPP_DEFAULT_ENGINE: NOWEB
+      WAHA_API_KEY: ${WAHA_API_KEY:-Akdasjdj21kndslan193912jdjsa}
+      WAHA_DASHBOARD_ENABLED: "false"
+    volumes:
+      - waha_sessions:/app/.sessions
     networks:
       - eunomia-network
 
@@ -86,6 +103,8 @@ volumes:
   postgres_data:
     driver: local
   backend_uploads:
+    driver: local
+  waha_sessions:
     driver: local
 
 networks:

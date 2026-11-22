@@ -103,18 +103,18 @@ export declare class TasksController {
             toValue: string | null;
             details: string | null;
         })[];
-        creator: {
-            id: string;
-            name: string;
-            email: string;
-            avatarUrl: string | null;
-        };
         assignee: {
             id: string;
             name: string;
             email: string;
             avatarUrl: string | null;
         } | null;
+        creator: {
+            id: string;
+            name: string;
+            email: string;
+            avatarUrl: string | null;
+        };
         assignees: ({
             user: {
                 id: string;
@@ -183,8 +183,8 @@ export declare class TasksController {
             priority: import("@prisma/client").$Enums.TaskPriority;
             identifier: string;
             assigneeId: string | null;
-            status: import("@prisma/client").$Enums.TaskStatus;
             workspaceId: string;
+            status: import("@prisma/client").$Enums.TaskStatus;
             order: number;
             customStatus: string | null;
             dueDate: Date | null;
@@ -208,14 +208,14 @@ export declare class TasksController {
                 priority: import("@prisma/client").$Enums.TaskPriority;
                 identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
-                customStatus: string | null;
-                labels: string[];
                 assignee: {
                     id: string;
                     name: string;
                     email: string;
                     avatarUrl: string | null;
                 } | null;
+                customStatus: string | null;
+                labels: string[];
             };
         } & {
             type: string;
@@ -231,14 +231,14 @@ export declare class TasksController {
                 priority: import("@prisma/client").$Enums.TaskPriority;
                 identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
-                customStatus: string | null;
-                labels: string[];
                 assignee: {
                     id: string;
                     name: string;
                     email: string;
                     avatarUrl: string | null;
                 } | null;
+                customStatus: string | null;
+                labels: string[];
             };
         } & {
             type: string;
@@ -294,8 +294,8 @@ export declare class TasksController {
         priority: import("@prisma/client").$Enums.TaskPriority;
         identifier: string;
         assigneeId: string | null;
-        status: import("@prisma/client").$Enums.TaskStatus;
         workspaceId: string;
+        status: import("@prisma/client").$Enums.TaskStatus;
         order: number;
         customStatus: string | null;
         dueDate: Date | null;
@@ -412,18 +412,18 @@ export declare class TasksController {
             toValue: string | null;
             details: string | null;
         })[];
-        creator: {
-            id: string;
-            name: string;
-            email: string;
-            avatarUrl: string | null;
-        };
         assignee: {
             id: string;
             name: string;
             email: string;
             avatarUrl: string | null;
         } | null;
+        creator: {
+            id: string;
+            name: string;
+            email: string;
+            avatarUrl: string | null;
+        };
         assignees: ({
             user: {
                 id: string;
@@ -492,8 +492,8 @@ export declare class TasksController {
             priority: import("@prisma/client").$Enums.TaskPriority;
             identifier: string;
             assigneeId: string | null;
-            status: import("@prisma/client").$Enums.TaskStatus;
             workspaceId: string;
+            status: import("@prisma/client").$Enums.TaskStatus;
             order: number;
             customStatus: string | null;
             dueDate: Date | null;
@@ -517,14 +517,14 @@ export declare class TasksController {
                 priority: import("@prisma/client").$Enums.TaskPriority;
                 identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
-                customStatus: string | null;
-                labels: string[];
                 assignee: {
                     id: string;
                     name: string;
                     email: string;
                     avatarUrl: string | null;
                 } | null;
+                customStatus: string | null;
+                labels: string[];
             };
         } & {
             type: string;
@@ -540,14 +540,14 @@ export declare class TasksController {
                 priority: import("@prisma/client").$Enums.TaskPriority;
                 identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
-                customStatus: string | null;
-                labels: string[];
                 assignee: {
                     id: string;
                     name: string;
                     email: string;
                     avatarUrl: string | null;
                 } | null;
+                customStatus: string | null;
+                labels: string[];
             };
         } & {
             type: string;
@@ -603,8 +603,8 @@ export declare class TasksController {
         priority: import("@prisma/client").$Enums.TaskPriority;
         identifier: string;
         assigneeId: string | null;
-        status: import("@prisma/client").$Enums.TaskStatus;
         workspaceId: string;
+        status: import("@prisma/client").$Enums.TaskStatus;
         order: number;
         customStatus: string | null;
         dueDate: Date | null;
@@ -732,18 +732,18 @@ export declare class TasksController {
             toValue: string | null;
             details: string | null;
         })[];
-        creator: {
-            id: string;
-            name: string;
-            email: string;
-            avatarUrl: string | null;
-        };
         assignee: {
             id: string;
             name: string;
             email: string;
             avatarUrl: string | null;
         } | null;
+        creator: {
+            id: string;
+            name: string;
+            email: string;
+            avatarUrl: string | null;
+        };
         assignees: ({
             user: {
                 id: string;
@@ -812,8 +812,8 @@ export declare class TasksController {
             priority: import("@prisma/client").$Enums.TaskPriority;
             identifier: string;
             assigneeId: string | null;
-            status: import("@prisma/client").$Enums.TaskStatus;
             workspaceId: string;
+            status: import("@prisma/client").$Enums.TaskStatus;
             order: number;
             customStatus: string | null;
             dueDate: Date | null;
@@ -837,14 +837,14 @@ export declare class TasksController {
                 priority: import("@prisma/client").$Enums.TaskPriority;
                 identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
-                customStatus: string | null;
-                labels: string[];
                 assignee: {
                     id: string;
                     name: string;
                     email: string;
                     avatarUrl: string | null;
                 } | null;
+                customStatus: string | null;
+                labels: string[];
             };
         } & {
             type: string;
@@ -860,14 +860,14 @@ export declare class TasksController {
                 priority: import("@prisma/client").$Enums.TaskPriority;
                 identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
-                customStatus: string | null;
-                labels: string[];
                 assignee: {
                     id: string;
                     name: string;
                     email: string;
                     avatarUrl: string | null;
                 } | null;
+                customStatus: string | null;
+                labels: string[];
             };
         } & {
             type: string;
@@ -923,8 +923,8 @@ export declare class TasksController {
         priority: import("@prisma/client").$Enums.TaskPriority;
         identifier: string;
         assigneeId: string | null;
-        status: import("@prisma/client").$Enums.TaskStatus;
         workspaceId: string;
+        status: import("@prisma/client").$Enums.TaskStatus;
         order: number;
         customStatus: string | null;
         dueDate: Date | null;
@@ -1048,18 +1048,18 @@ export declare class TasksController {
             toValue: string | null;
             details: string | null;
         })[];
-        creator: {
-            id: string;
-            name: string;
-            email: string;
-            avatarUrl: string | null;
-        };
         assignee: {
             id: string;
             name: string;
             email: string;
             avatarUrl: string | null;
         } | null;
+        creator: {
+            id: string;
+            name: string;
+            email: string;
+            avatarUrl: string | null;
+        };
         assignees: ({
             user: {
                 id: string;
@@ -1128,8 +1128,8 @@ export declare class TasksController {
             priority: import("@prisma/client").$Enums.TaskPriority;
             identifier: string;
             assigneeId: string | null;
-            status: import("@prisma/client").$Enums.TaskStatus;
             workspaceId: string;
+            status: import("@prisma/client").$Enums.TaskStatus;
             order: number;
             customStatus: string | null;
             dueDate: Date | null;
@@ -1153,14 +1153,14 @@ export declare class TasksController {
                 priority: import("@prisma/client").$Enums.TaskPriority;
                 identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
-                customStatus: string | null;
-                labels: string[];
                 assignee: {
                     id: string;
                     name: string;
                     email: string;
                     avatarUrl: string | null;
                 } | null;
+                customStatus: string | null;
+                labels: string[];
             };
         } & {
             type: string;
@@ -1176,14 +1176,14 @@ export declare class TasksController {
                 priority: import("@prisma/client").$Enums.TaskPriority;
                 identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
-                customStatus: string | null;
-                labels: string[];
                 assignee: {
                     id: string;
                     name: string;
                     email: string;
                     avatarUrl: string | null;
                 } | null;
+                customStatus: string | null;
+                labels: string[];
             };
         } & {
             type: string;
@@ -1239,8 +1239,8 @@ export declare class TasksController {
         priority: import("@prisma/client").$Enums.TaskPriority;
         identifier: string;
         assigneeId: string | null;
-        status: import("@prisma/client").$Enums.TaskStatus;
         workspaceId: string;
+        status: import("@prisma/client").$Enums.TaskStatus;
         order: number;
         customStatus: string | null;
         dueDate: Date | null;
@@ -1357,18 +1357,18 @@ export declare class TasksController {
             toValue: string | null;
             details: string | null;
         })[];
-        creator: {
-            id: string;
-            name: string;
-            email: string;
-            avatarUrl: string | null;
-        };
         assignee: {
             id: string;
             name: string;
             email: string;
             avatarUrl: string | null;
         } | null;
+        creator: {
+            id: string;
+            name: string;
+            email: string;
+            avatarUrl: string | null;
+        };
         assignees: ({
             user: {
                 id: string;
@@ -1437,8 +1437,8 @@ export declare class TasksController {
             priority: import("@prisma/client").$Enums.TaskPriority;
             identifier: string;
             assigneeId: string | null;
-            status: import("@prisma/client").$Enums.TaskStatus;
             workspaceId: string;
+            status: import("@prisma/client").$Enums.TaskStatus;
             order: number;
             customStatus: string | null;
             dueDate: Date | null;
@@ -1462,14 +1462,14 @@ export declare class TasksController {
                 priority: import("@prisma/client").$Enums.TaskPriority;
                 identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
-                customStatus: string | null;
-                labels: string[];
                 assignee: {
                     id: string;
                     name: string;
                     email: string;
                     avatarUrl: string | null;
                 } | null;
+                customStatus: string | null;
+                labels: string[];
             };
         } & {
             type: string;
@@ -1485,14 +1485,14 @@ export declare class TasksController {
                 priority: import("@prisma/client").$Enums.TaskPriority;
                 identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
-                customStatus: string | null;
-                labels: string[];
                 assignee: {
                     id: string;
                     name: string;
                     email: string;
                     avatarUrl: string | null;
                 } | null;
+                customStatus: string | null;
+                labels: string[];
             };
         } & {
             type: string;
@@ -1548,8 +1548,8 @@ export declare class TasksController {
         priority: import("@prisma/client").$Enums.TaskPriority;
         identifier: string;
         assigneeId: string | null;
-        status: import("@prisma/client").$Enums.TaskStatus;
         workspaceId: string;
+        status: import("@prisma/client").$Enums.TaskStatus;
         order: number;
         customStatus: string | null;
         dueDate: Date | null;
@@ -1681,18 +1681,18 @@ export declare class TasksController {
             toValue: string | null;
             details: string | null;
         })[];
-        creator: {
-            id: string;
-            name: string;
-            email: string;
-            avatarUrl: string | null;
-        };
         assignee: {
             id: string;
             name: string;
             email: string;
             avatarUrl: string | null;
         } | null;
+        creator: {
+            id: string;
+            name: string;
+            email: string;
+            avatarUrl: string | null;
+        };
         assignees: ({
             user: {
                 id: string;
@@ -1761,8 +1761,8 @@ export declare class TasksController {
             priority: import("@prisma/client").$Enums.TaskPriority;
             identifier: string;
             assigneeId: string | null;
-            status: import("@prisma/client").$Enums.TaskStatus;
             workspaceId: string;
+            status: import("@prisma/client").$Enums.TaskStatus;
             order: number;
             customStatus: string | null;
             dueDate: Date | null;
@@ -1786,14 +1786,14 @@ export declare class TasksController {
                 priority: import("@prisma/client").$Enums.TaskPriority;
                 identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
-                customStatus: string | null;
-                labels: string[];
                 assignee: {
                     id: string;
                     name: string;
                     email: string;
                     avatarUrl: string | null;
                 } | null;
+                customStatus: string | null;
+                labels: string[];
             };
         } & {
             type: string;
@@ -1809,14 +1809,14 @@ export declare class TasksController {
                 priority: import("@prisma/client").$Enums.TaskPriority;
                 identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
-                customStatus: string | null;
-                labels: string[];
                 assignee: {
                     id: string;
                     name: string;
                     email: string;
                     avatarUrl: string | null;
                 } | null;
+                customStatus: string | null;
+                labels: string[];
             };
         } & {
             type: string;
@@ -1872,8 +1872,8 @@ export declare class TasksController {
         priority: import("@prisma/client").$Enums.TaskPriority;
         identifier: string;
         assigneeId: string | null;
-        status: import("@prisma/client").$Enums.TaskStatus;
         workspaceId: string;
+        status: import("@prisma/client").$Enums.TaskStatus;
         order: number;
         customStatus: string | null;
         dueDate: Date | null;
@@ -2006,18 +2006,18 @@ export declare class TasksController {
             toValue: string | null;
             details: string | null;
         })[];
-        creator: {
-            id: string;
-            name: string;
-            email: string;
-            avatarUrl: string | null;
-        };
         assignee: {
             id: string;
             name: string;
             email: string;
             avatarUrl: string | null;
         } | null;
+        creator: {
+            id: string;
+            name: string;
+            email: string;
+            avatarUrl: string | null;
+        };
         assignees: ({
             user: {
                 id: string;
@@ -2086,8 +2086,8 @@ export declare class TasksController {
             priority: import("@prisma/client").$Enums.TaskPriority;
             identifier: string;
             assigneeId: string | null;
-            status: import("@prisma/client").$Enums.TaskStatus;
             workspaceId: string;
+            status: import("@prisma/client").$Enums.TaskStatus;
             order: number;
             customStatus: string | null;
             dueDate: Date | null;
@@ -2111,14 +2111,14 @@ export declare class TasksController {
                 priority: import("@prisma/client").$Enums.TaskPriority;
                 identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
-                customStatus: string | null;
-                labels: string[];
                 assignee: {
                     id: string;
                     name: string;
                     email: string;
                     avatarUrl: string | null;
                 } | null;
+                customStatus: string | null;
+                labels: string[];
             };
         } & {
             type: string;
@@ -2134,14 +2134,14 @@ export declare class TasksController {
                 priority: import("@prisma/client").$Enums.TaskPriority;
                 identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
-                customStatus: string | null;
-                labels: string[];
                 assignee: {
                     id: string;
                     name: string;
                     email: string;
                     avatarUrl: string | null;
                 } | null;
+                customStatus: string | null;
+                labels: string[];
             };
         } & {
             type: string;
@@ -2197,8 +2197,8 @@ export declare class TasksController {
         priority: import("@prisma/client").$Enums.TaskPriority;
         identifier: string;
         assigneeId: string | null;
-        status: import("@prisma/client").$Enums.TaskStatus;
         workspaceId: string;
+        status: import("@prisma/client").$Enums.TaskStatus;
         order: number;
         customStatus: string | null;
         dueDate: Date | null;
@@ -2326,18 +2326,18 @@ export declare class TasksController {
             toValue: string | null;
             details: string | null;
         })[];
-        creator: {
-            id: string;
-            name: string;
-            email: string;
-            avatarUrl: string | null;
-        };
         assignee: {
             id: string;
             name: string;
             email: string;
             avatarUrl: string | null;
         } | null;
+        creator: {
+            id: string;
+            name: string;
+            email: string;
+            avatarUrl: string | null;
+        };
         assignees: ({
             user: {
                 id: string;
@@ -2406,8 +2406,8 @@ export declare class TasksController {
             priority: import("@prisma/client").$Enums.TaskPriority;
             identifier: string;
             assigneeId: string | null;
-            status: import("@prisma/client").$Enums.TaskStatus;
             workspaceId: string;
+            status: import("@prisma/client").$Enums.TaskStatus;
             order: number;
             customStatus: string | null;
             dueDate: Date | null;
@@ -2431,14 +2431,14 @@ export declare class TasksController {
                 priority: import("@prisma/client").$Enums.TaskPriority;
                 identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
-                customStatus: string | null;
-                labels: string[];
                 assignee: {
                     id: string;
                     name: string;
                     email: string;
                     avatarUrl: string | null;
                 } | null;
+                customStatus: string | null;
+                labels: string[];
             };
         } & {
             type: string;
@@ -2454,14 +2454,14 @@ export declare class TasksController {
                 priority: import("@prisma/client").$Enums.TaskPriority;
                 identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
-                customStatus: string | null;
-                labels: string[];
                 assignee: {
                     id: string;
                     name: string;
                     email: string;
                     avatarUrl: string | null;
                 } | null;
+                customStatus: string | null;
+                labels: string[];
             };
         } & {
             type: string;
@@ -2517,8 +2517,8 @@ export declare class TasksController {
         priority: import("@prisma/client").$Enums.TaskPriority;
         identifier: string;
         assigneeId: string | null;
-        status: import("@prisma/client").$Enums.TaskStatus;
         workspaceId: string;
+        status: import("@prisma/client").$Enums.TaskStatus;
         order: number;
         customStatus: string | null;
         dueDate: Date | null;
@@ -2637,18 +2637,18 @@ export declare class TasksController {
             toValue: string | null;
             details: string | null;
         })[];
-        creator: {
-            id: string;
-            name: string;
-            email: string;
-            avatarUrl: string | null;
-        };
         assignee: {
             id: string;
             name: string;
             email: string;
             avatarUrl: string | null;
         } | null;
+        creator: {
+            id: string;
+            name: string;
+            email: string;
+            avatarUrl: string | null;
+        };
         assignees: ({
             user: {
                 id: string;
@@ -2717,8 +2717,8 @@ export declare class TasksController {
             priority: import("@prisma/client").$Enums.TaskPriority;
             identifier: string;
             assigneeId: string | null;
-            status: import("@prisma/client").$Enums.TaskStatus;
             workspaceId: string;
+            status: import("@prisma/client").$Enums.TaskStatus;
             order: number;
             customStatus: string | null;
             dueDate: Date | null;
@@ -2742,14 +2742,14 @@ export declare class TasksController {
                 priority: import("@prisma/client").$Enums.TaskPriority;
                 identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
-                customStatus: string | null;
-                labels: string[];
                 assignee: {
                     id: string;
                     name: string;
                     email: string;
                     avatarUrl: string | null;
                 } | null;
+                customStatus: string | null;
+                labels: string[];
             };
         } & {
             type: string;
@@ -2765,14 +2765,14 @@ export declare class TasksController {
                 priority: import("@prisma/client").$Enums.TaskPriority;
                 identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
-                customStatus: string | null;
-                labels: string[];
                 assignee: {
                     id: string;
                     name: string;
                     email: string;
                     avatarUrl: string | null;
                 } | null;
+                customStatus: string | null;
+                labels: string[];
             };
         } & {
             type: string;
@@ -2828,8 +2828,8 @@ export declare class TasksController {
         priority: import("@prisma/client").$Enums.TaskPriority;
         identifier: string;
         assigneeId: string | null;
-        status: import("@prisma/client").$Enums.TaskStatus;
         workspaceId: string;
+        status: import("@prisma/client").$Enums.TaskStatus;
         order: number;
         customStatus: string | null;
         dueDate: Date | null;
@@ -2946,18 +2946,18 @@ export declare class TasksController {
             toValue: string | null;
             details: string | null;
         })[];
-        creator: {
-            id: string;
-            name: string;
-            email: string;
-            avatarUrl: string | null;
-        };
         assignee: {
             id: string;
             name: string;
             email: string;
             avatarUrl: string | null;
         } | null;
+        creator: {
+            id: string;
+            name: string;
+            email: string;
+            avatarUrl: string | null;
+        };
         assignees: ({
             user: {
                 id: string;
@@ -3026,8 +3026,8 @@ export declare class TasksController {
             priority: import("@prisma/client").$Enums.TaskPriority;
             identifier: string;
             assigneeId: string | null;
-            status: import("@prisma/client").$Enums.TaskStatus;
             workspaceId: string;
+            status: import("@prisma/client").$Enums.TaskStatus;
             order: number;
             customStatus: string | null;
             dueDate: Date | null;
@@ -3051,14 +3051,14 @@ export declare class TasksController {
                 priority: import("@prisma/client").$Enums.TaskPriority;
                 identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
-                customStatus: string | null;
-                labels: string[];
                 assignee: {
                     id: string;
                     name: string;
                     email: string;
                     avatarUrl: string | null;
                 } | null;
+                customStatus: string | null;
+                labels: string[];
             };
         } & {
             type: string;
@@ -3074,14 +3074,14 @@ export declare class TasksController {
                 priority: import("@prisma/client").$Enums.TaskPriority;
                 identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
-                customStatus: string | null;
-                labels: string[];
                 assignee: {
                     id: string;
                     name: string;
                     email: string;
                     avatarUrl: string | null;
                 } | null;
+                customStatus: string | null;
+                labels: string[];
             };
         } & {
             type: string;
@@ -3137,8 +3137,8 @@ export declare class TasksController {
         priority: import("@prisma/client").$Enums.TaskPriority;
         identifier: string;
         assigneeId: string | null;
-        status: import("@prisma/client").$Enums.TaskStatus;
         workspaceId: string;
+        status: import("@prisma/client").$Enums.TaskStatus;
         order: number;
         customStatus: string | null;
         dueDate: Date | null;
@@ -3258,18 +3258,18 @@ export declare class TasksController {
             toValue: string | null;
             details: string | null;
         })[];
-        creator: {
-            id: string;
-            name: string;
-            email: string;
-            avatarUrl: string | null;
-        };
         assignee: {
             id: string;
             name: string;
             email: string;
             avatarUrl: string | null;
         } | null;
+        creator: {
+            id: string;
+            name: string;
+            email: string;
+            avatarUrl: string | null;
+        };
         assignees: ({
             user: {
                 id: string;
@@ -3338,8 +3338,8 @@ export declare class TasksController {
             priority: import("@prisma/client").$Enums.TaskPriority;
             identifier: string;
             assigneeId: string | null;
-            status: import("@prisma/client").$Enums.TaskStatus;
             workspaceId: string;
+            status: import("@prisma/client").$Enums.TaskStatus;
             order: number;
             customStatus: string | null;
             dueDate: Date | null;
@@ -3363,14 +3363,14 @@ export declare class TasksController {
                 priority: import("@prisma/client").$Enums.TaskPriority;
                 identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
-                customStatus: string | null;
-                labels: string[];
                 assignee: {
                     id: string;
                     name: string;
                     email: string;
                     avatarUrl: string | null;
                 } | null;
+                customStatus: string | null;
+                labels: string[];
             };
         } & {
             type: string;
@@ -3386,14 +3386,14 @@ export declare class TasksController {
                 priority: import("@prisma/client").$Enums.TaskPriority;
                 identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
-                customStatus: string | null;
-                labels: string[];
                 assignee: {
                     id: string;
                     name: string;
                     email: string;
                     avatarUrl: string | null;
                 } | null;
+                customStatus: string | null;
+                labels: string[];
             };
         } & {
             type: string;
@@ -3449,8 +3449,8 @@ export declare class TasksController {
         priority: import("@prisma/client").$Enums.TaskPriority;
         identifier: string;
         assigneeId: string | null;
-        status: import("@prisma/client").$Enums.TaskStatus;
         workspaceId: string;
+        status: import("@prisma/client").$Enums.TaskStatus;
         order: number;
         customStatus: string | null;
         dueDate: Date | null;
@@ -3567,18 +3567,18 @@ export declare class TasksController {
             toValue: string | null;
             details: string | null;
         })[];
-        creator: {
-            id: string;
-            name: string;
-            email: string;
-            avatarUrl: string | null;
-        };
         assignee: {
             id: string;
             name: string;
             email: string;
             avatarUrl: string | null;
         } | null;
+        creator: {
+            id: string;
+            name: string;
+            email: string;
+            avatarUrl: string | null;
+        };
         assignees: ({
             user: {
                 id: string;
@@ -3647,8 +3647,8 @@ export declare class TasksController {
             priority: import("@prisma/client").$Enums.TaskPriority;
             identifier: string;
             assigneeId: string | null;
-            status: import("@prisma/client").$Enums.TaskStatus;
             workspaceId: string;
+            status: import("@prisma/client").$Enums.TaskStatus;
             order: number;
             customStatus: string | null;
             dueDate: Date | null;
@@ -3672,14 +3672,14 @@ export declare class TasksController {
                 priority: import("@prisma/client").$Enums.TaskPriority;
                 identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
-                customStatus: string | null;
-                labels: string[];
                 assignee: {
                     id: string;
                     name: string;
                     email: string;
                     avatarUrl: string | null;
                 } | null;
+                customStatus: string | null;
+                labels: string[];
             };
         } & {
             type: string;
@@ -3695,14 +3695,14 @@ export declare class TasksController {
                 priority: import("@prisma/client").$Enums.TaskPriority;
                 identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
-                customStatus: string | null;
-                labels: string[];
                 assignee: {
                     id: string;
                     name: string;
                     email: string;
                     avatarUrl: string | null;
                 } | null;
+                customStatus: string | null;
+                labels: string[];
             };
         } & {
             type: string;
@@ -3758,8 +3758,8 @@ export declare class TasksController {
         priority: import("@prisma/client").$Enums.TaskPriority;
         identifier: string;
         assigneeId: string | null;
-        status: import("@prisma/client").$Enums.TaskStatus;
         workspaceId: string;
+        status: import("@prisma/client").$Enums.TaskStatus;
         order: number;
         customStatus: string | null;
         dueDate: Date | null;
@@ -3881,18 +3881,18 @@ export declare class TasksController {
             toValue: string | null;
             details: string | null;
         })[];
-        creator: {
-            id: string;
-            name: string;
-            email: string;
-            avatarUrl: string | null;
-        };
         assignee: {
             id: string;
             name: string;
             email: string;
             avatarUrl: string | null;
         } | null;
+        creator: {
+            id: string;
+            name: string;
+            email: string;
+            avatarUrl: string | null;
+        };
         assignees: ({
             user: {
                 id: string;
@@ -3961,8 +3961,8 @@ export declare class TasksController {
             priority: import("@prisma/client").$Enums.TaskPriority;
             identifier: string;
             assigneeId: string | null;
-            status: import("@prisma/client").$Enums.TaskStatus;
             workspaceId: string;
+            status: import("@prisma/client").$Enums.TaskStatus;
             order: number;
             customStatus: string | null;
             dueDate: Date | null;
@@ -3986,14 +3986,14 @@ export declare class TasksController {
                 priority: import("@prisma/client").$Enums.TaskPriority;
                 identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
-                customStatus: string | null;
-                labels: string[];
                 assignee: {
                     id: string;
                     name: string;
                     email: string;
                     avatarUrl: string | null;
                 } | null;
+                customStatus: string | null;
+                labels: string[];
             };
         } & {
             type: string;
@@ -4009,14 +4009,14 @@ export declare class TasksController {
                 priority: import("@prisma/client").$Enums.TaskPriority;
                 identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
-                customStatus: string | null;
-                labels: string[];
                 assignee: {
                     id: string;
                     name: string;
                     email: string;
                     avatarUrl: string | null;
                 } | null;
+                customStatus: string | null;
+                labels: string[];
             };
         } & {
             type: string;
@@ -4072,8 +4072,8 @@ export declare class TasksController {
         priority: import("@prisma/client").$Enums.TaskPriority;
         identifier: string;
         assigneeId: string | null;
-        status: import("@prisma/client").$Enums.TaskStatus;
         workspaceId: string;
+        status: import("@prisma/client").$Enums.TaskStatus;
         order: number;
         customStatus: string | null;
         dueDate: Date | null;
@@ -4212,18 +4212,18 @@ export declare class TasksController {
             toValue: string | null;
             details: string | null;
         })[];
-        creator: {
-            id: string;
-            name: string;
-            email: string;
-            avatarUrl: string | null;
-        };
         assignee: {
             id: string;
             name: string;
             email: string;
             avatarUrl: string | null;
         } | null;
+        creator: {
+            id: string;
+            name: string;
+            email: string;
+            avatarUrl: string | null;
+        };
         assignees: ({
             user: {
                 id: string;
@@ -4292,8 +4292,8 @@ export declare class TasksController {
             priority: import("@prisma/client").$Enums.TaskPriority;
             identifier: string;
             assigneeId: string | null;
-            status: import("@prisma/client").$Enums.TaskStatus;
             workspaceId: string;
+            status: import("@prisma/client").$Enums.TaskStatus;
             order: number;
             customStatus: string | null;
             dueDate: Date | null;
@@ -4317,14 +4317,14 @@ export declare class TasksController {
                 priority: import("@prisma/client").$Enums.TaskPriority;
                 identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
-                customStatus: string | null;
-                labels: string[];
                 assignee: {
                     id: string;
                     name: string;
                     email: string;
                     avatarUrl: string | null;
                 } | null;
+                customStatus: string | null;
+                labels: string[];
             };
         } & {
             type: string;
@@ -4340,14 +4340,14 @@ export declare class TasksController {
                 priority: import("@prisma/client").$Enums.TaskPriority;
                 identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
-                customStatus: string | null;
-                labels: string[];
                 assignee: {
                     id: string;
                     name: string;
                     email: string;
                     avatarUrl: string | null;
                 } | null;
+                customStatus: string | null;
+                labels: string[];
             };
         } & {
             type: string;
@@ -4403,8 +4403,8 @@ export declare class TasksController {
         priority: import("@prisma/client").$Enums.TaskPriority;
         identifier: string;
         assigneeId: string | null;
-        status: import("@prisma/client").$Enums.TaskStatus;
         workspaceId: string;
+        status: import("@prisma/client").$Enums.TaskStatus;
         order: number;
         customStatus: string | null;
         dueDate: Date | null;
@@ -4521,18 +4521,18 @@ export declare class TasksController {
             toValue: string | null;
             details: string | null;
         })[];
-        creator: {
-            id: string;
-            name: string;
-            email: string;
-            avatarUrl: string | null;
-        };
         assignee: {
             id: string;
             name: string;
             email: string;
             avatarUrl: string | null;
         } | null;
+        creator: {
+            id: string;
+            name: string;
+            email: string;
+            avatarUrl: string | null;
+        };
         assignees: ({
             user: {
                 id: string;
@@ -4601,8 +4601,8 @@ export declare class TasksController {
             priority: import("@prisma/client").$Enums.TaskPriority;
             identifier: string;
             assigneeId: string | null;
-            status: import("@prisma/client").$Enums.TaskStatus;
             workspaceId: string;
+            status: import("@prisma/client").$Enums.TaskStatus;
             order: number;
             customStatus: string | null;
             dueDate: Date | null;
@@ -4626,14 +4626,14 @@ export declare class TasksController {
                 priority: import("@prisma/client").$Enums.TaskPriority;
                 identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
-                customStatus: string | null;
-                labels: string[];
                 assignee: {
                     id: string;
                     name: string;
                     email: string;
                     avatarUrl: string | null;
                 } | null;
+                customStatus: string | null;
+                labels: string[];
             };
         } & {
             type: string;
@@ -4649,14 +4649,14 @@ export declare class TasksController {
                 priority: import("@prisma/client").$Enums.TaskPriority;
                 identifier: string;
                 status: import("@prisma/client").$Enums.TaskStatus;
-                customStatus: string | null;
-                labels: string[];
                 assignee: {
                     id: string;
                     name: string;
                     email: string;
                     avatarUrl: string | null;
                 } | null;
+                customStatus: string | null;
+                labels: string[];
             };
         } & {
             type: string;
@@ -4712,8 +4712,8 @@ export declare class TasksController {
         priority: import("@prisma/client").$Enums.TaskPriority;
         identifier: string;
         assigneeId: string | null;
-        status: import("@prisma/client").$Enums.TaskStatus;
         workspaceId: string;
+        status: import("@prisma/client").$Enums.TaskStatus;
         order: number;
         customStatus: string | null;
         dueDate: Date | null;
@@ -4739,8 +4739,8 @@ export declare class TasksController {
         priority: import("@prisma/client").$Enums.TaskPriority;
         identifier: string;
         assigneeId: string | null;
-        status: import("@prisma/client").$Enums.TaskStatus;
         workspaceId: string;
+        status: import("@prisma/client").$Enums.TaskStatus;
         order: number;
         customStatus: string | null;
         dueDate: Date | null;

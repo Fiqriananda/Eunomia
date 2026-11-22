@@ -4,6 +4,7 @@ import { TaskStatus, TaskPriority, TriageStatus, WorkspaceRole } from '@prisma/c
 import { EmailService } from '../email/email.service.js';
 import { EventsGateway } from '../events/events.gateway.js';
 import { NotificationsService } from '../notifications/notifications.service.js';
+import { WhatsappService } from '../whatsapp/whatsapp.service.js';
 
 const taskIncludeConfig = {
   project: {
@@ -158,6 +159,7 @@ export class TasksService {
     private emailService: EmailService,
     private eventsGateway: EventsGateway,
     private notificationsService: NotificationsService,
+    private whatsappService: WhatsappService,
   ) {}
 
   private formatStatusName(status: string | null | undefined, customStatus: string | null | undefined): string {
@@ -555,6 +557,25 @@ export class TasksService {
             assigneeId: aId,
           })
           .catch((err) => console.error('Failed to send task assignment push notification:', err));
+
+        this.whatsappService
+          .notifyTaskAssigned({
+            workspaceId: newTask.workspaceId,
+            assigneeId: aId,
+            taskId: newTask.id,
+            identifier: newTask.identifier,
+            taskTitle: newTask.title,
+            actorName: creator?.name || 'A team member',
+            description: newTask.description,
+            status: this.formatStatusName(newTask.status, newTask.customStatus),
+            projectName: newTask.project?.name,
+            cycleName: newTask.cycle?.name,
+            priority: newTask.priority,
+            labels: newTask.labels,
+            estimate: newTask.estimate,
+            dueDate: newTask.dueDate,
+          })
+          .catch((err) => console.error('Failed to send WhatsApp assignment reminder:', err));
       }
 
       // Auto-subscribe assignee
@@ -796,6 +817,29 @@ export class TasksService {
                 assigneeId: aId,
               })
               .catch((err) => console.error('Failed to send task assignment push notification:', err));
+
+            this.whatsappService
+              .notifyTaskAssigned({
+                workspaceId: currentTask.workspaceId,
+                assigneeId: aId,
+                taskId: id,
+                identifier: currentTask.identifier,
+                taskTitle: data.title || currentTask.title,
+                actorName: actor?.name || 'A team member',
+                description:
+                  data.description !== undefined ? data.description : currentTask.description,
+                status: this.formatStatusName(
+                  data.status !== undefined ? data.status : currentTask.status,
+                  data.customStatus !== undefined ? data.customStatus : currentTask.customStatus,
+                ),
+                projectName: currentTask.project?.name,
+                cycleName: currentTask.cycle?.name,
+                priority: data.priority || currentTask.priority,
+                labels: data.labels || currentTask.labels,
+                estimate: data.estimate !== undefined ? data.estimate : currentTask.estimate,
+                dueDate: data.dueDate !== undefined ? data.dueDate : currentTask.dueDate,
+              })
+              .catch((err) => console.error('Failed to send WhatsApp assignment reminder:', err));
           }
         }
 
@@ -1244,16 +1288,29 @@ export class TasksService {
 
     // Send Mobile FCM Push Notification for mentioned team members
     if (mentionedUserIds.size > 0) {
+      const mentionedIds = Array.from(mentionedUserIds);
       this.notificationsService
         .notifyCommentAdded({
           taskId: task.id,
           identifier: task.identifier,
           actorName: comment.user.name,
           content,
-          recipientUserIds: Array.from(mentionedUserIds),
+          recipientUserIds: mentionedIds,
           type: 'MENTIONED',
         })
         .catch((err) => console.error('Failed to send mention push notification:', err));
+
+      this.whatsappService
+        .notifyMentioned({
+          workspaceId: task.workspaceId,
+          recipientUserIds: mentionedIds,
+          taskId: task.id,
+          identifier: task.identifier,
+          taskTitle: task.title,
+          actorName: comment.user.name,
+          commentContent: content,
+        })
+        .catch((err) => console.error('Failed to send WhatsApp mention reminder:', err));
     }
 
     // 3. Notify all other subscribers to this task by email about the comment/reply
