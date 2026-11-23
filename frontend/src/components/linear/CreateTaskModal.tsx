@@ -69,11 +69,16 @@ export function CreateTaskModal({
   const [submitting, setSubmitting] = useState(false);
 
   React.useEffect(() => {
-    if (defaultProjectId) setProjectId(defaultProjectId);
+    const validIds = new Set(projects.map((p) => p.id));
+    if (defaultProjectId && validIds.has(defaultProjectId)) {
+      setProjectId(defaultProjectId);
+    } else {
+      setProjectId((prev) => (prev && validIds.has(prev) ? prev : projects[0]?.id ?? ''));
+    }
     if (defaultStatus) setStatusValue(defaultStatus);
     if (defaultPriority) setPriority(defaultPriority);
     if (defaultCycleId !== undefined) setCycleId(defaultCycleId || '');
-  }, [defaultProjectId, defaultStatus, defaultPriority, defaultCycleId]);
+  }, [isOpen, projects, defaultProjectId, defaultStatus, defaultPriority, defaultCycleId]);
 
   if (!isOpen) return null;
 

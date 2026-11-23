@@ -98,7 +98,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const setWorkspace = async (ws: Workspace) => {
     setWorkspaceState(ws);
+    setProjects([]);
+    setProject(null);
     localStorage.setItem('linear_active_ws', ws.id);
+    localStorage.removeItem('linear_active_proj');
     try {
       const projList = await api.projects.getByWorkspace(ws.id);
       setProjects(projList);

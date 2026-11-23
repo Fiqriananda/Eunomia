@@ -420,7 +420,9 @@ export class TasksService {
 
     let targetProjectId = data.projectId || null;
     if (targetProjectId) {
-      const proj = await this.prisma.project.findUnique({ where: { id: targetProjectId } });
+      const proj = await this.prisma.project.findFirst({
+        where: { id: targetProjectId, workspaceId: data.workspaceId },
+      });
       if (!proj) targetProjectId = null;
     }
     if (!targetProjectId && workspace.projects.length > 0) {
@@ -680,11 +682,13 @@ export class TasksService {
       updateData.parentId = data.parentId;
     }
 
-    if (data.projectId && !data.identifier) {
-      const project = await this.prisma.project.findUnique({
-        where: { id: data.projectId },
+    if (data.projectId) {
+      const project = await this.prisma.project.findFirst({
+        where: { id: data.projectId, workspaceId: currentTask.workspaceId },
       });
-      if (project) {
+      if (!project) {
+        delete updateData.projectId;
+      } else if (!data.identifier) {
         let suffix = '1';
         if (currentTask?.identifier) {
           const match = currentTask.identifier.match(/-(\d+)$/);
